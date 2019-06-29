@@ -4,6 +4,7 @@ package webtools.gui.run;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.InputStream;
 import java.net.URL;
 import javax.swing.border.LineBorder;
 
@@ -11,8 +12,9 @@ class SplashScreen extends JWindow
 { 
     public SplashScreen(String filename)
     {
-        URL u = this.getClass().getResource(filename);
-        JLabel l = new JLabel(new ImageIcon(u));
+        InputStream is = this.getClass().getResourceAsStream(filename);
+        URL u =  this.getClass().getResource(filename);
+        JLabel l = new JLabel(new ImageIcon(filename));
         Color gold = new Color( 232, 232, 77 );
         l.setBorder( new LineBorder( gold, 5 ) );
         getContentPane().add( l, BorderLayout.CENTER );

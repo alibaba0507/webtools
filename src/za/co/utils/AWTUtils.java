@@ -232,7 +232,7 @@ public class AWTUtils {
         } else {
             url = component.getClass().getResource(path);
         }
-        Image img = new ImageIcon(url).getImage();
+        Image img = new ImageIcon(/*url*/path).getImage();
         return img;//getIcon(component, url);
     }
 
