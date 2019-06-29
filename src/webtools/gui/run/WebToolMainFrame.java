@@ -12,5 +12,7 @@ import javax.swing.JFrame;
  * @author alibaba0507
  */
 public class WebToolMainFrame extends JFrame{
-    
+    public WebToolMainFrame(){
+        super("WebTools");
+    }
 }
