@@ -2,7 +2,14 @@
  {
      "menu":{
             "name":"File",
-            "key":"f"
-        }
- }
+            "key":"f",
+            "actions":[
+                {"class":"",
+                "key":"",
+                "button":"1",
+                "icon":""}
+                ,{}
+            ]
+         }
+      }
 ]
