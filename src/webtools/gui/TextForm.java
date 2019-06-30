@@ -46,7 +46,23 @@ public class TextForm extends JPanel{
       fieldPanel.add(p);
     }
   }
-
+  
+  public void setFormValues(String[] s)
+  {
+      for (int i = 0;i < Math.min(fields.length,s.length);i++)
+      {
+          fields[i].setText(s[i]);
+      }
+  }
+  public String[] getFormValues()
+  {
+      String[] s = new String[fields.length];
+      for (int i = 0;i < fields.length;i++)
+      {
+          s[i] = fields[i].getText();
+      }
+      return s;
+  }
   public String getText(int i) {
     return (fields[i].getText());
   }

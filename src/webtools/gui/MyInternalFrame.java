@@ -5,7 +5,10 @@
  */
 package webtools.gui;
 
+import javax.swing.ImageIcon;
 import javax.swing.JInternalFrame;
+import webtools.gui.run.Main;
+import za.co.utils.AWTUtils;
 
 /**
  *
@@ -29,5 +32,8 @@ public class MyInternalFrame extends JInternalFrame {
     private ProjectPanel project;
     public MyInternalFrame( String title, boolean a, boolean b, boolean c, boolean d) {
           super(title, a, b, c, d);
+          ImageIcon icon =  new ImageIcon(AWTUtils.getIcon(this,
+                            Main.prop.getProperty("project.item.image")));
+          this.setFrameIcon(icon);
     }
 }

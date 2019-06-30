@@ -42,7 +42,7 @@ public class NewProjectAction extends AbstractAction {
                 }
             }
             MyInternalFrame jif = new MyInternalFrame(title, true, true, true, true);
-            ProjectPanel proj = new ProjectPanel();
+            ProjectPanel proj = new ProjectPanel(title);
             jif.setProject(proj);
             JScrollPane scroller = new JScrollPane(proj, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
                     ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);

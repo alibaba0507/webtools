@@ -11,11 +11,15 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JInternalFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 import javax.swing.SpringLayout;
+import webtools.gui.run.WebToolMainFrame;
 import za.co.utils.AWTUtils;
 
 /**
@@ -26,9 +30,10 @@ public class ProjectPanel extends JPanel {
 
     private JPanel searchForm;
     private JTabbedPane tabs;
-
-    public ProjectPanel() {
+    private String title;
+    public ProjectPanel(String title) {
         super();
+        this.title = title;
         setLayout(new FlowLayout());
         initTabs();
     }
@@ -54,11 +59,37 @@ public class ProjectPanel extends JPanel {
                 ,"(Optional) Bigest File","(Optional)Smalest File" };
    final TextForm form = new TextForm(labels, mnemonics, widths, descs);
         JButton submit = new JButton("Save Project",new ImageIcon(AWTUtils.getIcon(this, ".\\images\\Save24.gif")));
-
+    Object list = WebToolMainFrame.defaultProjectProperties.get(this.title);
+    if (list != null)
+    {
+        form.setFormValues((String[])list);
+    }
     submit.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
+          if (form.getText(0) == null || form.getText(0) == "")
+          {
+              JOptionPane.showMessageDialog(form, "Saved Fial.Please fill Project Name field.");
+              return;
+          }
         System.out.println(form.getText(0) + " " + form.getText(1) + ". " + form.getText(2)
             + ", age " + form.getText(3));
+          java.awt.Container c = ProjectPanel.this.getParent();
+          while (true)
+          {
+              if (c == null)
+                  break;
+              if (c instanceof JInternalFrame)
+              {
+                  ((JInternalFrame)c).setTitle(form.getText(0));
+                  break;
+              }
+              c = c.getParent();
+          }
+          //((JInternalFrame)ProjectPanel.this.getParent().getParent()).setTitle(form.getText(0));
+          WebToolMainFrame.defaultProjectProperties.put(form.getText(0), form.getFormValues());
+          WebToolMainFrame.saveProjectPropToFile();
+          // repload the tree
+          WebToolMainFrame.instance.updateProjectTree();
       }
     });
    
