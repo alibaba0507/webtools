@@ -29,6 +29,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.ImageIcon;
 import webtools.gui.run.WebToolMainFrame;
+import webtools.gui.run.WebToolMainFrame_V1;
 
 /**
  * Misc helper methods for AWT that don't require Thinlet.
@@ -249,7 +250,7 @@ public class AWTUtils {
             log.fine("loading icon url=" + url + "...");
         }
 
-        Image icon = WebToolMainFrame.instance.getToolkit().getImage(url);
+        Image icon = WebToolMainFrame_V1.instance.getToolkit().getImage(url);
 
         MediaTracker mediatracker = new MediaTracker(component);
         mediatracker.addImage(icon, 1);

@@ -1,21 +1,29 @@
-[
+
  {
-     "menu":{
-            "name":"File",
-            "key":"f",
-            "actions":[
-                {
-                "class":"webtools.gui.actions.NewProjectAction",
-                "name":"New Project",
-                "key":"n",
-                "button":"1",
-                "icon":".\\images\\newProject.jpg"},
-                {
-                "class":"webtools.gui.actions.ExitAction",
-                "name":"Exit",
-                "key":"e",
-                "icon":".\\images\\exit.png"}
-            ]
+     "menu":[
+            {
+                "name":"File",
+                "key":"f",
+                "actions":[
+                    {
+                    "class":"webtools.gui.actions.NewProjectAction",
+                    "name":"New Project",
+                    "key":"n",
+                    "button":"1",
+                    "icon":".\\images\\newProject.jpg"},
+                    {
+                    "class":"webtools.gui.actions.ExitAction",
+                    "name":"Exit",
+                    "key":"e",
+                    "icon":".\\images\\exit.png"}
+                ]
+             }
+         ],
+       "actions":[
+          {
+          "class":"",
+          "name":"",
+          "icon":""
          }
-      }
-]
+       ]
+ }

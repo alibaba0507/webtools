@@ -13,12 +13,14 @@ import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Insets;
 import java.awt.Rectangle;
-import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Hashtable;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -34,6 +36,7 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
@@ -48,6 +51,8 @@ import javax.swing.plaf.metal.MetalTabbedPaneUI;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
+import webtools.gui.actions.ConsoleCaretListener;
+import webtools.gui.actions.ControlPropertiesUI;
 import webtools.gui.actions.ProjectsUI;
 import za.co.utils.AWTUtils;
 
@@ -55,34 +60,47 @@ import za.co.utils.AWTUtils;
  *
  * @author alibaba0507
  */
-public class WebToolMainFrame extends JFrame {
+public class WebToolMainFrame_V1 extends JFrame {
 
-    public static WebToolMainFrame instance;
-    private static JDesktopPane desktop;
-    private JToolBar toolBar;
-    private JMenuBar menuBar;
+    public static WebToolMainFrame_V1 instance;
+    private final JDesktopPane desktop;
+    private final JToolBar toolBar;
+    private final JMenuBar menuBar;
+    private JPopupMenu popup;
+    private JPopupMenu popupProj;
+    private DefaultListModel consolesListModel, projectListModel;
+    private ArrayList outputList = new ArrayList();
+    private int console_count;
     
-    public static JDesktopPane getDesckTopInstance()
-    {
-        if (desktop == null)
-        {
-            new WebToolMainFrame();
-        }
-        
-        return desktop;
-    }
-    public WebToolMainFrame() {
+    public WebToolMainFrame_V1() {
         super("WebTools");
+        // do some extra work and then
         desktop = new JDesktopPane();
         toolBar = new JToolBar();
         menuBar = new JMenuBar();
         createMenuBar();
         setJMenuBar(menuBar);
+        // Make dragging faster:
+        desktop.putClientProperty("JDesktopPane.dragMode", "outline");
+
+        JList consolesList = new JList();
+        consolesList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        consolesListModel = new DefaultListModel();
 
         JList projectList = new JList();
         projectList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        ProjectsUI.projectListModel = new DefaultListModel();
-        projectList.setModel(ProjectsUI.projectListModel);
+        projectListModel = new DefaultListModel();
+
+        try {
+            consolesList.setModel(consolesListModel);
+            projectList.setModel(projectListModel);
+
+        } catch (IllegalArgumentException iae) {
+            iae.printStackTrace();
+        }
+
+        ProjectsUI.consolesListModel = consolesListModel;
+        ProjectsUI.projectListModel = projectListModel;
 
         // JScrollPane commandScrollPane = new JScrollPane(consolesList);
         JScrollPane projectsScrollPane = new JScrollPane(projectList);
@@ -102,40 +120,60 @@ public class WebToolMainFrame extends JFrame {
         tabbedPane.addTab(tabs[0], projectPanel);
         tabbedPane.setMnemonicAt(0, ms[0]);
 
+        Dimension dim = new Dimension(0, 0);
+
         JSplitPane listSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT, tabbedPane/*commandPanel*/, null/*linePanel*/);
         listSplit.setDividerLocation(140);
 
         JSplitPane hSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, listSplit, desktop);
         hSplit.setOneTouchExpandable(true);
         hSplit.setDividerLocation(100);
-        hSplit.setMinimumSize(new Dimension(0, 0));
+        hSplit.setMinimumSize(dim);
 
+        // Initialize default console window for displaying program output
         JTextArea console = new JTextArea();
+        String setting = (String) ControlPropertiesUI.getInstance().getDefaultProps().get("SETTING");
+        if (setting != null && setting.equals("CUSTOM")) {
+            ControlPropertiesUI.getInstance().customizeTextArea(console, "CUSTOM_CONSOLE");
+        } else {
+            ControlPropertiesUI.getInstance().customizeTextArea(console, "DEFAULT_TEXTAREA");
+        }
 
+        console.setWrapStyleWord(true);
+        console.setEditable(false);
+        console.setDoubleBuffered(true);
+
+        console.addCaretListener(new ConsoleCaretListener(console));
+        ArrayList al = new ArrayList(4);
+        al.add(new Boolean(true));
+        al.add(console);
+        al.add(null);
+        al.add(null);
+        outputList.add(al);  // Reserve place for Process object
+        consolesListModel.addElement("Console " + console_count);
+        console_count++;
+        console.setText("JUST TO TEST >>>>");
+        consolesList.setSelectedIndex(0);
+        consolesList.addListSelectionListener(new ActionsUI().new ConsoleListener(consolesList, outputList, viewport));
+    
+        ProjectsUI.console = console;
+        
+        // Creating view port for console window
         JScrollPane jsp = new JScrollPane(console,
                 JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
                 JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         JViewport viewport = jsp.getViewport();
-
-        JPanel consolePanel = new JPanel(new BorderLayout());
-        consolePanel.add(jsp, BorderLayout.CENTER);
-        consolePanel.setMinimumSize(new Dimension(0, 0));
-
-        JSplitPane vSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT, hSplit, consolePanel);
-        vSplit.setOneTouchExpandable(true);
+        
         JPanel northPanel = new JPanel();
 
         northPanel.setLayout(new BorderLayout());
         northPanel.add(toolBar, BorderLayout.NORTH);
         Container contentPane = getContentPane();
         contentPane.add(northPanel, BorderLayout.NORTH);
-        contentPane.add(vSplit, BorderLayout.CENTER);
 
-        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-        setBounds(0, 0, screenSize.width, screenSize.height - 50);
         //This is last istantiation
-        if (WebToolMainFrame.instance == null) {
-            WebToolMainFrame.instance = this;
+        if (WebToolMainFrame_V1.instance == null) {
+            WebToolMainFrame_V1.instance = this;
         }
     }
 

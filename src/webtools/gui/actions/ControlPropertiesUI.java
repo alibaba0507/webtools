@@ -34,7 +34,28 @@ public class ControlPropertiesUI {
             instance = this;
         }
     }
+    public void customizeTextArea(JTextArea textArea, String type) {
+        JTextArea jta = (JTextArea) ControlPropertiesUI.getInstance().getDefaultProps().get(type);
+        Font font = jta.getFont();
+        textArea.setFont(font);
+        textArea.setForeground(jta.getForeground());
+        textArea.setBackground(jta.getBackground());
+        textArea.setCaretColor(jta.getCaretColor());
+        Integer intObj = (Integer) ControlPropertiesUI.getInstance().getDefaultProps().get("DEFAULT_TAB_SIZE");
+        textArea.setTabSize(intObj.intValue());
+    }
+    public Hashtable getDefaultProps(){
+        return this.defaultProps;
+    }
     
+    public static ControlPropertiesUI getInstance()
+    {
+        if (ControlPropertiesUI.instance == null)
+        {
+            ControlPropertiesUI.instance = new ControlPropertiesUI();
+        }
+        return ControlPropertiesUI.instance;
+    }
     
     public void loadProperties() {
         defaultProps = null;

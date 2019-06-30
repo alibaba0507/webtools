@@ -7,6 +7,9 @@ package webtools.gui.actions;
 
 import java.awt.event.ActionEvent;
 import javax.swing.AbstractAction;
+import javax.swing.JComponent;
+import javax.swing.JDialog;
+import javax.swing.JOptionPane;
 
 /**
  *
@@ -16,7 +19,9 @@ public class ExitAction extends AbstractAction{
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+       // throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        JOptionPane.showMessageDialog((JComponent) e.getSource(), "TODO: Before Exit check if need TO SAVE DATA ...");
+       System.exit(0);
     }
     
 }
