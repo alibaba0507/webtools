@@ -3,11 +3,15 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/C:/Users/alibaba0507/Documents/NetBeansProjects/dev/WebTools/src/webtools/gui/actions/ExitAction.java</file>
-            <file>file:/C:/Users/alibaba0507/Documents/NetBeansProjects/dev/WebTools/src/webtools/gui/actions/ControlPropertiesUI.java</file>
-            <file>file:/C:/Users/alibaba0507/Documents/NetBeansProjects/dev/WebTools/src/webtools/gui/run/Main.java</file>
+            <file>file:/C:/Users/alibaba0507/Documents/NetBeansProjects/dev/WebTools/src/za/co/utils/SQLiteTest.java</file>
+            <file>file:/C:/Users/alibaba0507/Documents/NetBeansProjects/dev/WebTools/src/webtools/gui/ProjectPanel.java</file>
+            <file>file:/C:/Users/alibaba0507/Documents/NetBeansProjects/dev/WebTools/src/webtools/gui/MyInternalFrame.java</file>
+            <file>file:/C:/Users/alibaba0507/Documents/NetBeansProjects/dev/WebTools/src/za/co/utils/AWTUtils.java</file>
+            <file>file:/C:/Users/alibaba0507/Documents/NetBeansProjects/dev/WebTools/src/webtools/gui/SearchForm.java</file>
             <file>file:/C:/Users/alibaba0507/Documents/NetBeansProjects/dev/WebTools/src/webtools/gui/run/WebToolMainFrame.java</file>
+            <file>file:/C:/Users/alibaba0507/Documents/NetBeansProjects/dev/WebTools/src/webtools/gui/dialogs/SearchQueryDialog.java</file>
             <file>file:/C:/Users/alibaba0507/Documents/NetBeansProjects/dev/WebTools/src/webtools/WebTools.java</file>
+            <file>file:/C:/Users/alibaba0507/Documents/NetBeansProjects/dev/WebTools/src/za/co/utils/SQLite.java</file>
         </group>
     </open-files>
 </project-private>

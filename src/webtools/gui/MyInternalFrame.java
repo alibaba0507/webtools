@@ -15,7 +15,11 @@ import za.co.utils.AWTUtils;
  * @author alibaba0507
  */
 public class MyInternalFrame extends JInternalFrame {
-
+    
+    public MyInternalFrame()
+    {
+        
+    }
     /**
      * @return the project
      */

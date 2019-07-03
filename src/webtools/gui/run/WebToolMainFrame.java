@@ -62,6 +62,7 @@ import org.json.simple.parser.JSONParser;
 import webtools.gui.actions.NewProjectAction;
 import webtools.gui.actions.ProjectsUI;
 import za.co.utils.AWTUtils;
+import za.co.utils.SQLite;
 
 /**
  *
@@ -70,6 +71,7 @@ import za.co.utils.AWTUtils;
 public class WebToolMainFrame extends JFrame {
     
     public static WebToolMainFrame instance;
+    public static SQLite sqlite;
     public static Hashtable defaultProjectProperties;
     
     private static JDesktopPane desktop;
@@ -169,6 +171,8 @@ public class WebToolMainFrame extends JFrame {
         setBounds(0, 0, screenSize.width, screenSize.height - 50);
         loadProjectPropFromFile();
         updateProjectTree();
+        WebToolMainFrame.sqlite = new SQLite();
+        
         //This is last istantiation
         if (WebToolMainFrame.instance == null) {
             WebToolMainFrame.instance = this;

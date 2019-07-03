@@ -5,6 +5,8 @@
  */
 package webtools;
 
+import java.net.InetSocketAddress;
+import java.net.Proxy;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.ArrayList;
@@ -15,6 +17,7 @@ import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
+import za.co.utils.WebConnector;
 
 /**
  *
@@ -22,24 +25,36 @@ import org.jsoup.select.Elements;
  */
 public class WebTools {
 
-    private final static String GOOGLE_SEARCH_URL = "http://www.google.com/search?q=";
+    private final static String GOOGLE_SEARCH_URL = "https://www.google.com/search?q=";
     private final static String GOOGLE_REGEX_SEARCH = "div[class='r']>a";
     private final static String USER_AGENT = "Mozilla/5.0 (Windows NT 6.2; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/32.0.1667.0 Safari/537.36";
 
     /**
      * @param args the command line arguments
      */
-    public static void mainRun(String[] args) {
+    public static void main(String[] args) {
         // TODO code application logic here
         try {
             int page = 1;
             String query = "yahoo";
-            String q =  query + "&start=" + page * 10;
+            String q = query + "&start=" + page * 10;
             String charset = "UTF-8";
-            String urlEncode = GOOGLE_SEARCH_URL  + q;//URLEncoder.encode(q, charset);
-            Document doc = new WebTools().search(urlEncode, "", true);
+            String urlEncode = GOOGLE_SEARCH_URL + q;//URLEncoder.encode(q, charset);
+            WebConnector webC = new WebConnector();
+           // webC.setProxy(new Proxy(Proxy.Type.SOCKS, new InetSocketAddress("127.0.0.1", 9153)));
+            //webC.setProxy(new Proxy(Proxy.Type.HTTP, new InetSocketAddress("127.0.0.1", 8118)));
+            //System.setProperty("https.proxyHost", "127.0.0.1");
+            //System.setProperty("https.proxyPort", "8118");
+            System.setProperty("java.net.preferIPv4Stack", "true");
+            System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
+            System.setProperty("socksProxyHost", "127.0.0.1");
+            System.setProperty("socksProxyPort", "9153");
+            String ipAddr = "https://www.google.com/search?q=my+ip&ie=utf-8&oe=utf-8&client=firefox-b-ab";
+
+            Document doc = webC.get(ipAddr, "", true, null,8118, null, null);// new WebTools().search(urlEncode, "", true);
+            System.out.print(doc.body().html());
             if (doc != null) {
-                
+
                 Elements links = doc.select("div[class='r']>a");//google only
                 // Elements links = doc.getElementById("links").getElementsByClass("results_links");
                 if (links.size() < 2) { // we have a problem something went wrong 
@@ -50,9 +65,9 @@ public class WebTools {
                         final String title = link.text();
                         //  final String url = link.absUrl("href"); // Google returns URLs in format "http://www.google.com/url?q=<url>&sa=U&ei=<someKey>".
                         final String result = link.attr("href");
-                        
+
                         final String url = URLDecoder.decode(result, "UTF-8");
-                        
+
                         if (!url.startsWith("http")) {
                             continue; // Ads/news/etc.
                         } else if (title == null || title.equals("") || title.equalsIgnoreCase("ad")) {

@@ -1,0 +1,125 @@
+{
+  "search":[
+     {
+       "keyword":"allinanchor:",
+       "descr":"Restricts the search to pages that contain all the search terms in the anchor text of the page.\n
+                An anchor is a marker inserted at a specific section of a page.\n
+                It lets the writer of the document create links to these anchors, which quickly take the reader to \n
+                the specified section. The table of contents at the top of this document, for example,\not
+                uses hyperlinks to anchors embedded throughout this document.\n\n
+                Do not include any other search operators with the allinanchor: operator.",
+       "example":"Typing allinanchor:cheap books in the search box returns only pages that have anchor text 
+                that include the words \"cheap\" and \"books.\""
+     },
+     {
+       "keyword":"allintext:",
+       "descr":"Restricts the search to documents whose body text contains the search terms. \n
+                    The search appliance does not search for the query words in the metadata, titles, and anchors.
+                   \nAlso see the intext: search operator.",
+       "example":"Typing allintext:google search in the search box returns only documents that have both \"google\" and \"search\" in the body text of the document."
+     },
+     {
+       "keyword":"allintitle:",
+       "descr":"Restricts the search to documents whose HTML title contains all the search terms.
+              \n\n
+       Also see the intitle: search operator.",
+       "example":"Typing allintitle:google search in the search box returns only documents that have both \"google\" and \"search\" in the HTML title."
+     },
+     {
+       "keyword":"allinurl:",
+       "descr":"Restricts the search to documents whose URL contains the search terms.\n 
+       The search operator does not require the query words to be adjacent to each other in the document, \n 
+       nor does it require the words to appear in a particular order in the document.\n\n
+        The search operator works on words in the URL, not URL components such as punctuation. Slashes (\"/\"),\n 
+        for example, are ignored.\n 
+        Also see the inurl: search operator.",
+       "example":"Typing allinurl:google search in the search box returns only documents that have both \"google\" and \n 
+       \"search\" in the URL.\n Typing allinurl:google/search in the search box returns the same documents as the previous\n 
+       example. The slash in the search term is altogether ignored."
+     },
+     {
+       "keyword":"cache:",
+       "descr":"The search engine keeps the text of the many documents it crawls available in a backed-up format\n 
+       known as \"cache.\" A cached version of a web page can be retrieved if the original page is unavailable,\n 
+       such as when the page\'s server is down. The cached page appears exactly as it looked when the crawler last crawled \n 
+       it, but it includes a message (at the top of the page) to indicate that it\'s a cached version of the page.\n\n 
+        If you include search words in addition to the web address in your query, those search words will be highlighted \n 
+        within the cached document.",
+       "example":"Typing cache:www.google.com in the search box returns the cached version of Google\'s homepage.\n\n
+        Typing cache:www.google.com press releases in the search box returns the cached content with the words\n 
+        \"press\" and \"releases\" highlighted."
+     },
+     {
+       "keyword":"filetype:",
+       "descr":"Restricts the search to specific file types such as Excel spreadsheets, PDF files, or Word documents. \n 
+       Type the filetype: operator followed by the file extension.",
+       "example":"Typing cars filetype:pdf in the search box returns only PDF files about cars."
+     },
+     {
+       "keyword":"info:",
+       "descr":"Returns the following information for that particular URL:\n\n 
+          \t  The cache of the page\n
+            \t\t Web sites that are similar to the page
+            \t\t Web pages that have hyperlinks to the page
+            \t\t Web pages that are hyperlinked in that page
+            \t\t Web pages that contain the URL in its body text",
+       "example":"Typing info:www.google.com in the search box returns the following information about the Google home page:
+                    \n\n \t The cache of www.google.com
+            \t\t Web sites that are similar to www.google.com
+       \t\t Web pages that have hyperlinks to www.google.com
+       \t\t Web pages that are hyperlinked in www.google.com
+       \t\t Web pages that contain the www.google.com in its body text"
+     },
+     {
+       "keyword":"intext:",
+       "descr":"Restricts the search to documents that contain the search word in the body text of the documents.\n\n
+Putting intext: in front of every word in your query is equivalent to putting allintext:\n at the front of your query.",
+       "example":"Typing intext:google returns documents that mention the word \"google\" in their body text.\n
+       If a document has \"google\" in the HTML title, but not in the body text, 
+       the document will not be included in the search results.\n\n 
+Typing intext:google search returns documents that mention the word \"google\" in the body text\n 
+ and mention the word \"search\" in the body text, the title, the anchor, or anywhere else in the document.\n
+Typing intext:google intext:search in the search box is the same as typing allintext: google search."
+     },
+     {
+       "keyword":"intitle:",
+       "descr":"Restricts the search to documents that contain the search word in the HTML title.\t\t
+Putting intitle: in front of every word in your query is equivalent to putting allintitle: at the front of your query.",
+       "example":"Typing intitle:google search returns documents that mention the word \"google\" \n 
+       in their HTML title, and mention the word \"search\" in the title, body text, anchor, or anywhere else in the document.\n\n 
+Typing intitle:google intitle:search in the search box is the same as typing allintitle:google search."
+     },
+     {
+       "keyword":"inurl:",
+       "descr":"Restricts the search to documents that contain the search word in the URL.\n 
+       This operator works on words, not URL components such as punctuation. Slashes (\"\/\"), for example, are ignored.\n\n 
+Putting the inurl: operator in front of every word in your query is equivalent to putting allinurl: at the front of your query.",
+       "example":"Typing inurl:google search in the search box returns documents that mention the word \"google\" \n 
+       in their URL and mention the word \"search\" in the URL, body text, title, or anywhere else in the document.\n \n 
+Typing inurl:google/search in the search box returns the same documents as the previous example. \n 
+The slash in the search term is altogether ignored.\n\n
+Typing google inurl:google inurl:search in the search box returns documents that contain both\n
+  \"google\" and \"search\" in the URL. It returns the same documents as the search query allinurl:google search."
+     },
+     {
+       "keyword":"link:",
+       "descr":"Restricts the search to all pages that link to the web site in the query.\n\n 
+No other search term can be appended to this search operator and the specified web site.(DEPRECATED)",
+       "example":"Typing link:www.berkeley.edu in the search box returns all the pages that link to that page."
+     },
+     {
+       "keyword":"site:",
+       "descr":"Restricts the search to documents in a web site. \n 
+       If you do not specify the web site and just type the generic top-level domain,\n 
+       such as .com, .edu, or .org, the search engine returns all documents in the generic top-level domain.\n\n 
+The site: operator lets you extend the search restriction down to directories.",
+       "example":"Typing help site:www.google.com in the search box returns pages about help \n 
+       or user documentation within www.google.com.\n\n
+Typing help site:com in the search box finds pages about \n 
+help or user documentation within all web sites that end in .com.\n\n 
+Typing site:www.google.com/enterprise/ restricts the search to everything \n 
+at the enterprise directory level. If the trailing slash is omitted, as in www.google.com\/enterprise, \n 
+all subdirectories are searched."
+     }
+  ]
+}

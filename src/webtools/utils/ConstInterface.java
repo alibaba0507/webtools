@@ -5,11 +5,21 @@
  */
 package webtools.utils;
 
+import webtools.gui.CrawlPanel;
+
 /**
  *
  * @author alibaba0507
  */
 public interface ConstInterface {
+    public static final SearchParams GOOGLE_SEARCH = new SearchParams("Google"
+                        , "http://www.google.com/search?q=", "div[class='r']>a");
+    
+    public static final SearchParams BING_SEARCH = new SearchParams("Bing"
+                        , "https://www.bing.com/search?q=", "#b_results .b_algo h2 a");
+    
+    public static final SearchParams DUCKDUCK_GO_SEARCH = new SearchParams("DuckDuckGo"
+                        , "https://duckduckgo.com/html/?q=", "#links .results_links .links_main a");
     public static final String FILE_SEPARATOR = System.getProperty("file.separator");
     public static final String JAVA_HOME = System.getProperty("java.home");
     public static final String CURRENT_DIR = System.getProperty("user.dir");

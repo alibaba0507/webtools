@@ -6,6 +6,10 @@
 package webtools.gui.actions;
 
 import java.awt.event.ActionEvent;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.File;
 import javax.swing.AbstractAction;
 import javax.swing.JInternalFrame;
@@ -38,11 +42,15 @@ public class NewProjectAction extends AbstractAction {
                     frame.moveToFront();
                     frame.setMaximum(true);
                     frame.setSelected(true);
+                    frame.moveToFront();
+                    frame.repaint();
+                   // System.out.print(">>>>> DISPLAY FRAME [" + title + "] >>>>>");
                     return;
                 }
             }
             MyInternalFrame jif = new MyInternalFrame(title, true, true, true, true);
-            ProjectPanel proj = new ProjectPanel(title);
+            
+            ProjectPanel proj = new ProjectPanel(title,jif);
             jif.setProject(proj);
             JScrollPane scroller = new JScrollPane(proj, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
                     ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
@@ -55,6 +63,9 @@ public class NewProjectAction extends AbstractAction {
             jif.setSelected(true);
            // jif.setMaximum(true);     
             WebToolMainFrame.getDesckTopInstance().add(jif);
+            jif.setMaximum(true);
+            jif.repaint();
+           
             //return jif;
         } catch (Exception pve) {
             pve.printStackTrace();

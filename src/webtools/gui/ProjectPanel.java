@@ -9,6 +9,8 @@ import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -31,23 +33,53 @@ public class ProjectPanel extends JPanel {
     private JPanel searchForm;
     private JTabbedPane tabs;
     private String title;
-    public ProjectPanel(String title) {
+    private JButton submit;
+    //private JInternalFrame jif;
+    public ProjectPanel(String title,JInternalFrame jif) {
         super();
         this.title = title;
         setLayout(new FlowLayout());
         initTabs();
+         jif.addPropertyChangeListener(JInternalFrame.IS_CLOSED_PROPERTY,new PropertyChangeListener() {
+                @Override
+                public void propertyChange(PropertyChangeEvent evt) {
+                    //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+                    if (evt.getNewValue() == Boolean.TRUE)
+                    {
+                        // System.out.println(">>>>> JINTERNAL FRAME CLOSING >>>> " + evt.getOldValue() + " ] NEW [" + evt.getNewValue() + "] >>>>>>>>>>");
+                  
+                        submit.doClick();
+                    }
+                }
+            });
     }
-    private void initTabs(){
+
+    private void initTabs() {
         initSeachForm();
         tabs = new JTabbedPane();
         tabs.addTab("Settings", searchForm);
         this.setLayout(new BorderLayout());
         this.add(tabs, BorderLayout.CENTER);
+        
     }
+
+    private void initCrawlTab() {
+        String[] labels = {"Project Name", "Search Query", "Search Engine",
+             "Search URL",
+             "Link Regex"};
+        char[] mnemonics = {'P', 'Q', 'E', 'U', 'L'};
+        int[] widths = {15, 55, 15, 55, 55};
+        String[] descs = {"Project Name", "Search Engine query with | (or) inurl e.t.c",
+             "Select Search Engine", "Search Engine URL",
+             "Regex for parsing links"};
+        final TextForm crawlForm = new SearchForm(labels, mnemonics, widths, descs);
+
+    }
+
     private void initSeachForm() {
-      //  String[] labels = {"Name: ", "Search Query: ", "Depth: ", "Site Search: "
-       //            ,"File Filter:","File Size > :","File Size  < :"};
-      String[] labels = { "Project Name", "Search Query", "Link Depth", "Link has keyword"
+        //  String[] labels = {"Name: ", "Search Query: ", "Depth: ", "Site Search: "
+        //            ,"File Filter:","File Size > :","File Size  < :"};
+        /*   String[] labels = { "Project Name", "Search Query", "Link Depth", "Link has keyword"
                         ,"Link File Ext Only(jpg e.t.c)"
                          ,"File Bigger(kb)","File Smaller(kb)"};
     char[] mnemonics = { 'P', 'Q', 'L', 'K','E','B','S' };
@@ -58,46 +90,53 @@ public class ProjectPanel extends JPanel {
                 ,"(Optional) will extract only this file Extention"
                 ,"(Optional) Bigest File","(Optional)Smalest File" };
    final TextForm form = new TextForm(labels, mnemonics, widths, descs);
-        JButton submit = new JButton("Save Project",new ImageIcon(AWTUtils.getIcon(this, ".\\images\\Save24.gif")));
-    Object list = WebToolMainFrame.defaultProjectProperties.get(this.title);
-    if (list != null)
-    {
-        form.setFormValues((String[])list);
-    }
-    submit.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-          if (form.getText(0) == null || form.getText(0) == "")
-          {
-              JOptionPane.showMessageDialog(form, "Saved Fial.Please fill Project Name field.");
-              return;
-          }
-        System.out.println(form.getText(0) + " " + form.getText(1) + ". " + form.getText(2)
-            + ", age " + form.getText(3));
-          java.awt.Container c = ProjectPanel.this.getParent();
-          while (true)
-          {
-              if (c == null)
-                  break;
-              if (c instanceof JInternalFrame)
-              {
-                  ((JInternalFrame)c).setTitle(form.getText(0));
-                  break;
-              }
-              c = c.getParent();
-          }
-          //((JInternalFrame)ProjectPanel.this.getParent().getParent()).setTitle(form.getText(0));
-          WebToolMainFrame.defaultProjectProperties.put(form.getText(0), form.getFormValues());
-          WebToolMainFrame.saveProjectPropToFile();
-          // repload the tree
-          WebToolMainFrame.instance.updateProjectTree();
-      }
-    });
-   
-    searchForm = new JPanel(new BorderLayout());
-    searchForm.add(form, BorderLayout.NORTH);
-    JPanel p = new JPanel();
-    p.add(submit);
-    searchForm.add(p, BorderLayout.SOUTH);
+         */
+        String[] labels = {"Project Name", "Search Query", "Search Engine",
+             "Search URL",
+             "Link Regex"};
+        char[] mnemonics = {'P', 'Q', 'E', 'U', 'L'};
+         int[] widths = {15, 55, 15, 55, 55};
+        String[] descs = {"Project Name", "Search Engine query with | (or) inurl e.t.c",
+             "Select Search Engine", "Search Engine URL",
+             "Regex for parsing links"};
+        final TextForm crawlForm = new SearchForm(labels, mnemonics, widths, descs);
+        submit = new JButton("Save Project", new ImageIcon(AWTUtils.getIcon(this, ".\\images\\Save24.gif")));
+        Object list = WebToolMainFrame.defaultProjectProperties.get(this.title);
+        if (list != null) {
+            crawlForm.setFormValues((String[]) list);
+        }
+        submit.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                if (crawlForm.getText(0) == null || crawlForm.getText(0) == "") {
+                    JOptionPane.showMessageDialog(crawlForm, "Saved Fial.Please fill Project Name field.");
+                    return;
+                }
+                System.out.println(crawlForm.getText(0) + " " + crawlForm.getText(1) + ". " + crawlForm.getText(2)
+                        + ", age " + crawlForm.getText(3));
+                java.awt.Container c = ProjectPanel.this.getParent();
+                while (true) {
+                    if (c == null) {
+                        break;
+                    }
+                    if (c instanceof JInternalFrame) {
+                        ((JInternalFrame) c).setTitle(crawlForm.getText(0));
+                        break;
+                    }
+                    c = c.getParent();
+                }
+                //((JInternalFrame)ProjectPanel.this.getParent().getParent()).setTitle(form.getText(0));
+                WebToolMainFrame.defaultProjectProperties.put(crawlForm.getText(0), crawlForm.getFormValues());
+                WebToolMainFrame.saveProjectPropToFile();
+                // repload the tree
+                WebToolMainFrame.instance.updateProjectTree();
+            }
+        });
+
+        searchForm = new JPanel(new BorderLayout());
+        searchForm.add(crawlForm, BorderLayout.NORTH);
+        JPanel p = new JPanel();
+        p.add(submit);
+        searchForm.add(p, BorderLayout.SOUTH);
     }
 
 }
