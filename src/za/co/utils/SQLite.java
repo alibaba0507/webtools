@@ -144,13 +144,30 @@ public class SQLite {
             e.printStackTrace();
         }
     }
-
+    public int getSearchQueryPage(int id){
+          try {
+           // Statement state = con.createStatement();
+            String sql = "SELECT lastPage FROM queries WHERE id=?";
+            PreparedStatement stm =  con.prepareStatement(sql);
+            stm.setInt(1, id);
+            ResultSet res = stm.executeQuery();
+            //ResultSet res = state.("SELECT lastPage FROM queries WHERE id=?");
+            if (res.next()) {
+                return res.getInt("lastPage");
+            }
+            stm.close();
+            res.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return -1;
+    }
     public int saveQuery(String query, String searchEngine,int currentSearchPage) {
         int generatedKey = 0;
         try {
 
-            int id = findQueryId(query, searchEngine);
-            if (id == -1) {
+             generatedKey = findQueryId(query, searchEngine);
+            if (generatedKey == -1) {
                 PreparedStatement prep = con.prepareStatement("insert into query values(?,?,?,?);");
                 prep.setString(2, query);
                 prep.setString(3, searchEngine);
