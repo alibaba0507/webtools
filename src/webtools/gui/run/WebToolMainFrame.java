@@ -90,6 +90,7 @@ public class WebToolMainFrame extends JFrame {
 
     public WebToolMainFrame() {
         super("WebTools");
+        setIconImage(AWTUtils.getIcon(null, ".\\images\\anonymous_mask_48.png"));
         desktop = new JDesktopPane();
         toolBar = new JToolBar();
         menuBar = new JMenuBar();

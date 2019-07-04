@@ -12,6 +12,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.io.FileReader;
 import javax.swing.JTextField;
+import javax.swing.WindowConstants;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -30,8 +31,18 @@ public class SearchQueryDialog extends javax.swing.JDialog {
      */
     public SearchQueryDialog(java.awt.Frame parent, boolean modal, JTextField txt) {
         super(parent, modal);
+        //this.setUndecorated(true);
+       // this.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE) ;
+        
         this.txt = txt;
         initComponents();
+        btnClose.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+         //       throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+             SearchQueryDialog.this.dispose();
+            }
+        });
         txtDexcr.setEditable(false);
         //txtDexcr.setEnabled(false);
         txtDexcr.setLineWrap(true);
@@ -110,8 +121,9 @@ public class SearchQueryDialog extends javax.swing.JDialog {
         jScrollPane3 = new javax.swing.JScrollPane();
         txtExample = new javax.swing.JTextArea();
         jLabel4 = new javax.swing.JLabel();
+        btnClose = new javax.swing.JButton();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE);
 
         jLabel1.setText("Select Query Keyword");
 
@@ -133,6 +145,8 @@ public class SearchQueryDialog extends javax.swing.JDialog {
 
         jLabel4.setText("Description");
 
+        btnClose.setText("Close");
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -148,6 +162,8 @@ public class SearchQueryDialog extends javax.swing.JDialog {
                     .addComponent(jScrollPane1)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(btnClose)
+                        .addGap(41, 41, 41)
                         .addComponent(btnUse, javax.swing.GroupLayout.PREFERRED_SIZE, 134, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(jScrollPane3)
                     .addGroup(jPanel1Layout.createSequentialGroup()
@@ -175,7 +191,9 @@ public class SearchQueryDialog extends javax.swing.JDialog {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 103, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(25, 25, 25)
-                .addComponent(btnUse)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(btnUse)
+                    .addComponent(btnClose))
                 .addContainerGap())
         );
 
@@ -233,11 +251,12 @@ public class SearchQueryDialog extends javax.swing.JDialog {
         /* Create and display the dialog */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                SearchQueryDialog dialog = new SearchQueryDialog(new javax.swing.JFrame(), true, null);
+                final SearchQueryDialog dialog = new SearchQueryDialog(new javax.swing.JFrame(), true, null);
                 dialog.addWindowListener(new java.awt.event.WindowAdapter() {
                     @Override
                     public void windowClosing(java.awt.event.WindowEvent e) {
-                        System.exit(0);
+                        //System.exit(0);
+                        dialog.dispose();
                     }
                 });
                 dialog.setVisible(true);
@@ -305,6 +324,7 @@ public class SearchQueryDialog extends javax.swing.JDialog {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton btnClose;
     private javax.swing.JButton btnUse;
     private javax.swing.JComboBox<CboItem> cboKeywords;
     private javax.swing.JLabel jLabel1;

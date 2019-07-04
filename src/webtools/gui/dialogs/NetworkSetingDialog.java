@@ -196,11 +196,12 @@ public class NetworkSetingDialog extends javax.swing.JDialog {
 
                                 html = tor.connect(u, null);
 
-                                TorTestPage dialog = new TorTestPage(new javax.swing.JFrame(), true, html);
+                                final TorTestPage dialog = new TorTestPage(new javax.swing.JFrame(), true, html);
                                 dialog.addWindowListener(new java.awt.event.WindowAdapter() {
                                     @Override
                                     public void windowClosing(java.awt.event.WindowEvent e) {
-                                        System.exit(0);
+                                      //  System.exit(0);
+                                      dialog.dispose();
                                     }
                                 });
                                 dialog.setVisible(true);

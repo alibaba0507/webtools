@@ -13,7 +13,6 @@
                     "icon":".\\images\\newProject.jpg",
                     "accelerator":"N"
                     },
-                    
                     {
                     "class":"webtools.gui.actions.ExitAction",
                     "name":"Exit",
@@ -22,6 +21,20 @@
                     "accelerator":"X"
                     }
                 ]
+             },
+             {
+              "name":"Settings",
+              "key":"s",
+              "actions":[
+                   {
+                    "class":"webtools.gui.actions.NettworkSettingsAction",
+                    "name":"Nettwork Settings",
+                    "key":"w",
+                    "button":"1",
+                    "icon":".\\images\\anonymous.png",
+                    "accelerator":"W"
+                   }
+              ]
              }
          ],
        "actions":[

@@ -78,11 +78,12 @@ public class SearchForm extends TextForm {
                // dlg.show();
                 java.awt.EventQueue.invokeLater(new Runnable() {
                     public void run() {
-                        SearchQueryDialog dialog = new SearchQueryDialog(WebToolMainFrame.instance, true, fields[1]);
+                       final SearchQueryDialog dialog = new SearchQueryDialog(WebToolMainFrame.instance, true, fields[1]);
                         dialog.addWindowListener(new java.awt.event.WindowAdapter() {
                             @Override
                             public void windowClosing(java.awt.event.WindowEvent e) {
-                                System.exit(0);
+                              //  System.exit(0);
+                              dialog.dispose();
                             }
                         });
                          ImageIcon icon =  new ImageIcon(AWTUtils.getIcon(SearchForm.this,

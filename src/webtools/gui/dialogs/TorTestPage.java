@@ -129,11 +129,12 @@ public class TorTestPage extends javax.swing.JDialog {
         /* Create and display the dialog */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                TorTestPage dialog = new TorTestPage(new javax.swing.JFrame(), true, null);
+                final TorTestPage dialog = new TorTestPage(new javax.swing.JFrame(), true, null);
                 dialog.addWindowListener(new java.awt.event.WindowAdapter() {
                     @Override
                     public void windowClosing(java.awt.event.WindowEvent e) {
-                        System.exit(0);
+                        //System.exit(0);
+                        dialog.dispose();
                     }
                 });
                 dialog.setVisible(true);
