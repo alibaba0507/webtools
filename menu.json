@@ -10,12 +10,17 @@
                     "name":"New Project",
                     "key":"n",
                     "button":"1",
-                    "icon":".\\images\\newProject.jpg"},
+                    "icon":".\\images\\newProject.jpg",
+                    "accelerator":"N"
+                    },
+                    
                     {
                     "class":"webtools.gui.actions.ExitAction",
                     "name":"Exit",
                     "key":"e",
-                    "icon":".\\images\\exit.png"}
+                    "icon":".\\images\\exit.png",
+                    "accelerator":"X"
+                    }
                 ]
              }
          ],

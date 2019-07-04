@@ -30,7 +30,6 @@ import java.util.logging.Logger;
 import javax.swing.ImageIcon;
 import webtools.gui.run.WebToolMainFrame;
 
-
 /**
  * Misc helper methods for AWT that don't require Thinlet.
  *
@@ -40,6 +39,18 @@ public class AWTUtils {
 
     //{{{ logging
     private static final Logger log = Logger.getLogger("thinletcommons");
+
+    public static boolean isInteger(String s) {
+        try {
+            Integer.parseInt(s);
+        } catch (NumberFormatException e) {
+            return false;
+        } catch (NullPointerException e) {
+            return false;
+        }
+        // only got here if we didn't return false
+        return true;
+    }
 
     private static final boolean debug() {
         return log.isLoggable(Level.FINE);
@@ -66,13 +77,12 @@ public class AWTUtils {
             int readBytes;
             byte[] buffer = new byte[4096];
             File f = new File(AWTUtils.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath());
-           if (f.getParentFile() != null)
-           {
-               f = f.getParentFile();
-           }
-         jarFolder = f.getPath().replace('\\', '/');
-         resourceName = resourceName.replace('\\', '/');
-         resourceName = resourceName.substring(resourceName.lastIndexOf('/'));
+            if (f.getParentFile() != null) {
+                f = f.getParentFile();
+            }
+            jarFolder = f.getPath().replace('\\', '/');
+            resourceName = resourceName.replace('\\', '/');
+            resourceName = resourceName.substring(resourceName.lastIndexOf('/'));
             resStreamOut = new FileOutputStream(jarFolder + resourceName);
             while ((readBytes = stream.read(buffer)) > 0) {
                 resStreamOut.write(buffer, 0, readBytes);

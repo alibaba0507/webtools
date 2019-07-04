@@ -52,12 +52,22 @@ public class TorSocket {
     }
 
     public String connect(URL u, String cookie) throws Exception {
+        String html= "";
+        try{
         SocketAddress sa = new InetSocketAddress(u.getHost(), 80);
         underlying.connect(sa);
         underlying.setKeepAlive(true);
         OutputStream theOutput = underlying.getOutputStream();
         InputStream in = underlying.getInputStream();
-        return socketBuffers(u,cookie,theOutput,in);
+        html = socketBuffers(u,cookie,theOutput,in);
+        }catch (Exception ex){
+            html = "<html><b> ConnectionError <br><style color=\"red\">" 
+                        + ex.getMessage() + "</style></b>";
+            underlying.close();
+        }finally{
+            underlying.close();
+            return html;
+        }
 
     }
     
@@ -69,9 +79,9 @@ public class TorSocket {
 
         String req = u.getPath() + "?" + u.getQuery();
         pw.print("GET /" + req + " HTTP/1.0\r\n");
-        pw.print("Host: " + u.getHost());
+        pw.print("Host: " + u.getHost() + " \r\n");
         if (cookie != null && cookie != "") {
-            pw.print("Cookie:" + cookie);
+            pw.print("Cookie:" + cookie + " \r\n");
         }
         pw.print("Accept-Language: en-US,en;q=0.8 \r\n");
         pw.print("User-Agent: Mozilla \r\n");
@@ -87,6 +97,8 @@ public class TorSocket {
             // get the cookie if need, for login
             String cookies = header.get("Set-Cookie");
             //return connect(new URL(newUrl), cookies);
+            underlying.close();
+            //return new TorSocket(this.host, this.port).connect(new URL(newUrl), cookie);
             return socketBuffers(new URL(newUrl),cookies,theOutput,in); 
         }
         InputStreamReader isr = new InputStreamReader(in);

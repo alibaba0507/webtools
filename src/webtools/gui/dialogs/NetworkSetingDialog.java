@@ -5,6 +5,7 @@
  */
 package webtools.gui.dialogs;
 
+import com.sun.awt.AWTUtilities;
 import java.awt.Desktop;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
@@ -12,10 +13,16 @@ import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.io.FileReader;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.Enumeration;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.AbstractButton;
 import javax.swing.ButtonModel;
+import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
@@ -23,6 +30,9 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import webtools.gui.run.Main;
+import webtools.gui.run.WebToolMainFrame;
+import webtools.net.TorSocket;
+import za.co.utils.AWTUtils;
 
 /**
  *
@@ -39,6 +49,97 @@ public class NetworkSetingDialog extends javax.swing.JDialog {
         super(parent, modal);
 
         initComponents();
+//        boolean radioButtonSelected = false;
+        btnOk.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (!txtPort.getText().trim().equals("") && 
+                            !AWTUtils.isInteger(txtPort.getText()))
+                {
+                    JOptionPane.showMessageDialog(NetworkSetingDialog.this, "Please enter valid port number between 1 and 99999, Or leave it blank");
+                    return;
+                }
+                  if (!txtTorPort.getText().trim().equals("") && 
+                            !AWTUtils.isInteger(txtPort.getText()))
+                {
+                    JOptionPane.showMessageDialog(NetworkSetingDialog.this, "Please enter valid \bTOR port number between 1 and 99999, Or leave it blank");
+                    return;
+                }
+                if (WebToolMainFrame.defaultProjectProperties != null) {
+                    if (rbUseProxy.isSelected()) {
+                        WebToolMainFrame.defaultProjectProperties.put("proxy.type", "HTTPS");
+                    }
+                    if (rbUseTor.isSelected()) {
+                        WebToolMainFrame.defaultProjectProperties.put("proxy.type", "TOR");
+                    }
+                    WebToolMainFrame.defaultProjectProperties.put("proxy.host", txtHost.getText());
+                    WebToolMainFrame.defaultProjectProperties.put("proxy.port", txtPort.getText());
+                    WebToolMainFrame.defaultProjectProperties.put("proxy.user", txtUser.getText());
+                    WebToolMainFrame.defaultProjectProperties.put("proxy.pasw", new String(txtPassw.getPassword()));
+
+                    WebToolMainFrame.defaultProjectProperties.put("proxy.tor.host", txtTorHost.getText());
+                    WebToolMainFrame.defaultProjectProperties.put("proxy.tor.port", txtTorPort.getText());
+                }
+                NetworkSetingDialog.this.dispose();
+            }
+        }
+        );
+        Enumeration<AbstractButton> e = buttonGroup1.getElements();
+        while (e.hasMoreElements()) {
+            AbstractButton b = e.nextElement();
+            if (b.getText().equals(rbUseProxy.getText())) {
+
+                b.setSelected(true);
+                updateProxy(true);
+                break;
+                //  buttonGroup1.setSelected(m, modal);
+            }
+        }// end while
+        if (WebToolMainFrame.defaultProjectProperties != null
+                && WebToolMainFrame.defaultProjectProperties.get("proxy.type") != null) {
+            String proxyType = (String) WebToolMainFrame.defaultProjectProperties.get("proxy.type");
+            if (proxyType.equals("HTTPS")) {
+                String proxyHost = (String) WebToolMainFrame.defaultProjectProperties.get("proxy.host");
+                String proxyPort = (String) WebToolMainFrame.defaultProjectProperties.get("proxy.port");
+                String proxyUser = (String) WebToolMainFrame.defaultProjectProperties.get("proxy.user");
+                String proxyPsw = (String) WebToolMainFrame.defaultProjectProperties.get("proxy.pasw");
+                if (proxyHost != null) {
+                    txtHost.setText(proxyHost);
+                }
+                if (proxyPort != null) {
+                    txtPort.setText(proxyPort);
+                }
+                if (proxyUser != null) {
+                    txtUser.setText(proxyUser);
+                }
+                if (proxyPsw != null) {
+                    txtPassw.setText(proxyPsw);
+                }
+            }
+            if (proxyType.equals("TOR")) {
+                String proxyHost = (String) WebToolMainFrame.defaultProjectProperties.get("proxy.tor.host");
+                String proxyPort = (String) WebToolMainFrame.defaultProjectProperties.get("proxy.tor.port");
+                if (proxyHost != null) {
+                    txtTorHost.setText(proxyHost);
+                }
+                if (proxyPort != null) {
+                    txtTorPort.setText(proxyPort);
+                }
+                e = buttonGroup1.getElements();
+                while (e.hasMoreElements()) {
+                    AbstractButton b = e.nextElement();
+                    if (b.getText().equals(rbUseTor.getText())) {
+                        //radioButtonSelected = true;
+                        b.setSelected(true);
+                        updateProxy(false);
+                        break;
+                        //  buttonGroup1.setSelected(m, modal);
+                    }
+                }// end while
+            }// end if
+
+        }
+
         rbUseProxy.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -58,9 +159,65 @@ public class NetworkSetingDialog extends javax.swing.JDialog {
         htmlPane.addHyperlinkListener(new HyperlinkListener() {
             public void hyperlinkUpdate(HyperlinkEvent hle) {
                 if (HyperlinkEvent.EventType.ACTIVATED.equals(hle.getEventType())) {
-                   // System.out.println(hle.getURL());
+                    // System.out.println(hle.getURL());
                     openWebpage(hle.getURL());
                 }
+            }
+        });
+
+        btnTestTor.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                //       throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+                try {
+                    if (txtTorHost.getText().trim().equals("")) {
+                        JOptionPane.showMessageDialog(NetworkSetingDialog.this, "Please Enter Host Name");
+                        return;
+                    }
+                    if (!AWTUtils.isInteger(txtTorPort.getText())) {
+                        JOptionPane.showMessageDialog(NetworkSetingDialog.this, "Please Enter Port Number");
+                        return;
+                    } else {
+                        int i = Integer.parseInt(txtTorPort.getText());
+                        if (i < 1 || i > 99999) {
+                            JOptionPane.showMessageDialog(NetworkSetingDialog.this,
+                                    "Invalid Port Number . Valid between 1 and 99999");
+                            return;
+                        }
+                    }
+
+                    java.awt.EventQueue.invokeLater(new Runnable() {
+                        public void run() {
+                            try {
+                                TorSocket tor = new TorSocket(txtTorHost.getText(), Integer.parseInt(txtTorPort.getText()));
+                                URL u = new URL("https://www.google.com/search?q=my+ip");
+
+                                final String html;
+
+                                html = tor.connect(u, null);
+
+                                TorTestPage dialog = new TorTestPage(new javax.swing.JFrame(), true, html);
+                                dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+                                    @Override
+                                    public void windowClosing(java.awt.event.WindowEvent e) {
+                                        System.exit(0);
+                                    }
+                                });
+                                dialog.setVisible(true);
+                                dialog.repaint();
+                            } catch (MalformedURLException ex) {
+                                Logger.getLogger(NetworkSetingDialog.class.getName()).log(Level.SEVERE, null, ex);
+                            } catch (Exception ex) {
+                                Logger.getLogger(NetworkSetingDialog.class.getName()).log(Level.SEVERE, null, ex);
+                            }
+                        }
+                    });
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                    JOptionPane.showMessageDialog(NetworkSetingDialog.this,
+                            "Error [" + ex.getMessage() + "]");
+                }
+
             }
         });
 
@@ -81,6 +238,9 @@ public class NetworkSetingDialog extends javax.swing.JDialog {
 
     public static boolean openWebpage(URL url) {
         try {
+            if (url == null) {
+                return false;
+            }
             return openWebpage(url.toURI());
         } catch (URISyntaxException e) {
             e.printStackTrace();
@@ -93,6 +253,9 @@ public class NetworkSetingDialog extends javax.swing.JDialog {
         txtPassw.setEnabled(isEnabled);
         txtPort.setEnabled(isEnabled);
         txtUser.setEnabled(isEnabled);
+
+        txtTorHost.setEnabled(!isEnabled);
+        txtTorPort.setEnabled(!isEnabled);
     }
 
     /**
@@ -118,14 +281,14 @@ public class NetworkSetingDialog extends javax.swing.JDialog {
         rbUseProxy = new javax.swing.JRadioButton();
         txtPassw = new javax.swing.JPasswordField();
         rbUseTor = new javax.swing.JRadioButton();
-        jButton1 = new javax.swing.JButton();
+        btnOk = new javax.swing.JButton();
         jLabel4 = new javax.swing.JLabel();
         txtTorHost = new javax.swing.JTextField();
         jLabel9 = new javax.swing.JLabel();
         txtTorPort = new javax.swing.JTextField();
         jScrollPane1 = new javax.swing.JScrollPane();
         htmlPane = new javax.swing.JEditorPane();
-        jButton2 = new javax.swing.JButton();
+        btnTestTor = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
@@ -205,7 +368,7 @@ public class NetworkSetingDialog extends javax.swing.JDialog {
         buttonGroup1.add(rbUseTor);
         rbUseTor.setText("Use Tor Proxy");
 
-        jButton1.setText("Ok");
+        btnOk.setText("Ok");
 
         jLabel4.setText("Host");
 
@@ -221,7 +384,12 @@ public class NetworkSetingDialog extends javax.swing.JDialog {
         htmlPane.setText("<html><b>To use Tor Network is very easy</b>.You must install only Tor Browser can be downloaded from <a href=\"https://www.torproject.org/download/\">here</a>\n<br>Once Tor Browser is downloaded Lunch the Browser. Usually Tor runs on port 9050 , but to make sure open windows comand  promt and type netstat , \n<br> you must find ports like 9050 or/and 9051 or/amd 9053 , 9153 , you have to test it when input host ussully \"127.0.0.1\" and port No and clik <b>Test Tor</b> Button\n</html>.");
         jScrollPane1.setViewportView(htmlPane);
 
-        jButton2.setText("Test Tor");
+        btnTestTor.setText("Test Tor");
+        btnTestTor.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnTestTorActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -240,7 +408,7 @@ public class NetworkSetingDialog extends javax.swing.JDialog {
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jButton1)
+                    .addComponent(btnOk)
                     .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                         .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 328, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
@@ -249,12 +417,12 @@ public class NetworkSetingDialog extends javax.swing.JDialog {
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(txtTorPort, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(jButton2))
+                                .addComponent(btnTestTor))
                             .addGroup(jPanel1Layout.createSequentialGroup()
                                 .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 66, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(txtTorHost, javax.swing.GroupLayout.PREFERRED_SIZE, 247, javax.swing.GroupLayout.PREFERRED_SIZE)))))
-                .addContainerGap(26, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -271,11 +439,11 @@ public class NetworkSetingDialog extends javax.swing.JDialog {
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel9)
                     .addComponent(txtTorPort, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton2))
+                    .addComponent(btnTestTor))
                 .addGap(18, 18, 18)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 123, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jButton1)
+                .addComponent(btnOk)
                 .addGap(19, 19, 19))
         );
 
@@ -306,6 +474,10 @@ public class NetworkSetingDialog extends javax.swing.JDialog {
     private void txtTorPortActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtTorPortActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_txtTorPortActionPerformed
+
+    private void btnTestTorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnTestTorActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_btnTestTorActionPerformed
 
     /**
      * @param args the command line arguments
@@ -359,10 +531,10 @@ public class NetworkSetingDialog extends javax.swing.JDialog {
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton btnOk;
+    private javax.swing.JButton btnTestTor;
     private javax.swing.ButtonGroup buttonGroup1;
     private javax.swing.JEditorPane htmlPane;
-    private javax.swing.JButton jButton1;
-    private javax.swing.JButton jButton2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel6;

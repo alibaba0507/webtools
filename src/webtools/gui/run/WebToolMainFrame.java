@@ -69,25 +69,25 @@ import za.co.utils.SQLite;
  * @author alibaba0507
  */
 public class WebToolMainFrame extends JFrame {
-    
+
     public static WebToolMainFrame instance;
     public static SQLite sqlite;
     public static Hashtable defaultProjectProperties;
-    
+
     private static JDesktopPane desktop;
     private JToolBar toolBar;
     private JMenuBar menuBar;
     private DefaultListModel consolesListModel, projectListModel;
     private JList projectList;
-    
+
     public static JDesktopPane getDesckTopInstance() {
         if (desktop == null) {
             new WebToolMainFrame();
         }
-        
+
         return desktop;
     }
-    
+
     public WebToolMainFrame() {
         super("WebTools");
         desktop = new JDesktopPane();
@@ -95,102 +95,102 @@ public class WebToolMainFrame extends JFrame {
         menuBar = new JMenuBar();
         createMenuBar();
         setJMenuBar(menuBar);
-        
+
         projectList = new JList();
         projectList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         projectListModel = new DefaultListModel();
         projectList.setModel(projectListModel);
         projectList.setCellRenderer(new ListEntryCellRenderer());
         projectList.addMouseListener(new MouseAdapter() {
-             @Override
+            @Override
             public void mouseClicked(MouseEvent e) {
                 if (e.getClickCount() == 2) {
-                     SwingUtilities.invokeLater(new Runnable() {
-                          @Override
+                    SwingUtilities.invokeLater(new Runnable() {
+                        @Override
                         public void run() {
                             Cursor cursor = projectList.getParent().getCursor();
                             projectList.getParent().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-                              //System.out.println(">>>> Selected Item [" + projectList.getSelectedValue().toString() + "] >>>>>");
-                              new NewProjectAction().openProjectFile(null, projectList.getSelectedValue().toString());
-                             projectList.getParent().setCursor(cursor);
-                             
+                            //System.out.println(">>>> Selected Item [" + projectList.getSelectedValue().toString() + "] >>>>>");
+                            new NewProjectAction().openProjectFile(null, projectList.getSelectedValue().toString());
+                            projectList.getParent().setCursor(cursor);
+
                         }
-                     });
+                    });
                 }
             }
-            
+
         });
         // JScrollPane commandScrollPane = new JScrollPane(consolesList);
         JScrollPane projectsScrollPane = new JScrollPane(projectList);
-        
+
         JPanel projectPanel = new JPanel(new BorderLayout());
         JLabel projectLabel = new JLabel("Projects:");
         projectLabel.setIcon(new ImageIcon(AWTUtils.getIcon(desktop, Main.prop.getProperty("project.list.image"))));
-        
+
         projectLabel.setBorder(new EtchedBorder(EtchedBorder.RAISED));
         projectPanel.add(projectLabel, BorderLayout.NORTH);
         projectPanel.add(projectsScrollPane, BorderLayout.CENTER);
-        
+
         MnemonicTabbedPane tabbedPane = new MnemonicTabbedPane();
         String[] tabs = {"Projects", "Console"};
         char[] ms = {'P', 'C',};
         int[] keys = {KeyEvent.VK_0, KeyEvent.VK_1};
         tabbedPane.addTab(tabs[0], projectPanel);
         tabbedPane.setMnemonicAt(0, ms[0]);
-        
+
         JSplitPane listSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT, tabbedPane/*commandPanel*/, null/*linePanel*/);
         listSplit.setDividerLocation(140);
-        
+
         JSplitPane hSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, listSplit, desktop);
         hSplit.setOneTouchExpandable(true);
         hSplit.setDividerLocation(100);
         hSplit.setMinimumSize(new Dimension(0, 0));
-        
+
         JTextArea console = new JTextArea();
-        
+
         JScrollPane jsp = new JScrollPane(console,
                 JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
                 JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         JViewport viewport = jsp.getViewport();
-        
+
         JPanel consolePanel = new JPanel(new BorderLayout());
         consolePanel.add(jsp, BorderLayout.CENTER);
         consolePanel.setMinimumSize(new Dimension(0, 0));
-        
+
         JSplitPane vSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT, hSplit, consolePanel);
         vSplit.setOneTouchExpandable(true);
         JPanel northPanel = new JPanel();
-        
+
         northPanel.setLayout(new BorderLayout());
         northPanel.add(toolBar, BorderLayout.NORTH);
         Container contentPane = getContentPane();
         contentPane.add(northPanel, BorderLayout.NORTH);
         contentPane.add(vSplit, BorderLayout.CENTER);
-        
+
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         setBounds(0, 0, screenSize.width, screenSize.height - 50);
         loadProjectPropFromFile();
         updateProjectTree();
         WebToolMainFrame.sqlite = new SQLite();
-        
+
         //This is last istantiation
         if (WebToolMainFrame.instance == null) {
             WebToolMainFrame.instance = this;
         }
     }
-    
+
     public void updateProjectTree() {
         projectListModel.clear();
         WebToolMainFrame.defaultProjectProperties.keySet().forEach(e -> {
-            
+
             projectListModel.addElement(new ListEntry((String) e,
                     new ImageIcon(AWTUtils.getIcon(desktop,
                             Main.prop.getProperty("project.item.image")))));
         });
         projectList.setSelectedIndex(projectListModel.size() - 1);
-        
+
     }
-    
+
     public static void loadProjectPropFromFile() {
         String propDir = Main.prop.getProperty("project.properties.dir");
         File file = new File(propDir + "defaultProperties");
@@ -214,7 +214,7 @@ public class WebToolMainFrame extends JFrame {
             }
         }
     }
-    
+
     public static void saveProjectPropToFile() {
         try {
             String propDir = Main.prop.getProperty("project.properties.dir");
@@ -228,9 +228,9 @@ public class WebToolMainFrame extends JFrame {
             e.printStackTrace();
         }
     }
-    
+
     private void createMenuBar() {
-        
+
         JSONParser jsonParser = new JSONParser();
         String menuFile = Main.prop.getProperty("menu.file");
         try (FileReader reader = new FileReader(menuFile)) {
@@ -257,9 +257,13 @@ public class WebToolMainFrame extends JFrame {
                         Class<?> clazz = Class.forName(className);
                         AbstractAction a = (AbstractAction) clazz.newInstance();
                         JMenuItem item = m.add(a);
+                        String keyAccelerator = (String) jsnAction.get("accelerator");
+                        if (keyAccelerator != null) {
+                            item.setAccelerator(KeyStroke.getKeyStroke(keyAccelerator.charAt(0),KeyEvent.CTRL_MASK));
+                        }
                         String icn = (String) jsnAction.get("icon");
                         if (icn != null) {
-                            
+
                             a.putValue(Action.SMALL_ICON, new ImageIcon(AWTUtils.getIcon(null, icn)));
                         }
                         String actionName = (String) jsnAction.get("name");
@@ -293,25 +297,25 @@ public class WebToolMainFrame extends JFrame {
             jsEx.printStackTrace();
         }
     }
-    
+
     class ListEntry {
-        
+
         private String value;
         private ImageIcon icon;
-        
+
         public ListEntry(String value, ImageIcon icon) {
             this.value = value;
             this.icon = icon;
         }
-        
+
         public String getValue() {
             return value;
         }
-        
+
         public ImageIcon getIcon() {
             return icon;
         }
-        
+
         public String toString() {
             return value;
         }
@@ -321,15 +325,15 @@ public class WebToolMainFrame extends JFrame {
             extends JLabel implements ListCellRenderer<Object> {
 
         private JLabel label;
-        
+
         public Component getListCellRendererComponent(JList list, Object value,
                 int index, boolean isSelected,
                 boolean cellHasFocus) {
             ListEntry entry = (ListEntry) value;
-            
+
             setText(value.toString());
             setIcon(entry.getIcon());
-            
+
             if (isSelected) {
                 setBackground(list.getSelectionBackground());
                 setForeground(list.getSelectionForeground());
@@ -337,21 +341,21 @@ public class WebToolMainFrame extends JFrame {
                 setBackground(list.getBackground());
                 setForeground(list.getForeground());
             }
-            
+
             setEnabled(list.isEnabled());
             setFont(list.getFont());
             setOpaque(true);
-            
+
             return this;
         }
     }
 
     class MnemonicTabbedPane extends JTabbedPane {
-        
+
         Hashtable mnemonics = null;
-        
+
         int condition;
-        
+
         public MnemonicTabbedPane() {
             setUI(new MnemonicTabbedPaneUI());
             mnemonics = new Hashtable();
@@ -360,7 +364,7 @@ public class WebToolMainFrame extends JFrame {
             //setMnemonicCondition(WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
             setMnemonicCondition(WHEN_IN_FOCUSED_WINDOW);
         }
-        
+
         public void setMnemonicAt(int index, char c) {
             int key = (int) c;
             if ('a' <= key && key <= 'z') {
@@ -368,7 +372,7 @@ public class WebToolMainFrame extends JFrame {
             }
             setMnemonicAt(index, key);
         }
-        
+
         public void setMnemonicAt(int index, int keyCode) {
             ActionListener action = new MnemonicAction(index);
             KeyStroke stroke = KeyStroke
@@ -376,7 +380,7 @@ public class WebToolMainFrame extends JFrame {
             registerKeyboardAction(action, stroke, condition);
             mnemonics.put(new Integer(index), new Integer(keyCode));
         }
-        
+
         public int getMnemonicAt(int index) {
             int keyCode = 0;
             Integer m = (Integer) mnemonics.get(new Integer(index));
@@ -385,32 +389,32 @@ public class WebToolMainFrame extends JFrame {
             }
             return keyCode;
         }
-        
+
         public void setMnemonicCondition(int condition) {
             this.condition = condition;
         }
-        
+
         public int getMnemonicCondition() {
             return condition;
         }
-        
+
         class MnemonicAction implements ActionListener {
-            
+
             int index;
-            
+
             public MnemonicAction(int index) {
                 this.index = index;
             }
-            
+
             public void actionPerformed(ActionEvent e) {
                 MnemonicTabbedPane tabbedPane = (MnemonicTabbedPane) e.getSource();
                 tabbedPane.setSelectedIndex(index);
                 tabbedPane.requestFocus();
             }
         }
-        
+
         class MnemonicTabbedPaneUI extends MetalTabbedPaneUI {
-            
+
             protected void paintText(Graphics g, int tabPlacement, Font font,
                     FontMetrics metrics, int tabIndex, String title,
                     Rectangle textRect, boolean isSelected) {
