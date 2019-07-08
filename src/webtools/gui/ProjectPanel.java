@@ -18,7 +18,9 @@ import javax.swing.JInternalFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
+import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.SpringLayout;
 import webtools.gui.run.WebToolMainFrame;
@@ -34,6 +36,7 @@ public class ProjectPanel extends JPanel {
     private JTabbedPane tabs;
     private String title;
     private JButton submit;
+    private JTable tblSearchResult;
     //private JInternalFrame jif;
     public ProjectPanel(String title,JInternalFrame jif) {
         super();
@@ -47,7 +50,7 @@ public class ProjectPanel extends JPanel {
                     if (evt.getNewValue() == Boolean.TRUE)
                     {
                         // System.out.println(">>>>> JINTERNAL FRAME CLOSING >>>> " + evt.getOldValue() + " ] NEW [" + evt.getNewValue() + "] >>>>>>>>>>");
-                  
+                         if (!WebToolMainFrame.isDelete)
                         submit.doClick();
                     }
                 }
@@ -58,6 +61,34 @@ public class ProjectPanel extends JPanel {
         initSeachForm();
         tabs = new JTabbedPane();
         tabs.addTab("Settings", searchForm);
+        
+        JPanel pnlSearchResult  = new JPanel();
+        tabs.addTab("Crawl Results", pnlSearchResult);
+        pnlSearchResult.setLayout(new BorderLayout());
+        JScrollPane searchTableScrool = new JScrollPane();
+        pnlSearchResult.add(searchTableScrool,BorderLayout.CENTER);
+        tblSearchResult = new JTable();
+        tblSearchResult.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+
+            },
+            new String [] {
+                "Domain", "URL Path", "Parent Id"
+            }
+        ) {
+            boolean[] canEdit = new boolean [] {
+                false, false, false, true, false
+            };
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
+        tblSearchResult.getColumnModel().getColumn(0).setMinWidth(250);
+        tblSearchResult.getColumnModel().getColumn(0).setPreferredWidth(250);
+        tblSearchResult.getColumnModel().getColumn(2).setMaxWidth(200);
+        tblSearchResult.getColumnModel().getColumn(1).setMinWidth(380);
+        searchTableScrool.setViewportView(tblSearchResult);
         this.setLayout(new BorderLayout());
         this.add(tabs, BorderLayout.CENTER);
         

@@ -144,6 +144,22 @@ public class SQLite {
             e.printStackTrace();
         }
     }
+    
+    public void updatePage(int id,int page)
+    {
+        String sql = "UPDATE queries SET page = ? "
+                + "WHERE id = ?";
+       try{
+            PreparedStatement stm =  con.prepareStatement(sql);
+            stm.setInt(1, page);
+            stm.setInt(2, id);
+            stm.executeUpdate();
+            
+       }catch (Exception e)
+       {
+           e.printStackTrace();
+       }
+    }
     public int getSearchQueryPage(int id){
           try {
            // Statement state = con.createStatement();

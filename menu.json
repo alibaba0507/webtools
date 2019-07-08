@@ -31,17 +31,30 @@
                     "name":"Nettwork Settings",
                     "key":"w",
                     "button":"1",
-                    "icon":".\\images\\anonymous.png",
+                    "icon":".\\images\\anonymus_v1.png",
                     "accelerator":"W"
                    }
               ]
              }
          ],
-       "actions":[
+      "popup":
           {
-          "class":"",
-          "name":"",
-          "icon":""
+            "Project Tree":
+                [
+                    {
+                        "class":"webtools.gui.actions.CrawlProjectAction",
+                        "name":"Resume Crawling ...",
+                        "icon":".\\images\\network.png"
+                    },
+                    {
+                        "class":"webtools.gui.actions.DeleteProjectAction",
+                        "name":"Delete Project ...",
+                        "icon":".\\images\\delete.png"
+                    }
+            ],
+            "Search Table":
+             [
+             ]
          }
-       ]
+       
  }

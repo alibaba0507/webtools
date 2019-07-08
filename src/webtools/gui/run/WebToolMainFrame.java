@@ -43,6 +43,7 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
@@ -73,12 +74,14 @@ public class WebToolMainFrame extends JFrame {
     public static WebToolMainFrame instance;
     public static SQLite sqlite;
     public static Hashtable defaultProjectProperties;
-
+    public static boolean isDelete;
     private static JDesktopPane desktop;
     private JToolBar toolBar;
     private JMenuBar menuBar;
     private DefaultListModel consolesListModel, projectListModel;
     private JList projectList;
+    private JPopupMenu projectPopUp;
+    private JPopupMenu searchTablePopUp;
 
     public static JDesktopPane getDesckTopInstance() {
         if (desktop == null) {
@@ -103,6 +106,20 @@ public class WebToolMainFrame extends JFrame {
         projectList.setModel(projectListModel);
         projectList.setCellRenderer(new ListEntryCellRenderer());
         projectList.addMouseListener(new MouseAdapter() {
+            public void mousePressed(MouseEvent e) {
+                ShowPopup(e);
+            }
+
+            public void mouseReleased(MouseEvent e) {
+                ShowPopup(e);
+            }
+
+            private void ShowPopup(MouseEvent e) {
+                if (e.isPopupTrigger()) {
+                    projectPopUp.show(e.getComponent(), e.getX(), e.getY());
+                }
+            }
+
             @Override
             public void mouseClicked(MouseEvent e) {
                 if (e.getClickCount() == 2) {
@@ -260,7 +277,7 @@ public class WebToolMainFrame extends JFrame {
                         JMenuItem item = m.add(a);
                         String keyAccelerator = (String) jsnAction.get("accelerator");
                         if (keyAccelerator != null) {
-                            item.setAccelerator(KeyStroke.getKeyStroke(keyAccelerator.charAt(0),KeyEvent.CTRL_MASK));
+                            item.setAccelerator(KeyStroke.getKeyStroke(keyAccelerator.charAt(0), KeyEvent.CTRL_MASK));
                         }
                         String icn = (String) jsnAction.get("icon");
                         if (icn != null) {
@@ -286,6 +303,51 @@ public class WebToolMainFrame extends JFrame {
                     }
                 }
             }// end for
+            JSONObject jsnMenuPopUp = (JSONObject) jsonMenu.get("popup");
+            JSONArray jsnProjectPopUp = (JSONArray) jsnMenuPopUp.get("Project Tree");
+            if (jsnProjectPopUp != null) {
+                projectPopUp = new JPopupMenu();
+                for (int j = 0; j < jsnProjectPopUp.size(); j++) {
+                    JSONObject jsnAction = ((JSONObject) jsnProjectPopUp.get(j));
+                    String className = (String) jsnAction.get("class");
+                    Class<?> clazz = Class.forName(className);
+                    AbstractAction a = (AbstractAction) clazz.newInstance();
+                    String icn = (String) jsnAction.get("icon");
+                    if (icn != null) {
+
+                        a.putValue(Action.SMALL_ICON, new ImageIcon(AWTUtils.getIcon(null, icn)));
+                    }
+                    String actionName = (String) jsnAction.get("name");
+                    if (actionName != null) {
+                        a.putValue(Action.NAME, actionName);
+                    }
+                    projectPopUp.add(a);
+                }// end for
+
+            }// end if if (jsnProjectPopUp != null)
+
+            jsnProjectPopUp = (JSONArray) jsnMenuPopUp.get("Search Table");
+            if (jsnProjectPopUp != null) {
+                searchTablePopUp = new JPopupMenu();
+                for (int j = 0; j < jsnProjectPopUp.size(); j++) {
+                    JSONObject jsnAction = ((JSONObject) jsnProjectPopUp.get(j));
+                    String className = (String) jsnAction.get("class");
+                    Class<?> clazz = Class.forName(className);
+                    AbstractAction a = (AbstractAction) clazz.newInstance();
+                    String icn = (String) jsnAction.get("icon");
+                    if (icn != null) {
+
+                        a.putValue(Action.SMALL_ICON, new ImageIcon(AWTUtils.getIcon(null, icn)));
+                    }
+                    String actionName = (String) jsnAction.get("name");
+                    if (actionName != null) {
+                        a.putValue(Action.NAME, actionName);
+                    }
+                    searchTablePopUp.add(a);
+                }// end for
+
+            }// end if if (jsnProjectPopUp != null)
+
         } catch (IllegalAccessException ex1) {
             ex1.printStackTrace();
         } catch (InstantiationException insEx) {

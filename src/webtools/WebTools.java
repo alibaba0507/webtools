@@ -51,7 +51,7 @@ public class WebTools {
             System.setProperty("socksProxyPort", "9153");
             String ipAddr = "https://www.google.com/search?q=my+ip&ie=utf-8&oe=utf-8&client=firefox-b-ab";
 
-            Document doc = webC.get(ipAddr, "", true, null,8118, null, null);// new WebTools().search(urlEncode, "", true);
+            Document doc = webC.getJsoup(ipAddr, "", true, null,8118, null, null);// new WebTools().search(urlEncode, "", true);
             System.out.print(doc.body().html());
             if (doc != null) {
 

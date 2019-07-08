@@ -26,6 +26,8 @@ import net.sourceforge.jsocks.socks.Socks5Proxy;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import webtools.gui.run.WebToolMainFrame;
+import webtools.net.TorSocket;
 
 /**
  *
@@ -57,7 +59,35 @@ public class WebConnector {
         this.userAgent = ua;
     }
 
-    public Document get(String url, String cookies, boolean isFollowRedirect,
+    public Document get(String url) throws Exception{
+        Document doc = null;
+        String proxyType = (String) WebToolMainFrame.defaultProjectProperties.get("proxy.type");
+        if (proxyType != null && !proxyType.trim().equals("")) {
+
+            if (proxyType.equals("HTTPS")) {
+                String host = (String) WebToolMainFrame.defaultProjectProperties.get("proxy.host");
+                String port = (String) WebToolMainFrame.defaultProjectProperties.get("proxy.port");
+                String user = (String) WebToolMainFrame.defaultProjectProperties.get("proxy.user");
+                String psw = (String) WebToolMainFrame.defaultProjectProperties.get("proxy.pasw");
+                doc = getJsoup(url, "", true, host, Integer.parseInt(port), user, psw);
+            } else if (proxyType.equals("TOR")) {
+                String proxyHost = (String) WebToolMainFrame.defaultProjectProperties.get("proxy.tor.host");
+                String proxyPort = (String) WebToolMainFrame.defaultProjectProperties.get("proxy.tor.port");
+                TorSocket tor = new TorSocket(proxyHost, Integer.parseInt(proxyPort));
+                //URL u = new URL("https://www.google.com/search?q=my+ip");
+                URL u = new URL(url);
+                final String html;
+                html = tor.connect(u, null);
+                doc = Jsoup.parse(html);
+            }
+        } else {
+            doc = getJsoup(url, "", true, null, 0, null, null);
+        }
+
+        return doc;
+    }
+
+    public Document getJsoup(String url, String cookies, boolean isFollowRedirect,
             String proxyHost, int proxyPort, String proxyUser, String proxyPassW) {
         Connection.Response response;
         try {
@@ -65,7 +95,7 @@ public class WebConnector {
             System.setProperty("java.protocol.handler.pkgs", "com.sun.net.ssl.internal.www.protocol");
             java.security.Provider prov = new com.sun.net.ssl.internal.ssl.Provider();
             Security.addProvider(prov);
-           
+
             Connection c = Jsoup.connect(url);
             if (proxyHost != null) {
                 if (proxyUser != null) {
@@ -74,8 +104,9 @@ public class WebConnector {
                     c.sslSocketFactory(new SSLTunnelSocketFactory(proxyHost, Integer.toString(proxyPort)));
                 }
             }
-            if (p != null)
+            if (p != null) {
                 c = c.proxy(p);
+            }
             response = c.userAgent(this.userAgent)
                     .header("Accept-Language", "en-US")
                     .header("Accept",
@@ -102,7 +133,7 @@ public class WebConnector {
                 }
                 //ProjectsUI.console.append(" Reirect [" + redirectUrl + "]\r\n");
                 //ProjectsUI.console.append(" Coocies [" + cookies + "]\r\n");
-                return get(redirectUrl, cookies, isFollowRedirect,proxyHost,proxyPort,proxyUser,proxyPassW);
+                return getJsoup(redirectUrl, cookies, isFollowRedirect, proxyHost, proxyPort, proxyUser, proxyPassW);
             }
             String body = response.body();
             //System.out.print(body);
