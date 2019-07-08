@@ -14,6 +14,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 
 /**
  *
@@ -56,11 +57,11 @@ public class SQLite {
                     + "q_id=? AND dom=? AND url=? ";
             PreparedStatement stm = con.prepareStatement(sql);
             //ResultSet res = state.executeQuery("SELECT id FROM search WHERE "
-             //       + "q_id=? AND dom=? AND url=? ");
-             stm.setInt(1, qId);
-             stm.setString(2, host);
-             stm.setString(3, path);
-             ResultSet rs = stm.executeQuery();
+            //       + "q_id=? AND dom=? AND url=? ");
+            stm.setInt(1, qId);
+            stm.setString(2, host);
+            stm.setString(3, path);
+            ResultSet rs = stm.executeQuery();
             if (rs.next()) {
                 return rs.getInt("id");
             }
@@ -70,6 +71,28 @@ public class SQLite {
             e.printStackTrace();
         }
         return 0;
+    }
+
+    public ArrayList<String[]> selectCoutDomains(int qId) {
+        //String sql = "SELECT id FROM search WHERE "
+        //         + "q_id=? AND dom=? AND url=? ";
+        String sql = "SELECT dom,count(dom) FROM search WHERE q_id=? AND level=0"
+                   + "GROUP BY dom ORDER BY count(dom) DESC;";
+        ArrayList <String[]> list = new ArrayList<String[]>();
+        try {
+            PreparedStatement stm = con.prepareStatement(sql);
+            stm.setInt(1, qId);
+            ResultSet rs = stm.executeQuery();
+            while (rs.next()) {
+                String[] row = new String[2];
+                row[0] = rs.getString(1);
+                row[1] = Integer.toString( rs.getInt(2));
+                list.add(row);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
     }
 
     public int saveSearch(int qId, String url, int level, int topId, int page) {
@@ -144,27 +167,26 @@ public class SQLite {
             e.printStackTrace();
         }
     }
-    
-    public void updatePage(int id,int page)
-    {
+
+    public void updatePage(int id, int page) {
         String sql = "UPDATE queries SET page = ? "
                 + "WHERE id = ?";
-       try{
-            PreparedStatement stm =  con.prepareStatement(sql);
+        try {
+            PreparedStatement stm = con.prepareStatement(sql);
             stm.setInt(1, page);
             stm.setInt(2, id);
             stm.executeUpdate();
-            
-       }catch (Exception e)
-       {
-           e.printStackTrace();
-       }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
-    public int getSearchQueryPage(int id){
-          try {
-           // Statement state = con.createStatement();
+
+    public int getSearchQueryPage(int id) {
+        try {
+            // Statement state = con.createStatement();
             String sql = "SELECT lastPage FROM queries WHERE id=?";
-            PreparedStatement stm =  con.prepareStatement(sql);
+            PreparedStatement stm = con.prepareStatement(sql);
             stm.setInt(1, id);
             ResultSet res = stm.executeQuery();
             //ResultSet res = state.("SELECT lastPage FROM queries WHERE id=?");
@@ -178,11 +200,12 @@ public class SQLite {
         }
         return -1;
     }
-    public int saveQuery(String query, String searchEngine,int currentSearchPage) {
+
+    public int saveQuery(String query, String searchEngine, int currentSearchPage) {
         int generatedKey = 0;
         try {
 
-             generatedKey = findQueryId(query, searchEngine);
+            generatedKey = findQueryId(query, searchEngine);
             if (generatedKey == -1) {
                 PreparedStatement prep = con.prepareStatement("insert into query values(?,?,?,?);");
                 prep.setString(2, query);
@@ -203,8 +226,6 @@ public class SQLite {
         }
         return generatedKey;
     }
-
-   
 
     public void createDb() {
         try {

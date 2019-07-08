@@ -19,6 +19,7 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
@@ -37,72 +38,94 @@ public class ProjectPanel extends JPanel {
     private String title;
     private JButton submit;
     private JTable tblSearchResult;
+    private JTable tblPagesResult;
+
     //private JInternalFrame jif;
-    public ProjectPanel(String title,JInternalFrame jif) {
+    public ProjectPanel(String title, JInternalFrame jif) {
         super();
         this.title = title;
         setLayout(new FlowLayout());
         initTabs();
-         jif.addPropertyChangeListener(JInternalFrame.IS_CLOSED_PROPERTY,new PropertyChangeListener() {
-                @Override
-                public void propertyChange(PropertyChangeEvent evt) {
-                    //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-                    if (evt.getNewValue() == Boolean.TRUE)
-                    {
-                        // System.out.println(">>>>> JINTERNAL FRAME CLOSING >>>> " + evt.getOldValue() + " ] NEW [" + evt.getNewValue() + "] >>>>>>>>>>");
-                         if (!WebToolMainFrame.isDelete)
+        jif.addPropertyChangeListener(JInternalFrame.IS_CLOSED_PROPERTY, new PropertyChangeListener() {
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+                if (evt.getNewValue() == Boolean.TRUE) {
+                    // System.out.println(">>>>> JINTERNAL FRAME CLOSING >>>> " + evt.getOldValue() + " ] NEW [" + evt.getNewValue() + "] >>>>>>>>>>");
+                    if (!WebToolMainFrame.isDelete) {
                         submit.doClick();
                     }
                 }
-            });
+            }
+        });
     }
 
     private void initTabs() {
         initSeachForm();
         tabs = new JTabbedPane();
         tabs.addTab("Settings", searchForm);
-        
-        JPanel pnlSearchResult  = new JPanel();
+
+        JPanel pnlSearchResult = new JPanel();
         tabs.addTab("Crawl Results", pnlSearchResult);
         pnlSearchResult.setLayout(new BorderLayout());
         JScrollPane searchTableScrool = new JScrollPane();
-        pnlSearchResult.add(searchTableScrool,BorderLayout.CENTER);
+        JScrollPane searchPagesTableScrool = new JScrollPane();
+        JSplitPane searchQuerySplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT, searchTableScrool, searchPagesTableScrool);
+        searchQuerySplit.setOneTouchExpandable(true);
+        searchQuerySplit.setDividerLocation(150);
+        pnlSearchResult.add(searchQuerySplit, BorderLayout.CENTER);
         tblSearchResult = new JTable();
         tblSearchResult.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-
-            },
-            new String [] {
-                "Domain", "URL Path", "Parent Id"
-            }
+                new Object[][]{},
+                new String[]{
+                    "Domain", "Pages"
+                }
         ) {
-            boolean[] canEdit = new boolean [] {
-                false, false, false, true, false
+            boolean[] canEdit = new boolean[]{
+                false, false
             };
 
             public boolean isCellEditable(int rowIndex, int columnIndex) {
-                return canEdit [columnIndex];
+                return canEdit[columnIndex];
             }
         });
-        tblSearchResult.getColumnModel().getColumn(0).setMinWidth(250);
-        tblSearchResult.getColumnModel().getColumn(0).setPreferredWidth(250);
-        tblSearchResult.getColumnModel().getColumn(2).setMaxWidth(200);
-        tblSearchResult.getColumnModel().getColumn(1).setMinWidth(380);
+        tblSearchResult.getColumnModel().getColumn(0).setMinWidth(350);
+        tblSearchResult.getColumnModel().getColumn(1).setMaxWidth(150);
         searchTableScrool.setViewportView(tblSearchResult);
+
+        tblPagesResult = new JTable();
+        tblPagesResult.setModel(new javax.swing.table.DefaultTableModel(
+                new Object[][]{},
+                new String[]{
+                    "URL", "Google Page Number"
+                }
+        ) {
+            boolean[] canEdit = new boolean[]{
+                false, false
+            };
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit[columnIndex];
+            }
+        });
+        tblPagesResult.getColumnModel().getColumn(0).setMinWidth(350);
+        tblPagesResult.getColumnModel().getColumn(1).setMaxWidth(250);
+        searchPagesTableScrool.setViewportView(tblPagesResult);
+
         this.setLayout(new BorderLayout());
         this.add(tabs, BorderLayout.CENTER);
-        
+
     }
 
     private void initCrawlTab() {
         String[] labels = {"Project Name", "Search Query", "Search Engine",
-             "Search URL",
-             "Link Regex"};
+            "Search URL",
+            "Link Regex"};
         char[] mnemonics = {'P', 'Q', 'E', 'U', 'L'};
         int[] widths = {15, 55, 15, 55, 55};
         String[] descs = {"Project Name", "Search Engine query with | (or) inurl e.t.c",
-             "Select Search Engine", "Search Engine URL",
-             "Regex for parsing links"};
+            "Select Search Engine", "Search Engine URL",
+            "Regex for parsing links"};
         final TextForm crawlForm = new SearchForm(labels, mnemonics, widths, descs);
 
     }
@@ -123,13 +146,13 @@ public class ProjectPanel extends JPanel {
    final TextForm form = new TextForm(labels, mnemonics, widths, descs);
          */
         String[] labels = {"Project Name", "Search Query", "Search Engine",
-             "Search URL",
-             "Link Regex"};
+            "Search URL",
+            "Link Regex"};
         char[] mnemonics = {'P', 'Q', 'E', 'U', 'L'};
-         int[] widths = {15, 55, 15, 55, 55};
+        int[] widths = {15, 55, 15, 55, 55};
         String[] descs = {"Project Name", "Search Engine query with | (or) inurl e.t.c",
-             "Select Search Engine", "Search Engine URL",
-             "Regex for parsing links"};
+            "Select Search Engine", "Search Engine URL",
+            "Regex for parsing links"};
         final TextForm crawlForm = new SearchForm(labels, mnemonics, widths, descs);
         submit = new JButton("Save Project", new ImageIcon(AWTUtils.getIcon(this, ".\\images\\Save24.gif")));
         Object list = WebToolMainFrame.defaultProjectProperties.get(this.title);

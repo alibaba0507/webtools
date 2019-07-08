@@ -6,6 +6,7 @@
 package webtools.net;
 
 import java.net.URLDecoder;
+import java.util.ArrayList;
 import java.util.HashSet;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
@@ -122,7 +123,7 @@ public class WebCrawler implements Runnable, ConnectorCallback {
                         //  final String url = link.absUrl("href"); // Google returns URLs in format "http://www.google.com/url?q=<url>&sa=U&ei=<someKey>".
                         final String result = link.attr("href");
                         sql.saveSearch(queryId, result,0,0,Integer.parseInt(page) );
-                        
+                        ArrayList<String[]> list = sql.selectCoutDomains(queryId);
                         final String url = URLDecoder.decode(result, "UTF-8");
                         
                     }// end for
