@@ -43,6 +43,11 @@ public class SearchForm extends TextForm {
         cSearch = new JComboBox();
         cSearch.addItem(new SearchParams("", "", ""));
         cSearch.addItem(ConstInterface.GOOGLE_SEARCH);
+        cSearch.addItem(ConstInterface.GOOGLE_SEARCH_UK);
+        cSearch.addItem(ConstInterface.GOOGLE_SEARCH_AU);
+        cSearch.addItem(ConstInterface.GOOGLE_SEARCH_NZ);
+        cSearch.addItem(ConstInterface.GOOGLE_SEARCH_DE);
+        cSearch.addItem(ConstInterface.GOOGLE_SEARCH_SA);
         cSearch.addItem(ConstInterface.BING_SEARCH);
         cSearch.addItem(ConstInterface.DUCKDUCK_GO_SEARCH);
         cSearch.addItemListener(new ItemListener() {
@@ -73,23 +78,23 @@ public class SearchForm extends TextForm {
         btnQuery.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-              //  SearchQueryDialog dlg = new SearchQueryDialog(WebToolMainFrame.instance, true, fields[1]);
-               // dlg.pack();
-               // dlg.show();
+                //  SearchQueryDialog dlg = new SearchQueryDialog(WebToolMainFrame.instance, true, fields[1]);
+                // dlg.pack();
+                // dlg.show();
                 java.awt.EventQueue.invokeLater(new Runnable() {
                     public void run() {
-                       final SearchQueryDialog dialog = new SearchQueryDialog(WebToolMainFrame.instance, true, fields[1]);
+                        final SearchQueryDialog dialog = new SearchQueryDialog(WebToolMainFrame.instance, true, fields[1]);
                         dialog.addWindowListener(new java.awt.event.WindowAdapter() {
                             @Override
                             public void windowClosing(java.awt.event.WindowEvent e) {
-                              //  System.exit(0);
-                              dialog.dispose();
+                                //  System.exit(0);
+                                dialog.dispose();
                             }
                         });
-                         ImageIcon icon =  new ImageIcon(AWTUtils.getIcon(SearchForm.this,
-                                            Main.prop.getProperty("project.item.image")));
-                        ((JFrame)dialog.getOwner()).setIconImage(AWTUtils.getIcon(SearchForm.this,
-                                            Main.prop.getProperty("project.item.image")));
+                        ImageIcon icon = new ImageIcon(AWTUtils.getIcon(SearchForm.this,
+                                Main.prop.getProperty("project.item.image")));
+                        ((JFrame) dialog.getOwner()).setIconImage(AWTUtils.getIcon(SearchForm.this,
+                                Main.prop.getProperty("project.item.image")));
                         dialog.setVisible(true);
                     }
                 });

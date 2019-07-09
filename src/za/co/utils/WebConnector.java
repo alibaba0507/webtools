@@ -24,10 +24,12 @@ import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import net.sourceforge.jsocks.socks.Socks5Proxy;
 import org.jsoup.Connection;
+import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import webtools.gui.run.WebToolMainFrame;
 import webtools.net.TorSocket;
+import webtools.net.WebRequest;
 
 /**
  *
@@ -59,7 +61,7 @@ public class WebConnector {
         this.userAgent = ua;
     }
 
-    public Document get(String url) throws Exception{
+    public Document get(WebRequest req) throws Exception {
         Document doc = null;
         String proxyType = (String) WebToolMainFrame.defaultProjectProperties.get("proxy.type");
         if (proxyType != null && !proxyType.trim().equals("")) {
@@ -69,34 +71,36 @@ public class WebConnector {
                 String port = (String) WebToolMainFrame.defaultProjectProperties.get("proxy.port");
                 String user = (String) WebToolMainFrame.defaultProjectProperties.get("proxy.user");
                 String psw = (String) WebToolMainFrame.defaultProjectProperties.get("proxy.pasw");
-                doc = getJsoup(url, "", true, host, Integer.parseInt(port), user, psw);
+                doc = getJsoup(req, "", true, host, Integer.parseInt(port), user, psw,"");
             } else if (proxyType.equals("TOR")) {
                 String proxyHost = (String) WebToolMainFrame.defaultProjectProperties.get("proxy.tor.host");
                 String proxyPort = (String) WebToolMainFrame.defaultProjectProperties.get("proxy.tor.port");
                 TorSocket tor = new TorSocket(proxyHost, Integer.parseInt(proxyPort));
                 //URL u = new URL("https://www.google.com/search?q=my+ip");
-                URL u = new URL(url);
+                URL u = new URL(req.getCurrentURL());
                 final String html;
                 html = tor.connect(u, null);
                 doc = Jsoup.parse(html);
             }
         } else {
-            doc = getJsoup(url, "", true, null, 0, null, null);
+            doc = getJsoup(req, "", true, null, 0, null, null,"");
         }
 
         return doc;
     }
 
-    public Document getJsoup(String url, String cookies, boolean isFollowRedirect,
-            String proxyHost, int proxyPort, String proxyUser, String proxyPassW) {
+    public Document getJsoup(WebRequest req, String cookies, boolean isFollowRedirect,
+            String proxyHost, int proxyPort, String proxyUser, String proxyPassW,String referer) {
         Connection.Response response;
+        URL u = null;
         try {
+            u = new URL(req.getOriginalURL());
             //set up handler for jsse
             System.setProperty("java.protocol.handler.pkgs", "com.sun.net.ssl.internal.www.protocol");
             java.security.Provider prov = new com.sun.net.ssl.internal.ssl.Provider();
             Security.addProvider(prov);
 
-            Connection c = Jsoup.connect(url);
+            Connection c = Jsoup.connect(req.getCurrentURL());
             if (proxyHost != null) {
                 if (proxyUser != null) {
                     c.sslSocketFactory(new SSLTunnelSocketFactory(proxyHost, Integer.toString(proxyPort), proxyUser, proxyPassW));
@@ -112,6 +116,7 @@ public class WebConnector {
                     .header("Accept",
                             "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
                     .header("Cookie", cookies)
+                    .referrer(referer)
                     .ignoreContentType(true) // This is used because Jsoup "approved" content-types parsing is enabled by default by Jsoup
                     .followRedirects(false)
                     .timeout(0)
@@ -133,14 +138,44 @@ public class WebConnector {
                 }
                 //ProjectsUI.console.append(" Reirect [" + redirectUrl + "]\r\n");
                 //ProjectsUI.console.append(" Coocies [" + cookies + "]\r\n");
-                return getJsoup(redirectUrl, cookies, isFollowRedirect, proxyHost, proxyPort, proxyUser, proxyPassW);
+                req.setCurrentURL(redirectUrl);
+                
+                return getJsoup(req, cookies, isFollowRedirect, proxyHost, proxyPort, proxyUser, proxyPassW,"http://www.google.com");
             }
             String body = response.body();
             //System.out.print(body);
             return Jsoup.parse(body);
-        } catch (Exception e) {
+        } catch (HttpStatusException e) {
             e.printStackTrace();
+            if (e.getStatusCode() == 429) { // to many request
+                if (u != null && u.getHost().indexOf("google") > -1) {
+                    String ext = u.getHost().substring(u.getHost().indexOf("google.")+"google.".length());
+                    if (ext.equals("com")) { // we will try to redirect to come other sites
+                        String url = req.getOriginalURL().replaceFirst(".com", ".co.uk");
+                        if (url.startsWith("https:"))
+                        {
+                            url = url.replaceFirst("https:", "http:");
+                        }
+                        req.setOriginalURL(url);
+                        req.setCurrentURL(url);
+                        
+                        return getJsoup(req, "", isFollowRedirect,
+                                 proxyHost, proxyPort, proxyUser, proxyPassW,"");
+                    } else if (ext.equals(".co.uk")) {
+                        String url = req.getOriginalURL().replaceFirst(".co.uk", ".com.au");
+                         req.setOriginalURL(url);
+                        req.setCurrentURL(url);
+                        return getJsoup(req, "", isFollowRedirect,
+                                 proxyHost, proxyPort, proxyUser, proxyPassW,"");
+
+                    }
+                }
+            }
+        }catch (IOException ioe)
+        {
+            ioe.printStackTrace();
         }
+            
         return null;
     }
 

@@ -15,6 +15,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Vector;
+import java.util.concurrent.Executor;
+import org.sqlite.SQLiteConnection;
 
 /**
  *
@@ -23,20 +26,23 @@ import java.util.ArrayList;
 public class SQLite {
 
     private Connection con;
+    private static String QUERY_TBL_NAME = "queries";
+    private static String SRCH_TBL_NAME = "search";
 
     public SQLite() {
-        createDb();
+        //createDb();
         createTables();
     }
 
     public void deleteSearch(int id) {
         try {
-            String sql = "DELETE FROM search WHERE id=?";
+            createDb();
+            String sql = "DELETE FROM " + SRCH_TBL_NAME + " WHERE id=?";
             PreparedStatement statement = con.prepareStatement(sql);
             statement.setInt(1, id);
             int rowsDeleted = statement.executeUpdate();
-            statement.close();
-
+            // statement.close();
+            close(statement);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -44,6 +50,7 @@ public class SQLite {
 
     public int findSearch(int qId, String url) {
         try {
+            createDb();
             URL u = new URL(url);
             String protocol = u.getProtocol();
             String host = u.getHost();
@@ -53,7 +60,7 @@ public class SQLite {
                 host += ":" + port;
             }
             Statement state = con.createStatement();
-            String sql = "SELECT id FROM search WHERE "
+            String sql = "SELECT id FROM " + SRCH_TBL_NAME + " WHERE "
                     + "q_id=? AND dom=? AND url=? ";
             PreparedStatement stm = con.prepareStatement(sql);
             //ResultSet res = state.executeQuery("SELECT id FROM search WHERE "
@@ -62,38 +69,54 @@ public class SQLite {
             stm.setString(2, host);
             stm.setString(3, path);
             ResultSet rs = stm.executeQuery();
+            int id = -1;
             if (rs.next()) {
-                return rs.getInt("id");
+                id = rs.getInt("id");
             }
-            rs.close();
-            state.close();
+            close(stm);
+            //  rs.close();
+            //  state.close();
+            return id;
         } catch (Exception e) {
             e.printStackTrace();
         }
         return 0;
     }
-    
+
     /**
      * Find domain and count (how many times domain is repeated)
+     *
      * @param qId - queryId
      * @return List([domain name],[count])
      */
-    public ArrayList<String[]> selectCoutDomains(int qId) {
+    public ArrayList<Vector> selectCoutDomains(int qId, int limit) {
         //String sql = "SELECT id FROM search WHERE "
         //         + "q_id=? AND dom=? AND url=? ";
-        String sql = "SELECT dom,count(dom) FROM search WHERE q_id=? AND level=0"
-                   + "GROUP BY dom ORDER BY count(dom) DESC;";
-        ArrayList <String[]> list = new ArrayList<String[]>();
+        String sql = "SELECT dom,count(dom) FROM " + SRCH_TBL_NAME + " WHERE q_id=? AND level=0"
+                + " GROUP BY dom ORDER BY count(dom) DESC";
+        if (limit > 0) {
+            sql += " LIMIT " + limit + ";";
+        } else {
+            sql += ";";
+        }
+        ArrayList<Vector> list = new ArrayList<Vector>();
         try {
+            createDb();
             PreparedStatement stm = con.prepareStatement(sql);
             stm.setInt(1, qId);
             ResultSet rs = stm.executeQuery();
             while (rs.next()) {
-                String[] row = new String[2];
-                row[0] = rs.getString(1);
-                row[1] = Integer.toString( rs.getInt(2));
-                list.add(row);
+                //String[] row = new String[2];
+                //row[0] = rs.getString(1);
+                //row[1] = Integer.toString( rs.getInt(2));
+                Vector v = new Vector();
+                v.addElement(rs.getString(1));
+                v.addElement(Integer.toString(rs.getInt(2)));
+                list.add(v);
             }
+            close(stm);
+            //   stm.close();
+            //   rs.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -110,7 +133,9 @@ public class SQLite {
             }
             // int id = findQueryId(projecName, query, searchEngine);
             // if (id == -1) {
-            PreparedStatement prep = con.prepareStatement("insert into search values(?,?,?,?,?,?,?,?);");
+            createDb();
+            PreparedStatement prep = con.prepareStatement("insert into " + SRCH_TBL_NAME
+                    + " (protocol,dom,url,level,parent_id,page,q_id) values(?,?,?,?,?,?,?);");
             URL u = new URL(url);
             String protocol = u.getProtocol();
             String host = u.getHost();
@@ -119,13 +144,13 @@ public class SQLite {
             if (port > 0) {
                 host += ":" + port;
             }
-            prep.setString(2, protocol);
-            prep.setString(3, host);
-            prep.setString(4, path);
-            prep.setInt(3, level);
-            prep.setInt(4, topId);
-            prep.setInt(5, page);
-            prep.setInt(6, qId);
+            prep.setString(1, protocol);
+            prep.setString(2, host);
+            prep.setString(3, path);
+            prep.setInt(4, level);
+            prep.setInt(5, topId);
+            prep.setInt(6, page);
+            prep.setInt(7, qId);
             //prep.setInt(6, topId);
             prep.execute();
             ResultSet rs = prep.getGeneratedKeys();
@@ -133,8 +158,9 @@ public class SQLite {
             if (rs.next()) {
                 generatedKey = rs.getInt(1);
             }
-            prep.close();
-            rs.close();
+            close(prep);
+            //    prep.close();
+            //    rs.close();
             //return generatedKey;
             //}
         } catch (Exception e) {
@@ -145,15 +171,17 @@ public class SQLite {
 
     public int findQueryId(String query, String searchEngine) {
         try {
+            createDb();
             Statement state = con.createStatement();
-            ResultSet res = state.executeQuery("SELECT id FROM queries WHERE name='" + query
+            ResultSet res = state.executeQuery("SELECT id FROM " + QUERY_TBL_NAME + " WHERE name='" + query
                     + "' AND search_engine='" + searchEngine
                     + "'");
             if (res.next()) {
                 return res.getInt("id");
             }
-            state.close();
-            res.close();
+            close(state);
+            //state.close();
+            // res.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -162,44 +190,84 @@ public class SQLite {
 
     public void deleteQuery(int id) {
         try {
-            String sql = "DELETE FROM queries WHERE id=?";
+            String sql = "DELETE FROM " + QUERY_TBL_NAME + " WHERE id=?";
+            createDb();
             PreparedStatement statement = con.prepareStatement(sql);
             statement.setInt(1, id);
             int rowsDeleted = statement.executeUpdate();
-            statement.close();
-
+            // statement.close();
+            close(statement);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    public void updatePage(int id, int page) {
-        String sql = "UPDATE queries SET page = ? "
+    public synchronized  void updatePage(int id, int page) {
+        String sql = "UPDATE " + QUERY_TBL_NAME + " SET lastPage = ? "
                 + "WHERE id = ?";
+        PreparedStatement stm = null;
         try {
-            PreparedStatement stm = con.prepareStatement(sql);
+            createDb();
+            boolean r = con.isReadOnly();
+            stm = con.prepareStatement(sql);
             stm.setInt(1, page);
             stm.setInt(2, id);
-            stm.executeUpdate();
+            stm.execute();
 
+            // stm.close();
+            System.out.println("UPDADE TRANSACTION PAGE[" + page + "]");
         } catch (Exception e) {
+            if (e.getMessage().indexOf("[SQLITE_BUSY]") > -1) {
+                e.printStackTrace();
+                // waitForTransaction();
+                // updatePage(id, page);
+            }
+        } finally {
+            try {
+                close(stm);
+            } catch (Exception e) {
+                e.printStackTrace();;
+            }
+        }
+    }
+
+    public void waitForTransaction() {
+        try {
+            con.abort(new Executor() {
+                @Override
+                public void execute(Runnable command) {
+                    command.run();
+                    // throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+                }
+            });
+            long tm = System.currentTimeMillis();
+            while (System.currentTimeMillis() - tm < 100) {
+                Thread.yield();
+            }
+
+            //createDb();
+        } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
-    public int getSearchQueryPage(int id) {
+    public synchronized int getSearchQueryPage(int id) {
         try {
             // Statement state = con.createStatement();
-            String sql = "SELECT lastPage FROM queries WHERE id=?";
+            String sql = "SELECT lastPage FROM " + QUERY_TBL_NAME + " WHERE id=?";
+            createDb();
             PreparedStatement stm = con.prepareStatement(sql);
             stm.setInt(1, id);
             ResultSet res = stm.executeQuery();
             //ResultSet res = state.("SELECT lastPage FROM queries WHERE id=?");
+            int lastPage = -1;
             if (res.next()) {
-                return res.getInt("lastPage");
+                lastPage = res.getInt("lastPage");
             }
-            stm.close();
-            res.close();
+            close(stm);
+            // stm.close();
+            //   res.close();
+            return lastPage;
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -212,18 +280,20 @@ public class SQLite {
 
             generatedKey = findQueryId(query, searchEngine);
             if (generatedKey == -1) {
-                PreparedStatement prep = con.prepareStatement("insert into query values(?,?,?,?);");
-                prep.setString(2, query);
-                prep.setString(3, searchEngine);
-                prep.setInt(4, currentSearchPage);
-                prep.execute();
+                createDb();
+                PreparedStatement prep = con.prepareStatement("insert into " + QUERY_TBL_NAME + " (name,search_engine,lastPage) values(?,?,?);");
+                prep.setString(1, query);
+                prep.setString(2, searchEngine);
+                prep.setInt(3, currentSearchPage);
+                prep.executeUpdate();
                 ResultSet rs = prep.getGeneratedKeys();
 
                 if (rs.next()) {
                     generatedKey = rs.getInt(1);
                 }
-                prep.close();
-                rs.close();
+                close(prep);
+                // prep.close();
+                // rs.close();
                 //return generatedKey;
             }
         } catch (Exception e) {
@@ -232,27 +302,36 @@ public class SQLite {
         return generatedKey;
     }
 
-    public void createDb() {
+    public synchronized  void createDb() {
         try {
             Class.forName("org.sqlite.JDBC");
 
             con = DriverManager.getConnection("jdbc:sqlite:webtools.db");
-
+            //org.sqlite.SQLiteConnection c =  (SQLiteConnection)DriverManager.getConnection("jdbc:sqlite:webtools.db");
+            //c.
+            con.clearWarnings();
             System.out.println("Database Opened...\n");
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
+    public synchronized void close(Statement stmt) throws Exception {
+        stmt.close();
+        con.close();
+        con = null;
+    }
+
     public void createTables() {
         try {
+            createDb();
             Statement stmt = con.createStatement();
-            ResultSet res = stmt.executeQuery("SELECT name FROM sqlite_master WHERE type='table' AND name='queries'");
+            ResultSet res = stmt.executeQuery("SELECT name FROM sqlite_master WHERE type='table' AND name='" + QUERY_TBL_NAME + "'");
             if (!res.next()) {
                 System.out.println("Building the User table with prepopulated values.");
 
-                String sql = "CREATE TABLE queries "
-                        + "(id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                String sql = "CREATE TABLE " + QUERY_TBL_NAME
+                        + " (id INTEGER PRIMARY KEY AUTOINCREMENT,"
                         + " name TEXT NOT NULL, "
                         + " search_engine TEXT NOT NULL,"
                         + " lastPage INTEGER); ";
@@ -260,13 +339,13 @@ public class SQLite {
                 stmt.executeUpdate(sql);
             }
 
-            res = stmt.executeQuery("SELECT name FROM sqlite_master WHERE type='table' AND name='search'");
+            res = stmt.executeQuery("SELECT name FROM sqlite_master WHERE type='table' AND name='" + SRCH_TBL_NAME + "'");
 
             if (!res.next()) {
                 System.out.println("Building the User table with prepopulated values.");
 
-                String sql = "CREATE TABLE search "
-                        + "(id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                String sql = "CREATE TABLE " + SRCH_TBL_NAME
+                        + " (id INTEGER PRIMARY KEY AUTOINCREMENT,"
                         + " protocol TEXT NOT NULL,"
                         + " dom TEXT NOT NULL,"
                         + " url TEXT NOT NULL, "
@@ -286,9 +365,9 @@ public class SQLite {
                         + "url TEXT NOT NULL )";
                 stmt.executeUpdate(sql);
             }
-
-            stmt.close();
-            con.close();
+            close(stmt);
+            //   stmt.close();
+            //con.close();
         } catch (Exception e) {
             e.printStackTrace();
         }

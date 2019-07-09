@@ -46,4 +46,27 @@ public class GUIController {
         }
         return  null;
     }
+    
+    
+    public static ProjectPanel getProjectPanel(String windowsTitle) {
+        JInternalFrame frame = null;
+        try {
+            JInternalFrame[] frames = WebToolMainFrame.getDesckTopInstance().getAllFrames();
+            for (int i = 0; i < frames.length; i++) {
+                if (windowsTitle != null && frames[i].getTitle().equals(windowsTitle)) {
+                    frame = frames[i];
+                    break;
+                }
+            }
+            if (frame != null)
+            {
+                MyInternalFrame jif = (MyInternalFrame)frame;
+                return jif.getProject();//.getSearchDomainTableModel();
+            }
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return  null;
+    }
 }

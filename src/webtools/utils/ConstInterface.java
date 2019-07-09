@@ -15,6 +15,21 @@ public interface ConstInterface {
     public static final SearchParams GOOGLE_SEARCH = new SearchParams("Google"
                         , "http://www.google.com/search?q=", "div[class='r']>a");
     
+    public static final SearchParams GOOGLE_SEARCH_UK = new SearchParams("Google UK"
+                        , "http://www.google.co.uk/search?q=", "div[class='r']>a");
+    
+     public static final SearchParams GOOGLE_SEARCH_NZ = new SearchParams("Google NZ"
+                        , "http://www.google.co.nz/search?q=", "div[class='r']>a");
+     
+     public static final SearchParams GOOGLE_SEARCH_AU = new SearchParams("Google AU"
+                        , "http://www.google.com.au/search?q=", "div[class='r']>a");
+     
+     public static final SearchParams GOOGLE_SEARCH_DE = new SearchParams("Google DE"
+                        , "http://www.google.de/search?q=", "div[class='r']>a");
+     
+     public static final SearchParams GOOGLE_SEARCH_SA = new SearchParams("Google SA"
+                        , "http://www.google.co.za/search?q=", "div[class='r']>a");
+     
     public static final SearchParams BING_SEARCH = new SearchParams("Bing"
                         , "https://www.bing.com/search?q=", "#b_results .b_algo h2 a");
     

@@ -11,6 +11,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
+import java.util.Vector;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -27,6 +29,7 @@ import javax.swing.SpringLayout;
 import javax.swing.table.DefaultTableModel;
 import webtools.gui.run.WebToolMainFrame;
 import za.co.utils.AWTUtils;
+import za.co.utils.SQLite;
 
 /**
  *
@@ -40,6 +43,8 @@ public class ProjectPanel extends JPanel {
     private JButton submit;
     private JTable tblSearchResult;
     private JTable tblPagesResult;
+    private TextForm crawlForm;
+    private int limitDoaminRecord  = 100; // defauult
 
     //private JInternalFrame jif;
     public ProjectPanel(String title, JInternalFrame jif) {
@@ -59,17 +64,17 @@ public class ProjectPanel extends JPanel {
                 }
             }
         });
+        updateSearchTableModel();
     }
-    public DefaultTableModel getSearchDomainTableModel()
-    {
-        return (DefaultTableModel)tblSearchResult.getModel();
+
+    public DefaultTableModel getSearchDomainTableModel() {
+        return (DefaultTableModel) tblSearchResult.getModel();
     }
-    
-     public DefaultTableModel getSearchPageTableModel()
-    {
-        return (DefaultTableModel)tblPagesResult.getModel();
+
+    public DefaultTableModel getSearchPageTableModel() {
+        return (DefaultTableModel) tblPagesResult.getModel();
     }
-    
+
     private void initTabs() {
         initSeachForm();
         tabs = new JTabbedPane();
@@ -124,7 +129,33 @@ public class ProjectPanel extends JPanel {
 
         this.setLayout(new BorderLayout());
         this.add(tabs, BorderLayout.CENTER);
+        //  updateSearchTableModel();
+    }
 
+    public void updateSearchTableModel() {
+        SQLite db = new SQLite();
+        String[] s = crawlForm.getFormValues();
+        int id = db.findQueryId(s[1], s[3]);
+        if (id > 0) {
+            ArrayList<Vector> list = db.selectCoutDomains(id,limitDoaminRecord);
+            DefaultTableModel m = (DefaultTableModel) tblSearchResult.getModel();
+            if (list.size() != m.getRowCount()) {
+                for (int i = 0; i < m.getRowCount(); i++) {
+                    m.removeRow(0);
+                }
+                for (int i = 0; i < list.size(); i++) {
+                    m.addRow(list.get(i));
+                }
+            } else {
+                for (int i = 0; i < m.getRowCount(); i++) {
+                    if (!m.getValueAt(i, 0).equals(list.get(i).elementAt(0))
+                            || m.getValueAt(i, 1).equals(list.get(i).elementAt(1))) {
+                        m.setValueAt(list.get(i).elementAt(0), i, 0);
+                        m.setValueAt(list.get(i).elementAt(1), i, 1);
+                    }
+                }// end for
+            }
+        }
     }
 
     private void initCrawlTab() {
@@ -136,7 +167,7 @@ public class ProjectPanel extends JPanel {
         String[] descs = {"Project Name", "Search Engine query with | (or) inurl e.t.c",
             "Select Search Engine", "Search Engine URL",
             "Regex for parsing links"};
-        final TextForm crawlForm = new SearchForm(labels, mnemonics, widths, descs);
+        crawlForm = new SearchForm(labels, mnemonics, widths, descs);
 
     }
 
@@ -163,7 +194,7 @@ public class ProjectPanel extends JPanel {
         String[] descs = {"Project Name", "Search Engine query with | (or) inurl e.t.c",
             "Select Search Engine", "Search Engine URL",
             "Regex for parsing links"};
-        final TextForm crawlForm = new SearchForm(labels, mnemonics, widths, descs);
+        crawlForm = new SearchForm(labels, mnemonics, widths, descs);
         submit = new JButton("Save Project", new ImageIcon(AWTUtils.getIcon(this, ".\\images\\Save24.gif")));
         Object list = WebToolMainFrame.defaultProjectProperties.get(this.title);
         if (list != null) {
