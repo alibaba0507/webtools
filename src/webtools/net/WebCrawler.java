@@ -8,8 +8,11 @@ package webtools.net;
 import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Vector;
+import javax.swing.table.DefaultTableModel;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
+import webtools.gui.ComponentHelper;
 import webtools.gui.run.WebToolMainFrame;
 import za.co.utils.SQLite;
 import za.co.utils.WebConnector;
@@ -122,11 +125,41 @@ public class WebCrawler implements Runnable, ConnectorCallback {
                         final String linkTitle = link.text();
                         //  final String url = link.absUrl("href"); // Google returns URLs in format "http://www.google.com/url?q=<url>&sa=U&ei=<someKey>".
                         final String result = link.attr("href");
-                        sql.saveSearch(queryId, result,0,0,Integer.parseInt(page) );
-                        ArrayList<String[]> list = sql.selectCoutDomains(queryId);
-                        final String url = URLDecoder.decode(result, "UTF-8");
-                        
+                        sql.saveSearch(queryId, result, 0, 0, Integer.parseInt(page));
+                        //final String url = URLDecoder.decode(result, "UTF-8");
                     }// end for
+                    ArrayList<String[]> list = sql.selectCoutDomains(queryId);
+                    DefaultTableModel m = ComponentHelper.getDomainSearchTableModel(title);
+                    if (m != null) {
+                        Vector v = m.getDataVector();
+                        if (v.size() != list.size()) {
+                            for (int i = 0; i < m.getRowCount(); i++) {
+                                m.removeRow(0);
+                            }
+                            v = new Vector(list);
+                            m.addRow(v);
+                        } else {
+                            boolean mustUpdate = false;
+                            for (int i = 0; i < v.size(); i++) {
+                                if (((Vector) v.elementAt(i)).elementAt(0)
+                                        != list.get(i)[0]
+                                        || ((Vector) v.elementAt(i)).elementAt(0)
+                                        != list.get(i)[0]) {
+                                    mustUpdate = true;
+                                    break;
+                                }
+                            }// end for
+                            if (mustUpdate) {
+                                for (int i = 0; i < m.getRowCount(); i++) {
+                                    m.removeRow(0);
+                                }
+                                v = new Vector(list);
+                                m.addRow(v);
+                            }
+                        }
+                    }//end if (m != null) 
+                    
+
                 } catch (Exception e) {
                     e.printStackTrace();
                 }

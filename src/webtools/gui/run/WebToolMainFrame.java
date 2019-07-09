@@ -157,11 +157,11 @@ public class WebToolMainFrame extends JFrame {
         tabbedPane.setMnemonicAt(0, ms[0]);
 
         JSplitPane listSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT, tabbedPane/*commandPanel*/, null/*linePanel*/);
-        listSplit.setDividerLocation(140);
+        listSplit.setDividerLocation(100);
 
         JSplitPane hSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, listSplit, desktop);
         hSplit.setOneTouchExpandable(true);
-        hSplit.setDividerLocation(100);
+        hSplit.setDividerLocation(180);
         hSplit.setMinimumSize(new Dimension(0, 0));
 
         JTextArea console = new JTextArea();

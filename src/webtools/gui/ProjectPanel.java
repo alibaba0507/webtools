@@ -24,6 +24,7 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.SpringLayout;
+import javax.swing.table.DefaultTableModel;
 import webtools.gui.run.WebToolMainFrame;
 import za.co.utils.AWTUtils;
 
@@ -59,7 +60,16 @@ public class ProjectPanel extends JPanel {
             }
         });
     }
-
+    public DefaultTableModel getSearchDomainTableModel()
+    {
+        return (DefaultTableModel)tblSearchResult.getModel();
+    }
+    
+     public DefaultTableModel getSearchPageTableModel()
+    {
+        return (DefaultTableModel)tblPagesResult.getModel();
+    }
+    
     private void initTabs() {
         initSeachForm();
         tabs = new JTabbedPane();

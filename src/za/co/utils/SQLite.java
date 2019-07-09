@@ -72,7 +72,12 @@ public class SQLite {
         }
         return 0;
     }
-
+    
+    /**
+     * Find domain and count (how many times domain is repeated)
+     * @param qId - queryId
+     * @return List([domain name],[count])
+     */
     public ArrayList<String[]> selectCoutDomains(int qId) {
         //String sql = "SELECT id FROM search WHERE "
         //         + "q_id=? AND dom=? AND url=? ";
