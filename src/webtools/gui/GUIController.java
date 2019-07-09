@@ -10,10 +10,12 @@ import javax.swing.table.DefaultTableModel;
 import webtools.gui.run.WebToolMainFrame;
 
 /**
- *
+ * This will be the link between WebToolMainFrame 
+ * components like ProjectPanel and its internal components 
+ * like tables and so on.
  * @author alibaba0507
  */
-public class ComponentHelper {
+public class GUIController {
     
     /**
      * Search WebToolMainFrame for JInternalFrame with 

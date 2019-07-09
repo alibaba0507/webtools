@@ -12,7 +12,7 @@ import java.util.Vector;
 import javax.swing.table.DefaultTableModel;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
-import webtools.gui.ComponentHelper;
+import webtools.gui.GUIController;
 import webtools.gui.run.WebToolMainFrame;
 import za.co.utils.SQLite;
 import za.co.utils.WebConnector;
@@ -129,7 +129,7 @@ public class WebCrawler implements Runnable, ConnectorCallback {
                         //final String url = URLDecoder.decode(result, "UTF-8");
                     }// end for
                     ArrayList<String[]> list = sql.selectCoutDomains(queryId);
-                    DefaultTableModel m = ComponentHelper.getDomainSearchTableModel(title);
+                    DefaultTableModel m = GUIController.getDomainSearchTableModel(title);
                     if (m != null) {
                         Vector v = m.getDataVector();
                         if (v.size() != list.size()) {
