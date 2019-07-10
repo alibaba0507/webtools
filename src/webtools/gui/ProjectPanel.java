@@ -132,8 +132,10 @@ public class ProjectPanel extends JPanel {
         //  updateSearchTableModel();
     }
 
-    public void updateSearchTableModel() {
-        SQLite db = new SQLite();
+    public void updateSearchTableModel( ) {
+        
+          SQLite db = SQLite.getInstance();
+        
         String[] s = crawlForm.getFormValues();
         int id = db.findQueryId(s[1], s[3]);
         if (id > 0) {

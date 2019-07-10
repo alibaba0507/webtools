@@ -18,21 +18,20 @@ import webtools.net.WebCrawler;
  *
  * @author alibaba0507
  */
-public class CrawlProjectAction extends AbstractAction {
+public class StopCrawlingAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        // throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        //   throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
         JList projList = (JList) ((JPopupMenu) ((JMenuItem) e.getSource()).getParent()).getInvoker();
-        
         Object obj = projList.getSelectedValue();
-        if (!WebCrawler.threadCrawlers.contains(obj.toString()))
-        {
-            SwingUtilities.invokeLater(new WebCrawler((obj.toString()),null));
-            
+        if (WebCrawler.threadCrawlers.contains(obj.toString())) {
+            WebCrawler.threadCrawlers.remove(obj.toString());
+            //SwingUtilities.invokeLater(new WebCrawler((obj.toString()), null));
+
         }else
         {
-            JOptionPane.showMessageDialog(projList.getParent(), "Crawling Process Start Already");
+            JOptionPane.showMessageDialog(projList.getParent(), "Can not STOP , Crawlong process DIN NOT START yet.");
         }
     }
 

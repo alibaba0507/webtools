@@ -9,6 +9,7 @@ import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Vector;
+import javax.swing.SwingWorker;
 import javax.swing.table.DefaultTableModel;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
@@ -32,7 +33,7 @@ public class WebCrawler implements Runnable, ConnectorCallback {
     private int queryId;
     private String searchQuery;
     private WebConnector webC;
-    private long delayInSec = 10;
+    private long maxDelayInSec = 30;
     private ConnectorCallback callback;
 
     public WebCrawler(String title, ConnectorCallback callback) {
@@ -42,19 +43,19 @@ public class WebCrawler implements Runnable, ConnectorCallback {
         } else {
             this.callback = callback;
         }
-        /*
-        sql = new SQLite();
+        
+        sql = SQLite.getInstance();
         String[] list = (String[]) WebToolMainFrame.defaultProjectProperties.get(title);
         /*
         String[] labels = {"Project Name", "Search Query", "Search Engine",
              "Search URL",
              "Link Regex"}
-         * /
+         */
         this.searchQuery = list[1];
         this.searcURL = list[3];
         this.regexStr = list[4];
         queryId = sql.saveQuery(list[1], list[3], 0);
-       */
+         
 
     }
 
@@ -65,32 +66,53 @@ public class WebCrawler implements Runnable, ConnectorCallback {
 
     @Override
     public void run() {
-        if (!WebCrawler.threadCrawlers.contains(this.name)) {
-            WebCrawler.threadCrawlers.add(this.name);
-            webC = new WebConnector();
-             timeOut();
-            //startCrawling();
+        if (!WebCrawler.threadCrawlers.contains(WebCrawler.this.name)) {
+            WebCrawler.threadCrawlers.add(WebCrawler.this.name);
         }
-        //   throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        SwingWorker worker = new SwingWorker() {
+            @Override
+            protected Object doInBackground() throws Exception {
+                //      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+                while (WebCrawler.threadCrawlers.contains(WebCrawler.this.name)) {
+                    webC = new WebConnector();
+                    long tm = System.currentTimeMillis();
+                    System.err.println("Before time out ....");
+                    startCrawling();
+                    long crawlingTime = (System.currentTimeMillis() - tm)/1000;
+                    if (crawlingTime < maxDelayInSec)
+                        timeOut(maxDelayInSec - crawlingTime); // to prevent crawler from blocking Err = 429
+                    
+                    System.err.println("After Time out ... [" + ((System.currentTimeMillis() - tm)/1000) + "] Sec");
+                }
+                System.out.println(">>>>>>>>>>>>>>> STOP CRAWLING [" + WebCrawler.this.name + "] >>>>>");
+                return webC;
+            }
+        };
+        worker.execute();
+
+//startCrawling();
+//   throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
-    public void timeOut() {
+    public void timeOut(long delay) {
         //synchronized (this) {
-            long tm = System.currentTimeMillis();
-           // if (lastTimeAccess != 0 && tm - lastTimeAccess < (delayInSec * 1000)) {
-                double randomDouble = Math.random();
-                randomDouble = randomDouble * 35 + 5;
-                int randomInt = (int) randomDouble;
-                try {
-                    while (System.currentTimeMillis() - tm < (randomInt * 1000)) {
-                        Thread.sleep(100);
-                        Thread.yield();
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            //}
-            lastTimeAccess = System.currentTimeMillis();
+        long tm = System.currentTimeMillis();
+        // if (lastTimeAccess != 0 && tm - lastTimeAccess < (delayInSec * 1000)) {
+        if (delay == 0)
+            delay = maxDelayInSec;
+        double randomDouble = Math.random();
+        randomDouble = randomDouble *delay + 5;
+        int randomInt = (int) randomDouble;
+        try {
+            while (System.currentTimeMillis() - tm < (randomInt * 1000)) {
+                Thread.sleep(100);
+                Thread.yield();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        //}
+        lastTimeAccess = System.currentTimeMillis();
         //}
     }
 
@@ -100,32 +122,24 @@ public class WebCrawler implements Runnable, ConnectorCallback {
     }
 
     private void startCrawling() {
-        // this will stop if is removed from hashset
-        while (WebCrawler.threadCrawlers.contains(this.name)) {
-            System.out.println(" BEFORE TIME OUT ....");
-            //synchronized (this) {
-                timeOut();
-               System.err.println("AFTER TIME OUT ....");
-                //timeOut();// sleep for a while
-                int page = sql.getSearchQueryPage(queryId);
-                //int startFrom = 1;
-                //if (page > 0) {
-                //startFrom = page * 10;
-                // }
-                if (page == 0) {
-                    page = 1;
-                }
-                String ipAddr = this.searcURL + this.searchQuery + "&start=" + (page * 10);
-                try {
-
-                    Document doc = webC.get(new WebRequest(ipAddr, null));// new WebTools().search(urlEncode, "", true);
-                    this.callback.callback(name, searchQuery, regexStr, Integer.toString(page), doc);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    continue;
-                }
+       
+            int page = sql.getSearchQueryPage(queryId);
+            //int startFrom = 1;
+            //if (page > 0) {
+            //startFrom = page * 10;
+            // }
+            if (page == 0) {
+                page = 1;
+            }
+            String ipAddr = this.searcURL + this.searchQuery + "&start=" + (page * 10);
+            try {
+                Document doc = webC.get(new WebRequest(ipAddr, null));// new WebTools().search(urlEncode, "", true);
+                this.callback.callback(name, searchQuery, regexStr, Integer.toString(page), doc);
+            } catch (Exception e) {
+                e.printStackTrace();
+                return;
+            }
             //}
-        }// end while 
     }
 
     @Override
@@ -150,9 +164,13 @@ public class WebCrawler implements Runnable, ConnectorCallback {
                     if (hasUpdate) {
                         GUIController.getProjectPanel(this.name).updateSearchTableModel();
                     }
+                  
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
+            }else if (Integer.parseInt(page) > 1)
+            { // and there is no more links so we have to stop this
+                stop();
             }
         }
     }

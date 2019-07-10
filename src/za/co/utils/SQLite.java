@@ -28,10 +28,18 @@ public class SQLite {
     private Connection con;
     private static String QUERY_TBL_NAME = "queries";
     private static String SRCH_TBL_NAME = "search";
+    private static SQLite instance;
 
     public SQLite() {
         //createDb();
         createTables();
+    }
+
+    public static SQLite getInstance() {
+        if (instance == null) {
+            instance = new SQLite();
+        }
+        return instance;
     }
 
     public void deleteSearch(int id) {
@@ -104,22 +112,26 @@ public class SQLite {
             createDb();
             PreparedStatement stm = con.prepareStatement(sql);
             stm.setInt(1, qId);
-            ResultSet rs = stm.executeQuery();
-            while (rs.next()) {
-                //String[] row = new String[2];
-                //row[0] = rs.getString(1);
-                //row[1] = Integer.toString( rs.getInt(2));
-                Vector v = new Vector();
-                v.addElement(rs.getString(1));
-                v.addElement(Integer.toString(rs.getInt(2)));
-                list.add(v);
+            synchronized (con) {
+                ResultSet rs = stm.executeQuery();
+                while (rs.next()) {
+                    //String[] row = new String[2];
+                    //row[0] = rs.getString(1);
+                    //row[1] = Integer.toString( rs.getInt(2));
+                    Vector v = new Vector();
+                    v.addElement(rs.getString(1));
+                    v.addElement(Integer.toString(rs.getInt(2)));
+                    list.add(v);
+                }
+                close(stm);
+                con.notifyAll();
             }
-            close(stm);
-            //   stm.close();
+//   stm.close();
             //   rs.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
+
         return list;
     }
 
@@ -152,14 +164,17 @@ public class SQLite {
             prep.setInt(6, page);
             prep.setInt(7, qId);
             //prep.setInt(6, topId);
-            prep.execute();
-            ResultSet rs = prep.getGeneratedKeys();
+            synchronized (con) {
+                prep.execute();
+                ResultSet rs = prep.getGeneratedKeys();
 
-            if (rs.next()) {
-                generatedKey = rs.getInt(1);
+                if (rs.next()) {
+                    generatedKey = rs.getInt(1);
+                }
+                close(prep);
+                con.notifyAll();
             }
-            close(prep);
-            //    prep.close();
+//    prep.close();
             //    rs.close();
             //return generatedKey;
             //}
@@ -185,6 +200,7 @@ public class SQLite {
         } catch (Exception e) {
             e.printStackTrace();
         }
+        ///notifyAll();
         return -1;
     }
 
@@ -202,7 +218,7 @@ public class SQLite {
         }
     }
 
-    public synchronized  void updatePage(int id, int page) {
+    public void updatePage(int id, int page) {
         String sql = "UPDATE " + QUERY_TBL_NAME + " SET lastPage = ? "
                 + "WHERE id = ?";
         PreparedStatement stm = null;
@@ -212,7 +228,11 @@ public class SQLite {
             stm = con.prepareStatement(sql);
             stm.setInt(1, page);
             stm.setInt(2, id);
-            stm.execute();
+            synchronized (con) {
+                stm.execute();
+                close(stm);
+                con.notifyAll();
+            }
 
             // stm.close();
             System.out.println("UPDADE TRANSACTION PAGE[" + page + "]");
@@ -222,55 +242,34 @@ public class SQLite {
                 // waitForTransaction();
                 // updatePage(id, page);
             }
-        } finally {
-            try {
-                close(stm);
-            } catch (Exception e) {
-                e.printStackTrace();;
-            }
         }
     }
 
-    public void waitForTransaction() {
-        try {
-            con.abort(new Executor() {
-                @Override
-                public void execute(Runnable command) {
-                    command.run();
-                    // throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-                }
-            });
-            long tm = System.currentTimeMillis();
-            while (System.currentTimeMillis() - tm < 100) {
-                Thread.yield();
-            }
-
-            //createDb();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public synchronized int getSearchQueryPage(int id) {
+    public int getSearchQueryPage(int id) {
         try {
             // Statement state = con.createStatement();
             String sql = "SELECT lastPage FROM " + QUERY_TBL_NAME + " WHERE id=?";
             createDb();
             PreparedStatement stm = con.prepareStatement(sql);
             stm.setInt(1, id);
-            ResultSet res = stm.executeQuery();
-            //ResultSet res = state.("SELECT lastPage FROM queries WHERE id=?");
             int lastPage = -1;
-            if (res.next()) {
-                lastPage = res.getInt("lastPage");
+            synchronized (con) {
+                ResultSet res = stm.executeQuery();
+                //ResultSet res = state.("SELECT lastPage FROM queries WHERE id=?");
+
+                if (res.next()) {
+                    lastPage = res.getInt("lastPage");
+                }
+                close(stm);
+                con.notifyAll();
             }
-            close(stm);
             // stm.close();
             //   res.close();
             return lastPage;
         } catch (Exception e) {
             e.printStackTrace();
         }
+        //notifyAll();
         return -1;
     }
 
@@ -285,13 +284,16 @@ public class SQLite {
                 prep.setString(1, query);
                 prep.setString(2, searchEngine);
                 prep.setInt(3, currentSearchPage);
-                prep.executeUpdate();
-                ResultSet rs = prep.getGeneratedKeys();
+                synchronized (con) {
+                    prep.executeUpdate();
+                    ResultSet rs = prep.getGeneratedKeys();
 
-                if (rs.next()) {
-                    generatedKey = rs.getInt(1);
+                    if (rs.next()) {
+                        generatedKey = rs.getInt(1);
+                    }
+                    close(prep);
+                    con.notifyAll();
                 }
-                close(prep);
                 // prep.close();
                 // rs.close();
                 //return generatedKey;
@@ -302,15 +304,17 @@ public class SQLite {
         return generatedKey;
     }
 
-    public synchronized  void createDb() {
+    public synchronized void createDb() {
         try {
             Class.forName("org.sqlite.JDBC");
+            if (con == null) {
+                con = DriverManager.getConnection("jdbc:sqlite:webtools.db");
+                //org.sqlite.SQLiteConnection c =  (SQLiteConnection)DriverManager.getConnection("jdbc:sqlite:webtools.db");
+                //c.
+                con.clearWarnings();
 
-            con = DriverManager.getConnection("jdbc:sqlite:webtools.db");
-            //org.sqlite.SQLiteConnection c =  (SQLiteConnection)DriverManager.getConnection("jdbc:sqlite:webtools.db");
-            //c.
-            con.clearWarnings();
-            System.out.println("Database Opened...\n");
+                System.out.println("Database Opened...\n");
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -318,8 +322,8 @@ public class SQLite {
 
     public synchronized void close(Statement stmt) throws Exception {
         stmt.close();
-        con.close();
-        con = null;
+        // con.close();
+        //  con = null;
     }
 
     public void createTables() {

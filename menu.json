@@ -50,6 +50,11 @@
                         "class":"webtools.gui.actions.DeleteProjectAction",
                         "name":"Delete Project ...",
                         "icon":".\\images\\delete.png"
+                    },
+                     {
+                        "class":"webtools.gui.actions.StopCrawlingAction",
+                        "name":"Stop Crawling ...",
+                        "icon":".\\images\\Stop24.gif"
                     }
             ],
             "Search Table":
