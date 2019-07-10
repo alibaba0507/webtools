@@ -92,6 +92,50 @@ public class SQLite {
     }
 
     /**
+     * Find all pages (URL) associated with selected domain
+     *
+     * @param qId - query ID
+     * @param domain - selected domain
+     * @return
+     */
+    public ArrayList<Vector> selectURLByDomain(int qId, String domain) {
+        String sql = "SELECT  protocol,dom,url,level,parent_id,page FROM " + SRCH_TBL_NAME + " WHERE q_id=? AND dom=?"
+                + " ORDER BY page DESC";
+        //protocol,dom,url,level,parent_id,page,q_id
+        ArrayList<Vector> list = new ArrayList<Vector>();
+        try {
+            createDb();
+            PreparedStatement stm = con.prepareStatement(sql);
+            stm.setInt(1, qId);
+            stm.setString(2, domain);
+            synchronized (con) {
+                ResultSet rs = stm.executeQuery();
+                while (rs.next()) {
+                   /*  "URL",
+                             "Google Page Number",
+                             "Crawl level",
+                             "Parent ID"
+                    */
+                    Vector v = new Vector();
+                    String url = rs.getString(1) + "://"
+                                + rs.getString(2)
+                               + rs.getString(3) ;
+                    v.addElement(url);
+                    v.addElement(Integer.toString(rs.getInt(6)));
+                    v.addElement(Integer.toString(rs.getInt(4)));
+                    v.addElement(Integer.toString(rs.getInt(5)));
+                    list.add(v);
+                }
+                close(stm);
+                con.notifyAll();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    /**
      * Find domain and count (how many times domain is repeated)
      *
      * @param qId - queryId

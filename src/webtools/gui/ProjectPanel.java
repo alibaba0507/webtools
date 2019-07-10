@@ -5,13 +5,18 @@
  */
 package webtools.gui;
 
+import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Vector;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -26,7 +31,12 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.SpringLayout;
+import javax.swing.event.TableModelEvent;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
+
 import webtools.gui.run.WebToolMainFrame;
 import za.co.utils.AWTUtils;
 import za.co.utils.SQLite;
@@ -44,7 +54,8 @@ public class ProjectPanel extends JPanel {
     private JTable tblSearchResult;
     private JTable tblPagesResult;
     private TextForm crawlForm;
-    private int limitDoaminRecord  = 100; // defauult
+    private int limitDoaminRecord = 100; // defauult
+    private int lastSearchSort = 0;
 
     //private JInternalFrame jif;
     public ProjectPanel(String title, JInternalFrame jif) {
@@ -107,14 +118,74 @@ public class ProjectPanel extends JPanel {
         tblSearchResult.getColumnModel().getColumn(0).setMinWidth(350);
         tblSearchResult.getColumnModel().getColumn(1).setMaxWidth(150);
         searchTableScrool.setViewportView(tblSearchResult);
+        JTableHeader header = tblSearchResult.getTableHeader();
+        header.setUpdateTableInRealTime(true);
+        //header.addMouseListener(tblSearchResult.new ColumnListener(table));
+        header.setReorderingAllowed(true);
+        header.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent e) {
+                TableColumnModel colModel = tblSearchResult.getColumnModel();
+                int columnModelIndex = colModel.getColumnIndexAtX(e.getX());
+                int modelIndex = colModel.getColumn(columnModelIndex)
+                        .getModelIndex();
 
-        tblPagesResult = new JTable();
-        tblPagesResult.setModel(new javax.swing.table.DefaultTableModel(
-                new Object[][]{},
-                new String[]{
-                    "URL", "Google Page Number"
+                if (modelIndex < 0) {
+                    return;
                 }
-        ) {
+                Vector v = ((DefaultTableModel) tblSearchResult.getModel()).getDataVector();
+                Collections.sort(v,
+                        new MyComparator(lastSearchSort != 0));
+                lastSearchSort = (lastSearchSort == 0) ? 1 : 0;
+                //Collections c = new PolicyUtils.Collections();
+                String[] s = new String[]{
+                    "Domain", "Pages"};
+                Vector col = new Vector();
+                col.insertElementAt(s[0], 0);
+                col.insertElementAt(s[1], 1);
+                ((DefaultTableModel) tblSearchResult.getModel()).setDataVector(v, col);
+                //table.tableChanged(new TableModelEvent(MyTableModel.this));
+                tblSearchResult.repaint();
+            }
+        });
+
+        tblSearchResult.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                //     super.mouseClicked(e); //To change body of generated methods, choose Tools | Templates.
+                if (e.getClickCount() == 2) {
+                   // System.out.println("double clicked");
+                    int row = tblSearchResult.getSelectedRow();
+                    String domain = (String) ((DefaultTableModel) tblSearchResult.getModel()).getValueAt(row, 0);
+                    SQLite db = SQLite.getInstance();
+                    String[] s = crawlForm.getFormValues();
+                    int id = db.findQueryId(s[1], s[3]);
+                    if (id > 0) {
+                        ArrayList<Vector> list = db.selectURLByDomain(id, domain);
+                        DefaultTableModel m = (DefaultTableModel) tblPagesResult.getModel();
+                        if (list.size() > 0) {
+                            while (m.getRowCount() >0) {
+                                m.removeRow(0);
+                            }
+                            for (int i = 0; i < list.size(); i++) {
+                                m.addRow(list.get(i));
+                            }// end for
+                        }// end if 
+                    }// end if
+                }
+            }
+        });
+        tblPagesResult = new JTable();
+
+        tblPagesResult.setModel(
+                new javax.swing.table.DefaultTableModel(
+                        new Object[][]{},
+                        new String[]{
+                            "URL",
+                            "Google Page Number",
+                            "Crawl level",
+                            "Parent ID"
+                        }
+                ) {
             boolean[] canEdit = new boolean[]{
                 false, false
             };
@@ -122,7 +193,8 @@ public class ProjectPanel extends JPanel {
             public boolean isCellEditable(int rowIndex, int columnIndex) {
                 return canEdit[columnIndex];
             }
-        });
+        }
+        );
         tblPagesResult.getColumnModel().getColumn(0).setMinWidth(350);
         tblPagesResult.getColumnModel().getColumn(1).setMaxWidth(250);
         searchPagesTableScrool.setViewportView(tblPagesResult);
@@ -132,17 +204,17 @@ public class ProjectPanel extends JPanel {
         //  updateSearchTableModel();
     }
 
-    public void updateSearchTableModel( ) {
-        
-          SQLite db = SQLite.getInstance();
-        
+    public void updateSearchTableModel() {
+
+        SQLite db = SQLite.getInstance();
+
         String[] s = crawlForm.getFormValues();
         int id = db.findQueryId(s[1], s[3]);
         if (id > 0) {
-            ArrayList<Vector> list = db.selectCoutDomains(id,limitDoaminRecord);
+            ArrayList<Vector> list = db.selectCoutDomains(id, limitDoaminRecord);
             DefaultTableModel m = (DefaultTableModel) tblSearchResult.getModel();
             if (list.size() != m.getRowCount()) {
-                for (int i = 0; i < m.getRowCount(); i++) {
+                while( m.getRowCount() > 0) {
                     m.removeRow(0);
                 }
                 for (int i = 0; i < list.size(); i++) {
@@ -234,6 +306,38 @@ public class ProjectPanel extends JPanel {
         JPanel p = new JPanel();
         p.add(submit);
         searchForm.add(p, BorderLayout.SOUTH);
+
     }
 
+}
+
+class MyComparator implements Comparator {
+
+    protected boolean isSortAsc;
+
+    public MyComparator(boolean sortAsc) {
+        isSortAsc = sortAsc;
+    }
+
+    public int compare(Object o1, Object o2) {
+        //if (!(o1 instanceof Integer) || !(o2 instanceof Integer)) {
+        //   return 0;
+        // }
+        Integer s1 = Integer.valueOf(((Vector) o1).elementAt(1).toString());
+        Integer s2 = Integer.valueOf(((Vector) o2).elementAt(1).toString());
+        int result = 0;
+        result = s1.compareTo(s2);
+        if (!isSortAsc) {
+            result = -result;
+        }
+        return result;
+    }
+
+    public boolean equals(Object obj) {
+        if (obj instanceof MyComparator) {
+            MyComparator compObj = (MyComparator) obj;
+            return compObj.isSortAsc == isSortAsc;
+        }
+        return false;
+    }
 }
