@@ -126,6 +126,8 @@ public class ProjectPanel extends JPanel {
             public void mouseClicked(MouseEvent e) {
                 TableColumnModel colModel = tblSearchResult.getColumnModel();
                 int columnModelIndex = colModel.getColumnIndexAtX(e.getX());
+                if (columnModelIndex < 0 || columnModelIndex >= colModel.getColumnCount())
+                    return;
                 int modelIndex = colModel.getColumn(columnModelIndex)
                         .getModelIndex();
 
@@ -152,25 +154,29 @@ public class ProjectPanel extends JPanel {
             @Override
             public void mouseClicked(MouseEvent e) {
                 //     super.mouseClicked(e); //To change body of generated methods, choose Tools | Templates.
-                if (e.getClickCount() == 2) {
-                   // System.out.println("double clicked");
-                    int row = tblSearchResult.getSelectedRow();
-                    String domain = (String) ((DefaultTableModel) tblSearchResult.getModel()).getValueAt(row, 0);
-                    SQLite db = SQLite.getInstance();
-                    String[] s = crawlForm.getFormValues();
-                    int id = db.findQueryId(s[1], s[3]);
-                    if (id > 0) {
-                        ArrayList<Vector> list = db.selectURLByDomain(id, domain);
-                        DefaultTableModel m = (DefaultTableModel) tblPagesResult.getModel();
-                        if (list.size() > 0) {
-                            while (m.getRowCount() >0) {
-                                m.removeRow(0);
-                            }
-                            for (int i = 0; i < list.size(); i++) {
-                                m.addRow(list.get(i));
-                            }// end for
-                        }// end if 
-                    }// end if
+                try {
+                    if (e.getClickCount() == 2) {
+                        // System.out.println("double clicked");
+                        int row = tblSearchResult.getSelectedRow();
+                        String domain = (String) ((DefaultTableModel) tblSearchResult.getModel()).getValueAt(row, 0);
+                        SQLite db = SQLite.getInstance();
+                        String[] s = crawlForm.getFormValues();
+                        int id = db.findQueryId(s[1], s[3]);
+                        if (id > 0) {
+                            ArrayList<Vector> list = db.selectURLByDomain(id, domain);
+                            DefaultTableModel m = (DefaultTableModel) tblPagesResult.getModel();
+                            if (list.size() > 0) {
+                                while (m.getRowCount() > 0) {
+                                    m.removeRow(0);
+                                }
+                                for (int i = 0; i < list.size(); i++) {
+                                    m.addRow(list.get(i));
+                                }// end for
+                            }// end if 
+                        }// end if
+                    }
+                } catch (Exception ex) {
+                    ex.printStackTrace();
                 }
             }
         });
@@ -197,6 +203,8 @@ public class ProjectPanel extends JPanel {
         );
         tblPagesResult.getColumnModel().getColumn(0).setMinWidth(350);
         tblPagesResult.getColumnModel().getColumn(1).setMaxWidth(250);
+        tblPagesResult.getColumnModel().getColumn(2).setMaxWidth(250);
+        tblPagesResult.getColumnModel().getColumn(3).setMaxWidth(250);
         searchPagesTableScrool.setViewportView(tblPagesResult);
 
         this.setLayout(new BorderLayout());
@@ -214,7 +222,7 @@ public class ProjectPanel extends JPanel {
             ArrayList<Vector> list = db.selectCoutDomains(id, limitDoaminRecord);
             DefaultTableModel m = (DefaultTableModel) tblSearchResult.getModel();
             if (list.size() != m.getRowCount()) {
-                while( m.getRowCount() > 0) {
+                while (m.getRowCount() > 0) {
                     m.removeRow(0);
                 }
                 for (int i = 0; i < list.size(); i++) {
@@ -235,12 +243,13 @@ public class ProjectPanel extends JPanel {
     private void initCrawlTab() {
         String[] labels = {"Project Name", "Search Query", "Search Engine",
             "Search URL",
-            "Link Regex"};
-        char[] mnemonics = {'P', 'Q', 'E', 'U', 'L'};
-        int[] widths = {15, 55, 15, 55, 55};
+            "Link Regex",
+            "Page Parser"};
+        char[] mnemonics = {'P', 'Q', 'E', 'U', 'L','X'};
+        int[] widths = {15, 55, 15, 55, 55,55};
         String[] descs = {"Project Name", "Search Engine query with | (or) inurl e.t.c",
             "Select Search Engine", "Search Engine URL",
-            "Regex for parsing links"};
+            "Regex for parsing links","Regex For Parsing Page"};
         crawlForm = new SearchForm(labels, mnemonics, widths, descs);
 
     }
@@ -262,12 +271,14 @@ public class ProjectPanel extends JPanel {
          */
         String[] labels = {"Project Name", "Search Query", "Search Engine",
             "Search URL",
-            "Link Regex"};
-        char[] mnemonics = {'P', 'Q', 'E', 'U', 'L'};
-        int[] widths = {15, 55, 15, 55, 55};
+            "Link Regex",
+        "Page Parser"};
+        char[] mnemonics = {'P', 'Q', 'E', 'U', 'L','R'};
+        int[] widths = {15, 55, 15, 55, 55,55};
         String[] descs = {"Project Name", "Search Engine query with | (or) inurl e.t.c",
             "Select Search Engine", "Search Engine URL",
-            "Regex for parsing links"};
+            "Regex for parsing links",
+          "Regex For Parsing Page"};
         crawlForm = new SearchForm(labels, mnemonics, widths, descs);
         submit = new JButton("Save Project", new ImageIcon(AWTUtils.getIcon(this, ".\\images\\Save24.gif")));
         Object list = WebToolMainFrame.defaultProjectProperties.get(this.title);
@@ -305,7 +316,7 @@ public class ProjectPanel extends JPanel {
         searchForm.add(crawlForm, BorderLayout.NORTH);
         JPanel p = new JPanel();
         p.add(submit);
-        searchForm.add(p, BorderLayout.SOUTH);
+        searchForm.add(p, BorderLayout.CENTER);
 
     }
 

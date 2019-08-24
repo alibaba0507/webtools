@@ -200,10 +200,11 @@ public class WebToolMainFrame extends JFrame {
     public void updateProjectTree() {
         projectListModel.clear();
         WebToolMainFrame.defaultProjectProperties.keySet().forEach(e -> {
-
-            projectListModel.addElement(new ListEntry((String) e,
-                    new ImageIcon(AWTUtils.getIcon(desktop,
-                            Main.prop.getProperty("project.item.image")))));
+            if (!((String) e).startsWith("proxy.")) {
+                projectListModel.addElement(new ListEntry((String) e,
+                        new ImageIcon(AWTUtils.getIcon(desktop,
+                                Main.prop.getProperty("project.item.image")))));
+            }
         });
         projectList.setSelectedIndex(projectListModel.size() - 1);
 

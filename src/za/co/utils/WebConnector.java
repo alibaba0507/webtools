@@ -119,7 +119,7 @@ public class WebConnector {
                     .referrer(referer)
                     .ignoreContentType(true) // This is used because Jsoup "approved" content-types parsing is enabled by default by Jsoup
                     .followRedirects(false)
-                    .timeout(0)
+                    .timeout(60 * 1000)
                     .execute();
 
             if (response.hasHeader("location") && isFollowRedirect) {

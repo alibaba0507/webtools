@@ -108,6 +108,51 @@ No other search term can be appended to this search operator and the specified w
        "example":"Typing link:www.berkeley.edu in the search box returns all the pages that link to that page."
      },
      {
+       "keyword":"inblogtitle:",
+       "descr":"Restricts the search to blog titles only",
+       "example":"Typing link:www.berkeley.edu in the search box returns all the pages that link to that page."
+     },
+     {
+       "keyword":"blogurl:",
+       "descr":"Restricts the search to blog url only",
+       "example":"Typing link:www.berkeley.edu in the search box returns all the pages that link to that page."
+     },
+      {
+       "keyword":"Keyword +site:wordpress.com",
+       "descr":"Find blog relavent to your industry ",
+       "example":"Typing link:www.berkeley.edu in the search box returns all the pages that link to that page."
+     },
+       {
+       "keyword":"Keyword +site:blogspot.com",
+       "descr":"Find blog relavent to your industry ",
+       "example":"Typing link:www.berkeley.edu in the search box returns all the pages that link to that page."
+     },
+       {
+       "keyword":"Keyword +site:typepad.com",
+       "descr":"Find blog relavent to your industry ",
+       "example":"Typing link:www.berkeley.edu in the search box returns all the pages that link to that page."
+     },
+     {
+       "keyword":"Keyword +site:edublogs.org",
+       "descr":"Find blog relavent to your industry ",
+       "example":"Typing link:www.berkeley.edu in the search box returns all the pages that link to that page."
+     },
+     {
+       "keyword":"Keyword +site:livejournal.com",
+       "descr":"Find blog relavent to your industry ",
+       "example":"Typing link:www.berkeley.edu in the search box returns all the pages that link to that page."
+     },
+      {
+       "keyword":"Keyword +intext:\"power by wordpress\"",
+       "descr":"Find blog relavent to your industry ",
+       "example":"Typing link:www.berkeley.edu in the search box returns all the pages that link to that page."
+     },
+     {
+       "keyword":"Keyword +intext:\"power by typepad\"",
+       "descr":"Find blog relavent to your industry ",
+       "example":"Typing link:www.berkeley.edu in the search box returns all the pages that link to that page."
+     },
+     {
        "keyword":"site:",
        "descr":"Restricts the search to documents in a web site. \n 
        If you do not specify the web site and just type the generic top-level domain,\n 

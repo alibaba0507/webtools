@@ -9,6 +9,8 @@ import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Vector;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.swing.SwingWorker;
 import javax.swing.table.DefaultTableModel;
 import org.jsoup.nodes.Document;
@@ -30,6 +32,7 @@ public class WebCrawler implements Runnable, ConnectorCallback {
     private SQLite sql;
     private String searcURL;
     private String regexStr;
+    private String regexParserString;
     private int queryId;
     private String searchQuery;
     private WebConnector webC;
@@ -54,6 +57,8 @@ public class WebCrawler implements Runnable, ConnectorCallback {
         this.searchQuery = list[1];
         this.searcURL = list[3];
         this.regexStr = list[4];
+        if (list.length > 5)
+            this.regexParserString = list[5];
         queryId = sql.saveQuery(list[1], list[3], 0);
          
 
@@ -131,10 +136,10 @@ public class WebCrawler implements Runnable, ConnectorCallback {
             if (page == 0) {
                 page = 1;
             }
-            String ipAddr = this.searcURL + this.searchQuery + "&start=" + (page * 10);
+            String ipAddr = this.searcURL + WebRequest.encodeValue(this.searchQuery) + "&start=" + (page * 10);
             try {
                 Document doc = webC.get(new WebRequest(ipAddr, null));// new WebTools().search(urlEncode, "", true);
-                this.callback.callback(name, searchQuery, regexStr, Integer.toString(page), doc);
+                this.callback.callback(name, searchQuery, regexStr,regexParserString, Integer.toString(page), doc);
             } catch (Exception e) {
                 e.printStackTrace();
                 return;
@@ -143,7 +148,7 @@ public class WebCrawler implements Runnable, ConnectorCallback {
     }
 
     @Override
-    public void callback(String title, String searchQuery, String regexStr, String page, Document doc) {
+    public void callback(String title, String searchQuery, String regexStr,String regexParserStr, String page, Document doc) {
         // throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
         if (doc != null) {
             Elements links = doc.select(regexStr);
@@ -160,7 +165,16 @@ public class WebCrawler implements Runnable, ConnectorCallback {
                         sql.saveSearch(queryId, result, 0, 0, Integer.parseInt(page));
                         //final String url = URLDecoder.decode(result, "UTF-8");
                         hasUpdate = true;
-                    }// end for          
+                    }// end for     
+                    if (regexParserString != null && !regexParserString.trim().equals(""))
+                    {
+                       String txt = doc.text();
+                        Pattern p = Pattern.compile(regexParserString.trim());
+                        Matcher matcher = p.matcher(txt);
+                        while (matcher.find()) {
+                            System.out.println(matcher.group());
+                        }//  end while
+                    }
                     if (hasUpdate) {
                         GUIController.getProjectPanel(this.name).updateSearchTableModel();
                     }

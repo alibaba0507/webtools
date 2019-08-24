@@ -79,6 +79,7 @@ public class NetworkSetingDialog extends javax.swing.JDialog {
 
                     WebToolMainFrame.defaultProjectProperties.put("proxy.tor.host", txtTorHost.getText());
                     WebToolMainFrame.defaultProjectProperties.put("proxy.tor.port", txtTorPort.getText());
+                    WebToolMainFrame.saveProjectPropToFile();
                 }
                 NetworkSetingDialog.this.dispose();
             }
@@ -370,6 +371,11 @@ public class NetworkSetingDialog extends javax.swing.JDialog {
         rbUseTor.setText("Use Tor Proxy");
 
         btnOk.setText("Ok");
+        btnOk.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnOkActionPerformed(evt);
+            }
+        });
 
         jLabel4.setText("Host");
 
@@ -479,6 +485,10 @@ public class NetworkSetingDialog extends javax.swing.JDialog {
     private void btnTestTorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnTestTorActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_btnTestTorActionPerformed
+
+    private void btnOkActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnOkActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_btnOkActionPerformed
 
     /**
      * @param args the command line arguments

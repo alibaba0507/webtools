@@ -12,5 +12,5 @@ import org.jsoup.nodes.Document;
  * @author alibaba0507
  */
 public interface ConnectorCallback {
-    public void callback(String title , String searchQuery,String regexStr,String page,Document doc);
+    public void callback(String title , String searchQuery,String regexStrLinks,String regexParserStr,String page,Document doc);
 }
