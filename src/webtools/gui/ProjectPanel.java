@@ -7,6 +7,7 @@ package webtools.gui;
 
 import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils;
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -36,6 +37,7 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
+import webtools.gui.run.Main;
 
 import webtools.gui.run.WebToolMainFrame;
 import za.co.utils.AWTUtils;
@@ -51,12 +53,13 @@ public class ProjectPanel extends JPanel {
     private JTabbedPane tabs;
     private String title;
     private JButton submit;
+     private JTable tblRegexResult;
     private JTable tblSearchResult;
     private JTable tblPagesResult;
     private TextForm crawlForm;
     private int limitDoaminRecord = 100; // defauult
     private int lastSearchSort = 0;
-
+    private int lastregexSort = 0;
     //private JInternalFrame jif;
     public ProjectPanel(String title, JInternalFrame jif) {
         super();
@@ -85,17 +88,90 @@ public class ProjectPanel extends JPanel {
     public DefaultTableModel getSearchPageTableModel() {
         return (DefaultTableModel) tblPagesResult.getModel();
     }
+    
+    
+    
+      private void initRegexTab(JPanel pnlRegexResults)
+    {
+        pnlRegexResults.setLayout(new BorderLayout());
+        JScrollPane searchTableScrool = new JScrollPane();
+        searchTableScrool.setMaximumSize(new Dimension(650, 50));
+        searchTableScrool.setPreferredSize(new Dimension(0, 50));
+            
+        JPanel pnlButtons = new JPanel();
+        pnlRegexResults.add(searchTableScrool, BorderLayout.CENTER);
+        pnlRegexResults.add(pnlButtons,BorderLayout.SOUTH);
+        JButton btnSaveRegex = new JButton("Save Regex To File", new ImageIcon(AWTUtils.getIcon(this, ".\\images\\Save24.gif")));
+        pnlButtons.setLayout(new FlowLayout());
+        pnlButtons.add(btnSaveRegex);
+        btnSaveRegex.addActionListener(new ActionListener() {
+             @Override
+            public void actionPerformed(ActionEvent e) {
+                JOptionPane.showMessageDialog(ProjectPanel.this, "Comming Soon ...");
+            } 
+         });
+        tblRegexResult = new JTable();
+        tblRegexResult.setModel(new javax.swing.table.DefaultTableModel(
+                new Object[][]{},
+                new String[]{
+                    "id","Regex Keywords"
+                }
+        ) {
+            boolean[] canEdit = new boolean[]{
+                false, false
+            };
 
-    private void initTabs() {
-        initSeachForm();
-        tabs = new JTabbedPane();
-        tabs.addTab("Settings", searchForm);
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit[columnIndex];
+            }
+        });
+        searchTableScrool.setViewportView(tblRegexResult);
+         JTableHeader header = tblRegexResult.getTableHeader();
+        header.setUpdateTableInRealTime(true);
+        // Sort of column when click on header ASC DESC
+         header.setReorderingAllowed(true);
+        header.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent e) {
+                TableColumnModel colModel = tblRegexResult.getColumnModel();
+                int columnModelIndex = colModel.getColumnIndexAtX(e.getX());
+                if (columnModelIndex < 0 || columnModelIndex >= colModel.getColumnCount())
+                    return;
+                int modelIndex = colModel.getColumn(columnModelIndex)
+                        .getModelIndex();
 
-        JPanel pnlSearchResult = new JPanel();
-        tabs.addTab("Crawl Results", pnlSearchResult);
+                if (modelIndex < 0) {
+                    return;
+                }
+                Vector v = ((DefaultTableModel) tblSearchResult.getModel()).getDataVector();
+                Collections.sort(v,
+                        new MyComparator(lastregexSort != 0));
+                lastregexSort = (lastregexSort == 0) ? 1 : 0;
+                //Collections c = new PolicyUtils.Collections();
+                String[] s = new String[]{
+                    "id","Regex Keywords"};
+                Vector col = new Vector();
+                col.insertElementAt(s[0], 0);
+                col.insertElementAt(s[1], 1);
+                ((DefaultTableModel) tblRegexResult.getModel()).setDataVector(v, col);
+                //table.tableChanged(new TableModelEvent(MyTableModel.this));
+                tblRegexResult.repaint();
+            }
+        });
+
+    }
+      
+    private void initSearchTab(JPanel pnlSearchResult)
+    {
+         
         pnlSearchResult.setLayout(new BorderLayout());
         JScrollPane searchTableScrool = new JScrollPane();
         JScrollPane searchPagesTableScrool = new JScrollPane();
+         searchTableScrool.setMaximumSize(new Dimension(350, 50));
+        searchTableScrool.setPreferredSize(new Dimension(0, 50));
+        
+         searchPagesTableScrool.setMaximumSize(new Dimension(350, 50));
+        searchPagesTableScrool.setPreferredSize(new Dimension(0, 50));
+        
         JSplitPane searchQuerySplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT, searchTableScrool, searchPagesTableScrool);
         searchQuerySplit.setOneTouchExpandable(true);
         searchQuerySplit.setDividerLocation(150);
@@ -206,12 +282,52 @@ public class ProjectPanel extends JPanel {
         tblPagesResult.getColumnModel().getColumn(2).setMaxWidth(250);
         tblPagesResult.getColumnModel().getColumn(3).setMaxWidth(250);
         searchPagesTableScrool.setViewportView(tblPagesResult);
+    }
+  
+    private void initTabs() {
+        initSeachForm();
+        tabs = new JTabbedPane();
+        tabs.addTab("Settings", searchForm);
+
+        JPanel pnlSearchResult = new JPanel();
+        tabs.addTab("Crawl Results", pnlSearchResult);
+        initSearchTab(pnlSearchResult);
+        JPanel pnlRegexResults = new JPanel();
+         tabs.addTab("Regex Results", pnlRegexResults);
+        initRegexTab(pnlRegexResults);
 
         this.setLayout(new BorderLayout());
         this.add(tabs, BorderLayout.CENTER);
         //  updateSearchTableModel();
     }
-
+    
+    public void updateRegexTableModel()
+    {
+         SQLite db = SQLite.getInstance();
+         String[] s = crawlForm.getFormValues();
+        int id = db.findQueryId(s[1], s[3]);
+        if (id > 0) {
+              Vector v = ((DefaultTableModel) tblSearchResult.getModel()).getDataVector();
+                Collections.sort(v,
+                        new MyComparator(false));
+          int indx = -1;  
+          if (v.size() > 0)
+          {
+              Vector row = (Vector)v.get(0);
+              indx = Integer.parseInt((String)row.get(0));
+          }
+          ArrayList<Vector> list = db.selectRegex(id,indx);
+          if (list.size()> 0)
+          {
+              DefaultTableModel m = (DefaultTableModel) tblRegexResult.getModel();
+              for (int i = 0;i < list.size();i++)
+              {
+                  //Vector row = list.get(i);
+                  m.addRow(list.get(i));
+              }
+          }
+        }
+    }
     public void updateSearchTableModel() {
 
         SQLite db = SQLite.getInstance();

@@ -163,7 +163,37 @@ public class SQLite {
         }
         return list;
     }
+ 
+    
+  public ArrayList<Vector> selectRegex(int qId,int startIndx) {
+   String sql = "SELECT id,txt FROM " + REGEX_TBL_NAME + " WHERE q_id=? AND id>? "
+                + " GROUP BY dom ORDER BY txt ASC";
+  
+  ArrayList<Vector> list = new ArrayList<Vector>();
+        try {
+            createDb();
+            PreparedStatement stm = con.prepareStatement(sql);
+            stm.setInt(1, qId);
+            stm.setInt(2, startIndx);
+            synchronized (con) {
+                ResultSet rs = stm.executeQuery();
+                while (rs.next()) {
+                      Vector v = new Vector();
+                    v.addElement(Integer.toString(rs.getInt(1)));
+                    v.addElement((rs.getString(2)));
+                    list.add(v);
+                }
+                close(stm);
+                con.notifyAll();
+            }
+//   stm.close();
+            //   rs.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
+        return list;
+  }
     /**
      * Find domain and count (how many times domain is repeated)
      *
