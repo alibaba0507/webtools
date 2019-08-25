@@ -28,6 +28,10 @@ public class SQLite {
     private Connection con;
     private static String QUERY_TBL_NAME = "queries";
     private static String SRCH_TBL_NAME = "search";
+    private static String REGEX_TBL_NAME = "regexSearch";
+    
+    
+    
     private static SQLite instance;
 
     public SQLite() {
@@ -55,7 +59,32 @@ public class SQLite {
             e.printStackTrace();
         }
     }
-
+    
+    public int findRegexSearch(int qId,String txt)
+    {
+        try {
+            createDb();
+            String sql = "SELECT id FROM " + REGEX_TBL_NAME + " WHERE "
+                    + "q_id=? AND txt=?";
+            PreparedStatement stm = con.prepareStatement(sql);
+            //ResultSet res = state.executeQuery("SELECT id FROM search WHERE "
+            //       + "q_id=? AND dom=? AND url=? ");
+            stm.setInt(1, qId);
+            stm.setString(2, txt);
+            ResultSet rs = stm.executeQuery();
+            int id = -1;
+            if (rs.next()) {
+                id = rs.getInt("id");
+            }
+            close(stm);
+            //  rs.close();
+            //  state.close();
+            return id;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
     public int findSearch(int qId, String url) {
         try {
             createDb();
@@ -178,7 +207,47 @@ public class SQLite {
 
         return list;
     }
+    
+    public int saveReqex (int qId,String reqexStr)
+    {
+          int generatedKey = 0;
+        try {
 
+            generatedKey = findRegexSearch(qId, reqexStr);
+            if (generatedKey > 0) {
+                return generatedKey;
+            }
+            // int id = findQueryId(projecName, query, searchEngine);
+            // if (id == -1) {
+            createDb();
+            PreparedStatement prep = con.prepareStatement("insert into " + REGEX_TBL_NAME
+                    + " (txt,q_id) values(?,?);");
+           
+            prep.setString(1, reqexStr);
+            
+            prep.setInt(2, qId);
+            //prep.setInt(6, topId);
+            synchronized (con) {
+                prep.execute();
+                ResultSet rs = prep.getGeneratedKeys();
+
+                if (rs.next()) {
+                    generatedKey = rs.getInt(1);
+                }
+                close(prep);
+                con.notifyAll();
+            }
+//    prep.close();
+            //    rs.close();
+            //return generatedKey;
+            //}
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return generatedKey;
+    }
+    
+    
     public int saveSearch(int qId, String url, int level, int topId, int page) {
         int generatedKey = 0;
         try {
@@ -247,9 +316,40 @@ public class SQLite {
         ///notifyAll();
         return -1;
     }
-
+    
+    public void deleteSearchByQueryId(int id) {
+        try {
+            String sql = "DELETE FROM " + SRCH_TBL_NAME + " WHERE q_id=?";
+            createDb();
+            PreparedStatement statement = con.prepareStatement(sql);
+            statement.setInt(1, id);
+            int rowsDeleted = statement.executeUpdate();
+            // statement.close();
+            close(statement);
+          
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    
+    public void deleteRegexQuery(int id) {
+        try {
+            String sql = "DELETE FROM " + REGEX_TBL_NAME + " WHERE q_id=?";
+            createDb();
+            PreparedStatement statement = con.prepareStatement(sql);
+            statement.setInt(1, id);
+            int rowsDeleted = statement.executeUpdate();
+            // statement.close();
+            close(statement);
+          
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    
     public void deleteQuery(int id) {
         try {
+            if (id <= 0) return;
             String sql = "DELETE FROM " + QUERY_TBL_NAME + " WHERE id=?";
             createDb();
             PreparedStatement statement = con.prepareStatement(sql);
@@ -257,11 +357,13 @@ public class SQLite {
             int rowsDeleted = statement.executeUpdate();
             // statement.close();
             close(statement);
+            deleteRegexQuery(id); // delete all assocated queries
+            deleteSearchByQueryId(id);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
-
+    
     public void updatePage(int id, int page) {
         String sql = "UPDATE " + QUERY_TBL_NAME + " SET lastPage = ? "
                 + "WHERE id = ?";
@@ -404,7 +506,19 @@ public class SQLite {
 
                 stmt.executeUpdate(sql);
             }
+           
+             res = stmt.executeQuery("SELECT name FROM sqlite_master WHERE type='table' AND name='" + REGEX_TBL_NAME + "'");
+             if (!res.next()) {
+                System.out.println("Building the User [" + REGEX_TBL_NAME + "] table with prepopulated values.");
 
+                String sql = "CREATE TABLE " + REGEX_TBL_NAME
+                        + " (id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                        + " txt TEXT NOT NULL,"
+                        + " q_id INTEGER NOT NULL); ";
+
+                stmt.executeUpdate(sql);
+            }
+           
             res = stmt.executeQuery("SELECT name FROM sqlite_master WHERE type='table' AND name='filter'");
             if (!res.next()) {
 

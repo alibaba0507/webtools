@@ -281,7 +281,7 @@ public class ProjectPanel extends JPanel {
           "Regex For Parsing Page"};
         crawlForm = new SearchForm(labels, mnemonics, widths, descs);
         submit = new JButton("Save Project", new ImageIcon(AWTUtils.getIcon(this, ".\\images\\Save24.gif")));
-        Object list = WebToolMainFrame.defaultProjectProperties.get(this.title);
+        final Object list = WebToolMainFrame.defaultProjectProperties.get(this.title);
         if (list != null) {
             crawlForm.setFormValues((String[]) list);
         }
@@ -305,6 +305,29 @@ public class ProjectPanel extends JPanel {
                     c = c.getParent();
                 }
                 //((JInternalFrame)ProjectPanel.this.getParent().getParent()).setTitle(form.getText(0));
+                // we must check to c if search query change
+                String query = "";
+                String searchEngine = "";
+                String regex = "";
+                if (list != null)
+                {
+                    query = ((String[])list)[1];
+                    searchEngine = ((String[])list)[3];
+                    regex = ((String[])list)[5];
+                }
+              
+                if ((!query.equals("") && !query.equals(crawlForm.getText(1)))
+                         || (!searchEngine.equals("") && !searchEngine.equals(crawlForm.getText(3))))
+                {
+                    String newQuery = crawlForm.getText(1);
+                    int qId = SQLite.getInstance().findQueryId(query, searchEngine);
+                    SQLite.getInstance().deleteQuery(qId);
+                }else if (!regex.equals("") && !regex.equals(crawlForm.getText(5)))
+                {
+                     int qId = SQLite.getInstance().findQueryId(query, searchEngine);
+                    SQLite.getInstance().deleteRegexQuery(qId);
+                }
+                
                 WebToolMainFrame.defaultProjectProperties.put(crawlForm.getText(0), crawlForm.getFormValues());
                 WebToolMainFrame.saveProjectPropToFile();
                 // repload the tree

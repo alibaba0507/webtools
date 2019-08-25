@@ -172,7 +172,9 @@ public class WebCrawler implements Runnable, ConnectorCallback {
                         Pattern p = Pattern.compile(regexParserString.trim());
                         Matcher matcher = p.matcher(txt);
                         while (matcher.find()) {
-                            System.out.println(matcher.group());
+                            String res = matcher.group();
+                            System.out.println(res);
+                            sql.saveReqex(queryId, res);
                         }//  end while
                     }
                     if (hasUpdate) {
