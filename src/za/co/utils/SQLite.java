@@ -167,7 +167,7 @@ public class SQLite {
     
   public ArrayList<Vector> selectRegex(int qId,int startIndx) {
    String sql = "SELECT id,txt FROM " + REGEX_TBL_NAME + " WHERE q_id=? AND id>? "
-                + " GROUP BY dom ORDER BY txt ASC";
+                + " GROUP BY txt ORDER BY id ASC";
   
   ArrayList<Vector> list = new ArrayList<Vector>();
         try {
@@ -179,7 +179,7 @@ public class SQLite {
                 ResultSet rs = stm.executeQuery();
                 while (rs.next()) {
                       Vector v = new Vector();
-                    v.addElement(Integer.toString(rs.getInt(1)));
+                    v.addElement(Integer.valueOf(rs.getInt(1)));
                     v.addElement((rs.getString(2)));
                     list.add(v);
                 }

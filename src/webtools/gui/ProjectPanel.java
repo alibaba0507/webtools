@@ -79,6 +79,7 @@ public class ProjectPanel extends JPanel {
             }
         });
         updateSearchTableModel();
+        updateRegexTableModel();
     }
 
     public DefaultTableModel getSearchDomainTableModel() {
@@ -142,9 +143,9 @@ public class ProjectPanel extends JPanel {
                 if (modelIndex < 0) {
                     return;
                 }
-                Vector v = ((DefaultTableModel) tblSearchResult.getModel()).getDataVector();
+                Vector v = ((DefaultTableModel) tblRegexResult.getModel()).getDataVector();
                 Collections.sort(v,
-                        new MyComparator(lastregexSort != 0));
+                        new MyComparator(lastregexSort != 0,0));
                 lastregexSort = (lastregexSort == 0) ? 1 : 0;
                 //Collections c = new PolicyUtils.Collections();
                 String[] s = new String[]{
@@ -307,14 +308,14 @@ public class ProjectPanel extends JPanel {
          String[] s = crawlForm.getFormValues();
         int id = db.findQueryId(s[1], s[3]);
         if (id > 0) {
-              Vector v = ((DefaultTableModel) tblSearchResult.getModel()).getDataVector();
+              Vector v = ((DefaultTableModel) tblRegexResult.getModel()).getDataVector();
                 Collections.sort(v,
-                        new MyComparator(false));
+                        new MyComparator(false,0));
           int indx = -1;  
           if (v.size() > 0)
           {
               Vector row = (Vector)v.get(0);
-              indx = Integer.parseInt((String)row.get(0));
+              indx = ((Integer)row.get(0)).intValue();
           }
           ArrayList<Vector> list = db.selectRegex(id,indx);
           if (list.size()> 0)
@@ -464,7 +465,13 @@ public class ProjectPanel extends JPanel {
 class MyComparator implements Comparator {
 
     protected boolean isSortAsc;
-
+    private int sortIndx = 1;
+    
+     public MyComparator(boolean sortAsc,int sortIndx) {
+        isSortAsc = sortAsc;
+        this.sortIndx = sortIndx;
+    }
+     
     public MyComparator(boolean sortAsc) {
         isSortAsc = sortAsc;
     }
@@ -473,8 +480,8 @@ class MyComparator implements Comparator {
         //if (!(o1 instanceof Integer) || !(o2 instanceof Integer)) {
         //   return 0;
         // }
-        Integer s1 = Integer.valueOf(((Vector) o1).elementAt(1).toString());
-        Integer s2 = Integer.valueOf(((Vector) o2).elementAt(1).toString());
+        Integer s1 = Integer.valueOf(((Vector) o1).elementAt(sortIndx).toString());
+        Integer s2 = Integer.valueOf(((Vector) o2).elementAt(sortIndx).toString());
         int result = 0;
         result = s1.compareTo(s2);
         if (!isSortAsc) {
