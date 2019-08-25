@@ -29,8 +29,8 @@ public class SQLite {
     private static String QUERY_TBL_NAME = "queries";
     private static String SRCH_TBL_NAME = "search";
     private static String REGEX_TBL_NAME = "regexSearch";
-    
-    
+    // this table will save resul of most used words among this sites
+    private static String USED_KEYWORDS_TBL_NAME ="usedKeywords";
     
     private static SQLite instance;
 
@@ -60,6 +60,34 @@ public class SQLite {
         }
     }
     
+    public int[] findKeyWord(int qId,String word)
+    {
+        int ret[] = new int[0];
+        try {
+            createDb();
+            String sql = "SELECT id,count FROM " + USED_KEYWORDS_TBL_NAME + " WHERE "
+                    + "q_id=? AND word=?";
+            PreparedStatement stm = con.prepareStatement(sql);
+            //ResultSet res = state.executeQuery("SELECT id FROM search WHERE "
+            //       + "q_id=? AND dom=? AND url=? ");
+            stm.setInt(1, qId);
+            stm.setString(2, word);
+            ResultSet rs = stm.executeQuery();
+            int id = -1;
+            if (rs.next()) {
+                ret = new int[2];
+                ret[0] = rs.getInt("id");
+                 ret[1] = rs.getInt("count");
+            }
+            close(stm);
+            //  rs.close();
+            //  state.close();
+            return ret;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return ret;
+    }
     public int findRegexSearch(int qId,String txt)
     {
         try {
@@ -238,6 +266,49 @@ public class SQLite {
         return list;
     }
     
+    public int saveKeyWords(int qId,String word)
+    {
+        int generatedKey = 0;
+         try {
+
+            int ret[] = findKeyWord(qId, word);
+            if (ret.length > 0) {
+                // update
+                updateKeyWord(ret[0], ret[1]+1);
+                return ret[0];
+            }
+            // int id = findQueryId(projecName, query, searchEngine);
+            // if (id == -1) {
+            createDb();
+            PreparedStatement prep = con.prepareStatement("insert into " + USED_KEYWORDS_TBL_NAME
+                    + " (word,count,q_id) values(?,?,?);");
+           
+            prep.setString(1, word);
+            prep.setInt(2, qId);
+             prep.setInt(3, 1); // coujnt of the words
+            //prep.setInt(6, topId);
+            synchronized (con) {
+                prep.execute();
+                ResultSet rs = prep.getGeneratedKeys();
+
+                if (rs.next()) {
+                    generatedKey = rs.getInt(1);
+                }
+                close(prep);
+                con.notifyAll();
+            }
+//    prep.close();
+            //    rs.close();
+            //return generatedKey;
+            //}
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        
+        return generatedKey;
+    }
+    
+   
     public int saveReqex (int qId,String reqexStr)
     {
           int generatedKey = 0;
@@ -394,6 +465,34 @@ public class SQLite {
         }
     }
     
+    
+    public void updateKeyWord(int id,int count)
+    {
+         String sql = "UPDATE " + USED_KEYWORDS_TBL_NAME + " SET count = ? "
+                + "WHERE id = ?";
+        PreparedStatement stm = null;
+        try {
+            createDb();
+            boolean r = con.isReadOnly();
+            stm = con.prepareStatement(sql);
+            stm.setInt(1, count);
+            stm.setInt(2, id);
+            synchronized (con) {
+                stm.execute();
+                close(stm);
+                con.notifyAll();
+            }
+
+            // stm.close();
+            System.out.println("UPDADE TRANSACTION WORD CNT[" + count + "]");
+        } catch (Exception e) {
+            if (e.getMessage().indexOf("[SQLITE_BUSY]") > -1) {
+                e.printStackTrace();
+                // waitForTransaction();
+                // updatePage(id, page);
+            }
+        }
+    }
     public void updatePage(int id, int page) {
         String sql = "UPDATE " + QUERY_TBL_NAME + " SET lastPage = ? "
                 + "WHERE id = ?";
@@ -544,6 +643,20 @@ public class SQLite {
                 String sql = "CREATE TABLE " + REGEX_TBL_NAME
                         + " (id INTEGER PRIMARY KEY AUTOINCREMENT,"
                         + " txt TEXT NOT NULL,"
+                        + " q_id INTEGER NOT NULL); ";
+
+                stmt.executeUpdate(sql);
+            }
+             
+             
+             res = stmt.executeQuery("SELECT name FROM sqlite_master WHERE type='table' AND name='" + USED_KEYWORDS_TBL_NAME + "'");
+             if (!res.next()) {
+                System.out.println("Building the User [" + USED_KEYWORDS_TBL_NAME + "] table with prepopulated values.");
+
+                String sql = "CREATE TABLE " + USED_KEYWORDS_TBL_NAME
+                        + " (id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                        + " word TEXT NOT NULL,"
+                        + " count INTEGER,"
                         + " q_id INTEGER NOT NULL); ";
 
                 stmt.executeUpdate(sql);

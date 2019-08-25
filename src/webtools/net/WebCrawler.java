@@ -167,10 +167,12 @@ public class WebCrawler implements Runnable, ConnectorCallback {
                         //final String url = URLDecoder.decode(result, "UTF-8");
                         hasUpdate = true;
                     }// end for
+                    // strip HTML , this is plain text
+                    String txt = doc.text();
                      boolean foundRegex = false;
                     if (regexParserString != null && !regexParserString.trim().equals(""))
                     {
-                       String txt = doc.text();
+                       
                         Pattern p = Pattern.compile(regexParserString.trim());
                         Matcher matcher = p.matcher(txt);
                        
@@ -181,6 +183,15 @@ public class WebCrawler implements Runnable, ConnectorCallback {
                             sql.saveReqex(queryId, res);
                         }//  end while
                     }
+                    
+                    String[] words = txt.split("\\s+");
+                    for (int i = 0;i < words.length;i++)
+                    {
+                        if (words[i].length() > 4)
+                        {
+                            sql.saveKeyWords(queryId, words[1]);
+                        }
+                    }// end for
                     if (hasUpdate) {
                         GUIController.getProjectPanel(this.name).updateSearchTableModel();
                     }
