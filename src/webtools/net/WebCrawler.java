@@ -5,6 +5,7 @@
  */
 package webtools.net;
 
+import com.sun.org.apache.xpath.internal.FoundIndex;
 import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -165,22 +166,28 @@ public class WebCrawler implements Runnable, ConnectorCallback {
                         sql.saveSearch(queryId, result, 0, 0, Integer.parseInt(page));
                         //final String url = URLDecoder.decode(result, "UTF-8");
                         hasUpdate = true;
-                    }// end for     
+                    }// end for
+                     boolean foundRegex = false;
                     if (regexParserString != null && !regexParserString.trim().equals(""))
                     {
                        String txt = doc.text();
                         Pattern p = Pattern.compile(regexParserString.trim());
                         Matcher matcher = p.matcher(txt);
+                       
                         while (matcher.find()) {
                             String res = matcher.group();
                             System.out.println(res);
+                            foundRegex = true;
                             sql.saveReqex(queryId, res);
                         }//  end while
                     }
                     if (hasUpdate) {
                         GUIController.getProjectPanel(this.name).updateSearchTableModel();
                     }
-                  
+                   if (foundRegex)
+                   {
+                       GUIController.getProjectPanel(this.name).updateRegexTableModel();
+                   }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
