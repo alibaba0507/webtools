@@ -54,12 +54,14 @@ public class ProjectPanel extends JPanel {
     private String title;
     private JButton submit;
      private JTable tblRegexResult;
+     private JTable tblKeywordsResult;
     private JTable tblSearchResult;
     private JTable tblPagesResult;
     private TextForm crawlForm;
     private int limitDoaminRecord = 100; // defauult
     private int lastSearchSort = 0;
     private int lastregexSort = 0;
+     private int lastKeywordSort = 0;
     //private JInternalFrame jif;
     public ProjectPanel(String title, JInternalFrame jif) {
         super();
@@ -98,9 +100,18 @@ public class ProjectPanel extends JPanel {
         JScrollPane searchTableScrool = new JScrollPane();
         searchTableScrool.setMaximumSize(new Dimension(650, 50));
         searchTableScrool.setPreferredSize(new Dimension(0, 50));
-            
+         
+        JScrollPane searchKeywordsTableScrool = new JScrollPane();
+         searchKeywordsTableScrool.setMaximumSize(new Dimension(650, 50));
+        searchKeywordsTableScrool.setPreferredSize(new Dimension(0, 50));
+        
+         JSplitPane searchQuerySplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT, searchTableScrool, searchKeywordsTableScrool);
+        searchQuerySplit.setOneTouchExpandable(true);
+        searchQuerySplit.setDividerLocation(150);
+        
+        
         JPanel pnlButtons = new JPanel();
-        pnlRegexResults.add(searchTableScrool, BorderLayout.CENTER);
+        pnlRegexResults.add(searchQuerySplit, BorderLayout.CENTER);
         pnlRegexResults.add(pnlButtons,BorderLayout.SOUTH);
         JButton btnSaveRegex = new JButton("Save Regex To File", new ImageIcon(AWTUtils.getIcon(this, ".\\images\\Save24.gif")));
         pnlButtons.setLayout(new FlowLayout());
@@ -111,6 +122,73 @@ public class ProjectPanel extends JPanel {
                 JOptionPane.showMessageDialog(ProjectPanel.this, "Comming Soon ...");
             } 
          });
+        
+        JButton btnRefreshKeywords = new JButton("Refresh keyword table", new ImageIcon(AWTUtils.getIcon(this, ".\\images\\Redo24.gif")));
+        //pnlButtons.setLayout(new FlowLayout());
+        pnlButtons.add(btnRefreshKeywords);
+        btnRefreshKeywords.addActionListener(new ActionListener() {
+             @Override
+            public void actionPerformed(ActionEvent e) {
+               // JOptionPane.showMessageDialog(ProjectPanel.this, "Comming Soon ...");
+               updateKeyWordModel();
+            } 
+         });
+        
+        
+         tblKeywordsResult = new JTable();
+        tblKeywordsResult.setModel(new javax.swing.table.DefaultTableModel(
+                new Object[][]{},
+                new String[]{
+                    "Most Used words by Sites","Count"
+                }
+        ) {
+            boolean[] canEdit = new boolean[]{
+                false, false
+            };
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit[columnIndex];
+            }
+        });
+        
+        searchKeywordsTableScrool.setViewportView(tblKeywordsResult);
+        
+         JTableHeader headerKeywords = tblKeywordsResult.getTableHeader();
+        headerKeywords.setUpdateTableInRealTime(true);
+        // Sort of column when click on header ASC DESC
+         headerKeywords.setReorderingAllowed(true);
+        headerKeywords.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent e) {
+                TableColumnModel colModel = tblKeywordsResult.getColumnModel();
+                int columnModelIndex = colModel.getColumnIndexAtX(e.getX());
+                if (columnModelIndex < 0 || columnModelIndex >= colModel.getColumnCount())
+                    return;
+                int modelIndex = colModel.getColumn(columnModelIndex)
+                        .getModelIndex();
+
+                if (modelIndex < 0) {
+                    return;
+                }
+                Vector v = ((DefaultTableModel) tblKeywordsResult.getModel()).getDataVector();
+                Collections.sort(v,
+                        new MyComparator(lastKeywordSort != 0,1));
+                lastKeywordSort = (lastKeywordSort == 0) ? 1 : 0;
+                //Collections c = new PolicyUtils.Collections();
+                String[] s = new String[]{
+                    "id","Regex Keywords"};
+                Vector col = new Vector();
+                col.insertElementAt(s[0], 0);
+                col.insertElementAt(s[1], 1);
+                ((DefaultTableModel) tblKeywordsResult.getModel()).setDataVector(v, col);
+                //table.tableChanged(new TableModelEvent(MyTableModel.this));
+                tblKeywordsResult.repaint();
+            }
+        });
+        
+        
+        
+        
+        
         tblRegexResult = new JTable();
         tblRegexResult.setModel(new javax.swing.table.DefaultTableModel(
                 new Object[][]{},
@@ -302,6 +380,25 @@ public class ProjectPanel extends JPanel {
         //  updateSearchTableModel();
     }
     
+    
+    public void updateKeyWordModel()
+    {
+        SQLite db = SQLite.getInstance();
+         String[] s = crawlForm.getFormValues();
+        int id = db.findQueryId(s[1], s[3]);
+        if (id > 0) {
+             Vector<Vector> list = db.selectKeywords(id);
+             
+               String[] cols = new String[]{
+                    "Most Used words by Sites","Count"
+                };
+                Vector col = new Vector();
+                col.insertElementAt(cols[0], 0);
+                col.insertElementAt(cols[1], 1);
+                 ((DefaultTableModel) tblKeywordsResult.getModel()).setRowCount(0);
+                ((DefaultTableModel) tblKeywordsResult.getModel()).setDataVector(list, col);
+        }
+    }
     public void updateRegexTableModel()
     {
          SQLite db = SQLite.getInstance();
@@ -443,6 +540,7 @@ public class ProjectPanel extends JPanel {
                 {
                      int qId = SQLite.getInstance().findQueryId(query, searchEngine);
                     SQLite.getInstance().deleteRegexQuery(qId);
+                    SQLite.getInstance().deleteKeywordsQuery(qId);
                 }
                 
                 WebToolMainFrame.defaultProjectProperties.put(crawlForm.getText(0), crawlForm.getFormValues());

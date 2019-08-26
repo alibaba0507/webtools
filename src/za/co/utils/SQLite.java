@@ -192,7 +192,35 @@ public class SQLite {
         return list;
     }
  
-    
+  public Vector<Vector> selectKeywords(int qId) {
+      String sql = "SELECT word,count FROM " + USED_KEYWORDS_TBL_NAME + " WHERE q_id=? "
+                + " GROUP BY word ORDER BY count DESC";
+     Vector<Vector> list = new Vector<Vector>();
+        try {
+            createDb();
+            PreparedStatement stm = con.prepareStatement(sql);
+            stm.setInt(1, qId);
+           
+            synchronized (con) {
+                ResultSet rs = stm.executeQuery();
+                while (rs.next()) {
+                      Vector v = new Vector();
+                      v.addElement((rs.getString(1)));
+                      v.addElement(Integer.valueOf(rs.getInt(2)));
+                    list.add(v);
+                }
+                close(stm);
+                con.notifyAll();
+            }
+//   stm.close();
+            //   rs.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return list;
+        
+  }   
   public ArrayList<Vector> selectRegex(int qId,int startIndx) {
    String sql = "SELECT id,txt FROM " + REGEX_TBL_NAME + " WHERE q_id=? AND id>? "
                 + " GROUP BY txt ORDER BY id ASC";
@@ -266,7 +294,7 @@ public class SQLite {
         return list;
     }
     
-    public int saveKeyWords(int qId,String word)
+    public int saveKeyWords(int qId,String word,int cnt)
     {
         int generatedKey = 0;
          try {
@@ -274,7 +302,7 @@ public class SQLite {
             int ret[] = findKeyWord(qId, word);
             if (ret.length > 0) {
                 // update
-                updateKeyWord(ret[0], ret[1]+1);
+                updateKeyWord(ret[0], ret[1]+cnt);
                 return ret[0];
             }
             // int id = findQueryId(projecName, query, searchEngine);
@@ -284,8 +312,8 @@ public class SQLite {
                     + " (word,count,q_id) values(?,?,?);");
            
             prep.setString(1, word);
-            prep.setInt(2, qId);
-             prep.setInt(3, 1); // coujnt of the words
+            prep.setInt(2, cnt);
+             prep.setInt(3, qId); // coujnt of the words
             //prep.setInt(6, topId);
             synchronized (con) {
                 prep.execute();
@@ -421,6 +449,21 @@ public class SQLite {
     public void deleteSearchByQueryId(int id) {
         try {
             String sql = "DELETE FROM " + SRCH_TBL_NAME + " WHERE q_id=?";
+            createDb();
+            PreparedStatement statement = con.prepareStatement(sql);
+            statement.setInt(1, id);
+            int rowsDeleted = statement.executeUpdate();
+            // statement.close();
+            close(statement);
+          
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    
+    public void deleteKeywordsQuery(int id) {
+        try {
+            String sql = "DELETE FROM " + USED_KEYWORDS_TBL_NAME + " WHERE q_id=?";
             createDb();
             PreparedStatement statement = con.prepareStatement(sql);
             statement.setInt(1, id);

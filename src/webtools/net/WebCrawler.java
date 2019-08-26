@@ -8,7 +8,12 @@ package webtools.net;
 import com.sun.org.apache.xpath.internal.FoundIndex;
 import java.net.URLDecoder;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -184,13 +189,28 @@ public class WebCrawler implements Runnable, ConnectorCallback {
                         }//  end while
                     }
                     
-                    String[] words = txt.split("\\s+");
-                    for (int i = 0;i < words.length;i++)
-                    {
-                        if (words[i].length() > 4)
+                   // String[] words = txt.split("\\s+");
+                    List<String> list = Arrays.asList(txt.split("\\s+"));
+                    Set<String> uniqueWords = new HashSet<String>(list);
+                    Vector<Vector> w = new Vector<Vector>();
+                    for (String word : uniqueWords) {
+                        if (word.length() > 4)
                         {
-                            sql.saveKeyWords(queryId, words[1]);
+                            Vector cols = new Vector();
+                            cols.add(word);
+                            cols.add(Integer.valueOf(Collections.frequency(list, word)));
+                            w.add(cols);
+                            //System.out.println(word + ": " + Collections.frequency(list, word));
                         }
+                    }// end for
+                     Collections.sort(w,
+                        new MyComparator(false,1));
+                    int cnt = (w.size() < 30)?w.size():30;
+                    for (int i = 0;i < cnt;i++)
+                    {
+                        Vector v = w.get(i);
+                        sql.saveKeyWords(queryId, (String)v.get(0),((Integer)v.get(1)).intValue());
+                       
                     }// end for
                     if (hasUpdate) {
                         GUIController.getProjectPanel(this.name).updateSearchTableModel();
@@ -207,5 +227,41 @@ public class WebCrawler implements Runnable, ConnectorCallback {
                 stop();
             }
         }
+    }
+}
+class MyComparator implements Comparator {
+
+    protected boolean isSortAsc;
+    private int sortIndx = 1;
+    
+     public MyComparator(boolean sortAsc,int sortIndx) {
+        isSortAsc = sortAsc;
+        this.sortIndx = sortIndx;
+    }
+     
+    public MyComparator(boolean sortAsc) {
+        isSortAsc = sortAsc;
+    }
+
+    public int compare(Object o1, Object o2) {
+        //if (!(o1 instanceof Integer) || !(o2 instanceof Integer)) {
+        //   return 0;
+        // }
+        Integer s1 = Integer.valueOf(((Vector) o1).elementAt(sortIndx).toString());
+        Integer s2 = Integer.valueOf(((Vector) o2).elementAt(sortIndx).toString());
+        int result = 0;
+        result = s1.compareTo(s2);
+        if (!isSortAsc) {
+            result = -result;
+        }
+        return result;
+    }
+
+    public boolean equals(Object obj) {
+        if (obj instanceof MyComparator) {
+            MyComparator compObj = (MyComparator) obj;
+            return compObj.isSortAsc == isSortAsc;
+        }
+        return false;
     }
 }
