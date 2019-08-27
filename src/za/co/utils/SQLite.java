@@ -34,9 +34,15 @@ public class SQLite {
     private static String USED_KEYWORDS_TBL_NAME = "usedKeywords";
 
     private static SQLite instance;
-
+    private String dbFile = "webtools1.db";
+    private String bkpFile = "webtools.db";
+    private String currentDbFile = "";
     public SQLite() {
         //createDb();
+        if (currentDbFile == "")
+        {
+            currentDbFile = dbFile;
+        }
         createTables();
     }
 
@@ -49,7 +55,7 @@ public class SQLite {
 
     public void deleteSearch(int id) {
         try {
-            createDb();
+            createDb(false);
             String sql = "DELETE FROM " + SRCH_TBL_NAME + " WHERE id=?";
             PreparedStatement statement = con.prepareStatement(sql);
             statement.setInt(1, id);
@@ -58,13 +64,14 @@ public class SQLite {
             close(statement);
         } catch (Exception e) {
             e.printStackTrace();
+            createDb(true);
         }
     }
 
     public int[] findKeyWord(int qId, String word) {
         int ret[] = new int[0];
         try {
-            createDb();
+            createDb(false);
             String sql = "SELECT id,count FROM " + USED_KEYWORDS_TBL_NAME + " WHERE "
                     + "q_id=? AND word=?";
             PreparedStatement stm = con.prepareStatement(sql);
@@ -85,15 +92,14 @@ public class SQLite {
             return ret;
         } catch (Exception e) {
             e.printStackTrace();
-        }finally{
-            
+            createDb(true);
         }
         return ret;
     }
 
     public int findRegexSearch(int qId, String txt) {
         try {
-            createDb();
+            createDb(false);
             String sql = "SELECT id FROM " + REGEX_TBL_NAME + " WHERE "
                     + "q_id=? AND txt=?";
             PreparedStatement stm = con.prepareStatement(sql);
@@ -112,13 +118,14 @@ public class SQLite {
             return id;
         } catch (Exception e) {
             e.printStackTrace();
+            createDb(true);
         }
         return 0;
     }
 
     public int findSearch(int qId, String url) {
         try {
-            createDb();
+            createDb(false);
             URL u = new URL(url);
             String protocol = u.getProtocol();
             String host = u.getHost();
@@ -147,6 +154,7 @@ public class SQLite {
             return id;
         } catch (Exception e) {
             e.printStackTrace();
+            createDb(true);
         }
         return 0;
     }
@@ -164,7 +172,7 @@ public class SQLite {
         //protocol,dom,url,level,parent_id,page,q_id
         ArrayList<Vector> list = new ArrayList<Vector>();
         try {
-            createDb();
+            createDb(false);
             PreparedStatement stm = con.prepareStatement(sql);
             stm.setInt(1, qId);
             stm.setString(2, domain);
@@ -191,6 +199,7 @@ public class SQLite {
             }
         } catch (Exception e) {
             e.printStackTrace();
+            createDb(true);
         }
         return list;
     }
@@ -200,7 +209,7 @@ public class SQLite {
                 + " GROUP BY word ORDER BY count DESC";
         Vector<Vector> list = new Vector<Vector>();
         try {
-            createDb();
+            createDb(false);
             PreparedStatement stm = con.prepareStatement(sql);
             stm.setInt(1, qId);
 
@@ -219,6 +228,7 @@ public class SQLite {
             //   rs.close();
         } catch (Exception e) {
             e.printStackTrace();
+            createDb(true);
         }
 
         return list;
@@ -231,7 +241,7 @@ public class SQLite {
 
         ArrayList<Vector> list = new ArrayList<Vector>();
         try {
-            createDb();
+            createDb(false);
             PreparedStatement stm = con.prepareStatement(sql);
             stm.setInt(1, qId);
             stm.setInt(2, startIndx);
@@ -250,6 +260,7 @@ public class SQLite {
             //   rs.close();
         } catch (Exception e) {
             e.printStackTrace();
+            createDb(true);
         }
 
         return list;
@@ -273,7 +284,7 @@ public class SQLite {
         }
         ArrayList<Vector> list = new ArrayList<Vector>();
         try {
-            createDb();
+            createDb(false);
             PreparedStatement stm = con.prepareStatement(sql);
             stm.setInt(1, qId);
             synchronized (con) {
@@ -294,6 +305,7 @@ public class SQLite {
             //   rs.close();
         } catch (Exception e) {
             e.printStackTrace();
+            createDb(true);
         }
 
         return list;
@@ -311,7 +323,7 @@ public class SQLite {
             }
             // int id = findQueryId(projecName, query, searchEngine);
             // if (id == -1) {
-            createDb();
+            createDb(false);
             PreparedStatement prep = con.prepareStatement("insert into " + USED_KEYWORDS_TBL_NAME
                     + " (word,count,q_id) values(?,?,?);");
 
@@ -335,6 +347,7 @@ public class SQLite {
             //}
         } catch (Exception e) {
             e.printStackTrace();
+            createDb(true);
         }
 
         return generatedKey;
@@ -350,7 +363,7 @@ public class SQLite {
             }
             // int id = findQueryId(projecName, query, searchEngine);
             // if (id == -1) {
-            createDb();
+            createDb(false);
             PreparedStatement prep = con.prepareStatement("insert into " + REGEX_TBL_NAME
                     + " (txt,q_id) values(?,?);");
 
@@ -374,6 +387,7 @@ public class SQLite {
             //}
         } catch (Exception e) {
             e.printStackTrace();
+            createDb(true);
         }
         return generatedKey;
     }
@@ -388,7 +402,7 @@ public class SQLite {
             }
             // int id = findQueryId(projecName, query, searchEngine);
             // if (id == -1) {
-            createDb();
+            createDb(false);
             PreparedStatement prep = con.prepareStatement("insert into " + SRCH_TBL_NAME
                     + " (protocol,dom,url,level,parent_id,page,q_id) values(?,?,?,?,?,?,?);");
             URL u = new URL(url);
@@ -423,13 +437,14 @@ public class SQLite {
             //}
         } catch (Exception e) {
             e.printStackTrace();
+            createDb(true);
         }
         return generatedKey;
     }
 
     public int findQueryId(String query, String searchEngine) {
         try {
-            createDb();
+            createDb(false);
             Statement state = con.createStatement();
             ResultSet res = state.executeQuery("SELECT id FROM " + QUERY_TBL_NAME + " WHERE name='" + query
                     + "' AND search_engine='" + searchEngine
@@ -442,6 +457,7 @@ public class SQLite {
             // res.close();
         } catch (Exception e) {
             e.printStackTrace();
+            createDb(true);
         }
         ///notifyAll();
         return -1;
@@ -450,7 +466,7 @@ public class SQLite {
     public void deleteSearchByQueryId(int id) {
         try {
             String sql = "DELETE FROM " + SRCH_TBL_NAME + " WHERE q_id=?";
-            createDb();
+            createDb(false);
             PreparedStatement statement = con.prepareStatement(sql);
             statement.setInt(1, id);
             synchronized (con) {
@@ -460,13 +476,14 @@ public class SQLite {
             }
         } catch (Exception e) {
             e.printStackTrace();
+            createDb(true);
         }
     }
 
     public void deleteKeywordsQuery(int id) {
         try {
             String sql = "DELETE FROM " + USED_KEYWORDS_TBL_NAME + " WHERE q_id=?";
-            createDb();
+            createDb(false);
             PreparedStatement statement = con.prepareStatement(sql);
             statement.setInt(1, id);
             int rowsDeleted = statement.executeUpdate();
@@ -475,13 +492,14 @@ public class SQLite {
 
         } catch (Exception e) {
             e.printStackTrace();
+            createDb(true);
         }
     }
 
     public void deleteRegexQuery(int id) {
         try {
             String sql = "DELETE FROM " + REGEX_TBL_NAME + " WHERE q_id=?";
-            createDb();
+            createDb(false);
             PreparedStatement statement = con.prepareStatement(sql);
             statement.setInt(1, id);
             synchronized (con) {
@@ -491,6 +509,7 @@ public class SQLite {
             }
         } catch (Exception e) {
             e.printStackTrace();
+            createDb(true);
         }
     }
 
@@ -500,7 +519,7 @@ public class SQLite {
                 return;
             }
             String sql = "DELETE FROM " + QUERY_TBL_NAME + " WHERE id=?";
-            createDb();
+            createDb(false);
             PreparedStatement statement = con.prepareStatement(sql);
             statement.setInt(1, id);
             synchronized (con) {
@@ -512,6 +531,7 @@ public class SQLite {
             deleteSearchByQueryId(id);
         } catch (Exception e) {
             e.printStackTrace();
+            createDb(true);
         }
     }
 
@@ -520,7 +540,7 @@ public class SQLite {
                 + "WHERE id = ?";
         PreparedStatement stm = null;
         try {
-            createDb();
+            createDb(false);
             boolean r = con.isReadOnly();
             stm = con.prepareStatement(sql);
             stm.setInt(1, count);
@@ -540,6 +560,7 @@ public class SQLite {
                 // waitForTransaction();
                 // updatePage(id, page);
             }
+            createDb(true);
         }
     }
 
@@ -548,7 +569,7 @@ public class SQLite {
                 + "WHERE id = ?";
         PreparedStatement stm = null;
         try {
-            createDb();
+            createDb(false);
             boolean r = con.isReadOnly();
             stm = con.prepareStatement(sql);
             stm.setInt(1, page);
@@ -568,6 +589,7 @@ public class SQLite {
                 // waitForTransaction();
                 // updatePage(id, page);
             }
+            createDb(true);
         }
     }
 
@@ -575,7 +597,7 @@ public class SQLite {
         try {
             // Statement state = con.createStatement();
             String sql = "SELECT lastPage FROM " + QUERY_TBL_NAME + " WHERE id=?";
-            createDb();
+            createDb(false);
             PreparedStatement stm = con.prepareStatement(sql);
             stm.setInt(1, id);
             int lastPage = -1;
@@ -594,6 +616,7 @@ public class SQLite {
             return lastPage;
         } catch (Exception e) {
             e.printStackTrace();
+            createDb(true);
         }
         //notifyAll();
         return -1;
@@ -605,7 +628,7 @@ public class SQLite {
 
             generatedKey = findQueryId(query, searchEngine);
             if (generatedKey == -1) {
-                createDb();
+                createDb(false);
                 PreparedStatement prep = con.prepareStatement("insert into " + QUERY_TBL_NAME + " (name,search_engine,lastPage) values(?,?,?);");
                 prep.setString(1, query);
                 prep.setString(2, searchEngine);
@@ -626,19 +649,43 @@ public class SQLite {
             }
         } catch (Exception e) {
             e.printStackTrace();
+            createDb(true);
         }
         return generatedKey;
     }
 
-    public synchronized void createDb() {
+    public synchronized void createDb(boolean  clearLock) {
         try {
             Class.forName("org.sqlite.JDBC");
-            if (con == null ) {
-                con = DriverManager.getConnection("jdbc:sqlite:webtools1.db");
+            if (con == null || clearLock) {
+                if (clearLock)
+                {
+                    con.commit();
+                    con.close();
+                    con = null;
+                    //String delFile = "";
+                    if (currentDbFile.equals(dbFile))
+                    {
+                        //delFile = dbFile;
+                        currentDbFile = bkpFile;
+                    }else if (currentDbFile.equals(bkpFile))
+                    {
+                      currentDbFile = dbFile;  
+                    }
+                    createTables();
+                }
+                con = DriverManager.getConnection("jdbc:sqlite:" + currentDbFile);
                 //org.sqlite.SQLiteConnection c =  (SQLiteConnection)DriverManager.getConnection("jdbc:sqlite:webtools.db");
                 //c.
                 con.clearWarnings();
-
+                if (!currentDbFile.equals(dbFile) && new File(dbFile).exists())
+                {
+                    new File(dbFile).delete();
+                }
+                if (!currentDbFile.equals(bkpFile) && new File(bkpFile).exists())
+                {
+                    new File(bkpFile).delete();
+                }
                 System.out.println("Database Opened...\n");
             }
         } catch (Exception e) {
@@ -654,7 +701,7 @@ public class SQLite {
 
     public void createTables() {
         try {
-            createDb();
+            createDb(false);
             Statement stmt = con.createStatement();
             ResultSet res = stmt.executeQuery("SELECT name FROM sqlite_master WHERE type='table' AND name='" + QUERY_TBL_NAME + "'");
             if (!res.next()) {
