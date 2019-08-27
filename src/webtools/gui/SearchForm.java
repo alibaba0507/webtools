@@ -83,7 +83,7 @@ public class SearchForm extends TextForm {
                 // dlg.show();
                 java.awt.EventQueue.invokeLater(new Runnable() {
                     public void run() {
-                        final SearchQueryDialog dialog = new SearchQueryDialog(WebToolMainFrame.instance, true, fields[1]);
+                        final SearchQueryDialog dialog = new SearchQueryDialog(WebToolMainFrame.instance, true, fields[1],fields[5]);
                         dialog.addWindowListener(new java.awt.event.WindowAdapter() {
                             @Override
                             public void windowClosing(java.awt.event.WindowEvent e) {

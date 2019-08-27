@@ -29,7 +29,7 @@ public class SearchQueryDialog extends javax.swing.JDialog {
     /**
      * Creates new form SearchQueryDialog
      */
-    public SearchQueryDialog(java.awt.Frame parent, boolean modal, JTextField txt) {
+    public SearchQueryDialog(java.awt.Frame parent, boolean modal, JTextField txt,JTextField txtRegex) {
         super(parent, modal);
         //this.setUndecorated(true);
        // this.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE) ;
@@ -43,15 +43,33 @@ public class SearchQueryDialog extends javax.swing.JDialog {
              SearchQueryDialog.this.dispose();
             }
         });
+         btnClose1.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+         //       throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+             SearchQueryDialog.this.dispose();
+            }
+        });
         txtDexcr.setEditable(false);
         //txtDexcr.setEnabled(false);
         txtDexcr.setLineWrap(true);
         
+        txtDexcr1.setEditable(false);
+        txtDexcr1.setLineWrap(true);
         //txtDexcr.setFont(f);
         txtExample.setEditable(false);
         //txtExample.setEnabled(false);
         txtExample.setLineWrap(true);
+        if (txt != null)
         txtSearchString.setText(txt.getText());
+        
+        txtExample1.setEditable(false);
+        //txtExample.setEnabled(false);
+        txtExample1.setLineWrap(true);
+        if (txtRegex != null)
+        txtSearchString1.setText(txtRegex.getText());
+        
+        
         btnUse.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -59,10 +77,57 @@ public class SearchQueryDialog extends javax.swing.JDialog {
               SearchQueryDialog.this.dispose();
             }
         });
+        
+        btnUse1.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+              txtRegex.setText(txtSearchString1.getText());
+              SearchQueryDialog.this.dispose();
+            }
+        });
+        
         loadSearchJson();
+        loadRegexJson();
 
     }
+    
+    private void loadRegexJson()
+    {
+        JSONParser jsonParser = new JSONParser();
+        String menuFile = Main.prop.getProperty("search.regex.keywords");
+          try (FileReader reader = new FileReader(menuFile)) {
+            //Read JSON file
+            Object obj = jsonParser.parse(reader);
+            JSONObject jsonKeywords = (JSONObject) obj;
+            JSONArray jsnSearch = (JSONArray) jsonKeywords.get("search");
+              for (int i = 0; i < jsnSearch.size(); i++) {
+                JSONObject menuJSON = (JSONObject) jsnSearch.get(i);
+                CboItem itm = new CboItem((String) menuJSON.get("keyword"),
+                        (String) menuJSON.get("descr"),
+                        (String) menuJSON.get("example"));
+                cboKeywords1.addItem(itm);
+                cboKeywords1.addItemListener(new ItemListener() {
+                    @Override
+                    public void itemStateChanged(ItemEvent e) {
+                        if (e.getStateChange() == ItemEvent.SELECTED) {
+                            CboItem itm = (CboItem) cboKeywords1.getSelectedItem();
+                            //String s = txtSearchString1.getText();
+                            //if (s.indexOf(" " + itm.toString() + " ") < 0) {
+                             //   s += " " + itm.toString() + " ";
+                                txtSearchString1.setText(itm.toString());
+                            //}
+                            txtDexcr1.setText(itm.getDescr());
+                            txtExample1.setText(itm.getExamp());
 
+                        }
+
+                    }
+                });
+            }
+          }catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
     private void loadSearchJson() {
         JSONParser jsonParser = new JSONParser();
         String menuFile = Main.prop.getProperty("search.query.keywords");
@@ -122,10 +187,28 @@ public class SearchQueryDialog extends javax.swing.JDialog {
         txtExample = new javax.swing.JTextArea();
         jLabel4 = new javax.swing.JLabel();
         btnClose = new javax.swing.JButton();
+        jPanel3 = new javax.swing.JPanel();
+        jLabel3 = new javax.swing.JLabel();
+        cboKeywords1 = new javax.swing.JComboBox<>();
+        txtSearchString1 = new javax.swing.JTextField();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        txtDexcr1 = new javax.swing.JTextArea();
+        jLabel5 = new javax.swing.JLabel();
+        btnUse1 = new javax.swing.JButton();
+        jScrollPane4 = new javax.swing.JScrollPane();
+        txtExample1 = new javax.swing.JTextArea();
+        jLabel6 = new javax.swing.JLabel();
+        btnClose1 = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE);
 
         jLabel1.setText("Select Query Keyword");
+
+        cboKeywords.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cboKeywordsActionPerformed(evt);
+            }
+        });
 
         txtSearchString.setToolTipText("Search Query String");
 
@@ -199,6 +282,86 @@ public class SearchQueryDialog extends javax.swing.JDialog {
 
         jTabbedPane1.addTab("Search Query Constractor", jPanel1);
 
+        jLabel3.setText("Select Regex Keyword");
+
+        cboKeywords1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cboKeywords1ActionPerformed(evt);
+            }
+        });
+
+        txtSearchString1.setToolTipText("Search Query String");
+
+        txtDexcr1.setColumns(20);
+        txtDexcr1.setFont(new java.awt.Font("Courier New", 1, 14)); // NOI18N
+        txtDexcr1.setRows(5);
+        jScrollPane2.setViewportView(txtDexcr1);
+
+        jLabel5.setText("Example");
+
+        btnUse1.setText("Use Only");
+
+        txtExample1.setColumns(20);
+        txtExample1.setFont(new java.awt.Font("Courier New", 1, 14)); // NOI18N
+        txtExample1.setRows(5);
+        jScrollPane4.setViewportView(txtExample1);
+
+        jLabel6.setText("Description");
+
+        btnClose1.setText("Close");
+
+        javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
+        jPanel3.setLayout(jPanel3Layout);
+        jPanel3Layout.setHorizontalGroup(
+            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel3Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(txtSearchString1)
+                    .addGroup(jPanel3Layout.createSequentialGroup()
+                        .addComponent(jLabel3)
+                        .addGap(18, 18, 18)
+                        .addComponent(cboKeywords1, 0, 314, Short.MAX_VALUE))
+                    .addComponent(jScrollPane2)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(btnClose1)
+                        .addGap(41, 41, 41)
+                        .addComponent(btnUse1, javax.swing.GroupLayout.PREFERRED_SIZE, 134, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jScrollPane4)
+                    .addGroup(jPanel3Layout.createSequentialGroup()
+                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, 82, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 82, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(0, 0, Short.MAX_VALUE)))
+                .addContainerGap())
+        );
+        jPanel3Layout.setVerticalGroup(
+            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel3Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel3)
+                    .addComponent(cboKeywords1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(18, 18, 18)
+                .addComponent(txtSearchString1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(8, 8, 8)
+                .addComponent(jLabel6)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 103, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(33, 33, 33)
+                .addComponent(jLabel5)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, 103, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(25, 25, 25)
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(btnUse1)
+                    .addComponent(btnClose1))
+                .addContainerGap())
+        );
+
+        jTabbedPane1.addTab("Search Query Constractor", jPanel3);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -207,11 +370,22 @@ public class SearchQueryDialog extends javax.swing.JDialog {
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jTabbedPane1)
+            .addComponent(jTabbedPane1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
         );
+
+        jTabbedPane1.getAccessibleContext().setAccessibleName("Search Regex Constractor");
+        jTabbedPane1.getAccessibleContext().setAccessibleDescription("");
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
+
+    private void cboKeywordsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cboKeywordsActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_cboKeywordsActionPerformed
+
+    private void cboKeywords1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cboKeywords1ActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_cboKeywords1ActionPerformed
 
     /**
      * @param args the command line arguments
@@ -251,7 +425,7 @@ public class SearchQueryDialog extends javax.swing.JDialog {
         /* Create and display the dialog */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                final SearchQueryDialog dialog = new SearchQueryDialog(new javax.swing.JFrame(), true, null);
+                final SearchQueryDialog dialog = new SearchQueryDialog(new javax.swing.JFrame(), true, null,null);
                 dialog.addWindowListener(new java.awt.event.WindowAdapter() {
                     @Override
                     public void windowClosing(java.awt.event.WindowEvent e) {
@@ -325,18 +499,30 @@ public class SearchQueryDialog extends javax.swing.JDialog {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnClose;
+    private javax.swing.JButton btnClose1;
     private javax.swing.JButton btnUse;
+    private javax.swing.JButton btnUse1;
     private javax.swing.JComboBox<CboItem> cboKeywords;
+    private javax.swing.JComboBox<CboItem> cboKeywords1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
+    private javax.swing.JLabel jLabel5;
+    private javax.swing.JLabel jLabel6;
     private javax.swing.JPanel jPanel1;
+    private javax.swing.JPanel jPanel3;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
+    private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JTextArea txtDexcr;
+    private javax.swing.JTextArea txtDexcr1;
     private javax.swing.JTextArea txtExample;
+    private javax.swing.JTextArea txtExample1;
     private javax.swing.JTextField txtSearchString;
+    private javax.swing.JTextField txtSearchString1;
     // End of variables declaration//GEN-END:variables
 
 }

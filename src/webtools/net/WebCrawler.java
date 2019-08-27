@@ -6,6 +6,8 @@
 package webtools.net;
 
 import com.sun.org.apache.xpath.internal.FoundIndex;
+import java.awt.Color;
+import java.awt.Font;
 import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -52,7 +54,8 @@ public class WebCrawler implements Runnable, ConnectorCallback {
         } else {
             this.callback = callback;
         }
-        
+       // WebToolMainFrame.instance.getConsole().setText("");
+         WebToolMainFrame.instance.getConsole().append(">>>>> INIT WebCrawler [" + title + "]..... >>>>>\n");
         sql = SQLite.getInstance();
         String[] list = (String[]) WebToolMainFrame.defaultProjectProperties.get(title);
         /*
@@ -84,6 +87,10 @@ public class WebCrawler implements Runnable, ConnectorCallback {
             @Override
             protected Object doInBackground() throws Exception {
                 //      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+                Font f = WebToolMainFrame.instance.getConsole().getFont();
+                WebToolMainFrame.instance.getConsole().setFont(f.deriveFont(Font.BOLD));
+                WebToolMainFrame.instance.getConsole().append(">>>>>>>>>>>>>>> START CRAWLING [" + WebCrawler.this.name + "] >>>>>\n");
+             
                 while (WebCrawler.threadCrawlers.contains(WebCrawler.this.name)) {
                     webC = new WebConnector();
                     long tm = System.currentTimeMillis();
@@ -96,6 +103,10 @@ public class WebCrawler implements Runnable, ConnectorCallback {
                     System.err.println("After Time out ... [" + ((System.currentTimeMillis() - tm)/1000) + "] Sec");
                 }
                 System.out.println(">>>>>>>>>>>>>>> STOP CRAWLING [" + WebCrawler.this.name + "] >>>>>");
+                  f = WebToolMainFrame.instance.getConsole().getFont();
+                WebToolMainFrame.instance.getConsole().setFont(f.deriveFont(Font.BOLD));
+                WebToolMainFrame.instance.getConsole().append(">>>>>>>>>>>>>>> STOP CRAWLING [" + WebCrawler.this.name + "] >>>>>\n");
+             
                 return webC;
             }
         };
@@ -183,7 +194,7 @@ public class WebCrawler implements Runnable, ConnectorCallback {
                        
                         while (matcher.find()) {
                             String res = matcher.group();
-                            System.out.println(res);
+                           // System.out.println(res);
                             foundRegex = true;
                             sql.saveReqex(queryId, res);
                         }//  end while
@@ -193,8 +204,9 @@ public class WebCrawler implements Runnable, ConnectorCallback {
                     List<String> list = Arrays.asList(txt.split("\\s+"));
                     Set<String> uniqueWords = new HashSet<String>(list);
                     Vector<Vector> w = new Vector<Vector>();
+                    String excludeWords = " Search Cache Cached Menu link links home ";
                     for (String word : uniqueWords) {
-                        if (word.length() > 4)
+                        if (word.length() > 4 && !excludeWords.toLowerCase().contains(" " + word.toLowerCase() + " "))
                         {
                             Vector cols = new Vector();
                             cols.add(word);
@@ -221,10 +233,19 @@ public class WebCrawler implements Runnable, ConnectorCallback {
                    }
                 } catch (Exception e) {
                     e.printStackTrace();
+                    
+                    Font f = WebToolMainFrame.instance.getConsole().getFont();
+                    Color oldColor = WebToolMainFrame.instance.getConsole().getForeground();
+                    Font errFont = f.deriveFont(15);
+                    errFont = errFont.deriveFont(Font.BOLD);
+                    WebToolMainFrame.instance.getConsole().setFont(errFont);
+                    WebToolMainFrame.instance.getConsole().append("Error Crawling [" 
+                                + title + "][" + searchQuery + "][" + e.toString() +"] >>>>>\n");
+                   WebToolMainFrame.instance.getConsole().setFont(f);
                 }
             }else if (Integer.parseInt(page) > 1)
             { // and there is no more links so we have to stop this
-                stop();
+                  stop();
             }
         }
     }

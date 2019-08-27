@@ -82,7 +82,7 @@ public class WebToolMainFrame extends JFrame {
     private JList projectList;
     private JPopupMenu projectPopUp;
     private JPopupMenu searchTablePopUp;
-
+    private JTextArea console; 
     public static JDesktopPane getDesckTopInstance() {
         if (desktop == null) {
             new WebToolMainFrame();
@@ -90,7 +90,11 @@ public class WebToolMainFrame extends JFrame {
 
         return desktop;
     }
-
+    
+    public JTextArea getConsole()
+    {
+        return console;
+    }
     public WebToolMainFrame() {
         super("WebTools");
         setIconImage(AWTUtils.getIcon(null, ".\\images\\anonymous_mask_48.png"));
@@ -164,8 +168,8 @@ public class WebToolMainFrame extends JFrame {
         hSplit.setDividerLocation(180);
         hSplit.setMinimumSize(new Dimension(0, 0));
 
-        JTextArea console = new JTextArea();
-
+         console = new JTextArea();
+         console.setEditable(false);
         JScrollPane jsp = new JScrollPane(console,
                 JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
                 JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);

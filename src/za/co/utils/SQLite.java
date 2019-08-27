@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Vector;
 import java.util.concurrent.Executor;
 import org.sqlite.SQLiteConnection;
+import webtools.gui.run.WebToolMainFrame;
 
 /**
  *
@@ -30,8 +31,8 @@ public class SQLite {
     private static String SRCH_TBL_NAME = "search";
     private static String REGEX_TBL_NAME = "regexSearch";
     // this table will save resul of most used words among this sites
-    private static String USED_KEYWORDS_TBL_NAME ="usedKeywords";
-    
+    private static String USED_KEYWORDS_TBL_NAME = "usedKeywords";
+
     private static SQLite instance;
 
     public SQLite() {
@@ -59,9 +60,8 @@ public class SQLite {
             e.printStackTrace();
         }
     }
-    
-    public int[] findKeyWord(int qId,String word)
-    {
+
+    public int[] findKeyWord(int qId, String word) {
         int ret[] = new int[0];
         try {
             createDb();
@@ -77,7 +77,7 @@ public class SQLite {
             if (rs.next()) {
                 ret = new int[2];
                 ret[0] = rs.getInt("id");
-                 ret[1] = rs.getInt("count");
+                ret[1] = rs.getInt("count");
             }
             close(stm);
             //  rs.close();
@@ -85,11 +85,13 @@ public class SQLite {
             return ret;
         } catch (Exception e) {
             e.printStackTrace();
+        }finally{
+            
         }
         return ret;
     }
-    public int findRegexSearch(int qId,String txt)
-    {
+
+    public int findRegexSearch(int qId, String txt) {
         try {
             createDb();
             String sql = "SELECT id FROM " + REGEX_TBL_NAME + " WHERE "
@@ -113,6 +115,7 @@ public class SQLite {
         }
         return 0;
     }
+
     public int findSearch(int qId, String url) {
         try {
             createDb();
@@ -168,15 +171,15 @@ public class SQLite {
             synchronized (con) {
                 ResultSet rs = stm.executeQuery();
                 while (rs.next()) {
-                   /*  "URL",
+                    /*  "URL",
                              "Google Page Number",
                              "Crawl level",
                              "Parent ID"
-                    */
+                     */
                     Vector v = new Vector();
                     String url = rs.getString(1) + "://"
-                                + rs.getString(2)
-                               + rs.getString(3) ;
+                            + rs.getString(2)
+                            + rs.getString(3);
                     v.addElement(url);
                     v.addElement(Integer.toString(rs.getInt(6)));
                     v.addElement(Integer.toString(rs.getInt(4)));
@@ -191,22 +194,22 @@ public class SQLite {
         }
         return list;
     }
- 
-  public Vector<Vector> selectKeywords(int qId) {
-      String sql = "SELECT word,count FROM " + USED_KEYWORDS_TBL_NAME + " WHERE q_id=? "
+
+    public Vector<Vector> selectKeywords(int qId) {
+        String sql = "SELECT word,count FROM " + USED_KEYWORDS_TBL_NAME + " WHERE q_id=? "
                 + " GROUP BY word ORDER BY count DESC";
-     Vector<Vector> list = new Vector<Vector>();
+        Vector<Vector> list = new Vector<Vector>();
         try {
             createDb();
             PreparedStatement stm = con.prepareStatement(sql);
             stm.setInt(1, qId);
-           
+
             synchronized (con) {
                 ResultSet rs = stm.executeQuery();
                 while (rs.next()) {
-                      Vector v = new Vector();
-                      v.addElement((rs.getString(1)));
-                      v.addElement(Integer.valueOf(rs.getInt(2)));
+                    Vector v = new Vector();
+                    v.addElement((rs.getString(1)));
+                    v.addElement(Integer.valueOf(rs.getInt(2)));
                     list.add(v);
                 }
                 close(stm);
@@ -219,13 +222,14 @@ public class SQLite {
         }
 
         return list;
-        
-  }   
-  public ArrayList<Vector> selectRegex(int qId,int startIndx) {
-   String sql = "SELECT id,txt FROM " + REGEX_TBL_NAME + " WHERE q_id=? AND id>? "
+
+    }
+
+    public ArrayList<Vector> selectRegex(int qId, int startIndx) {
+        String sql = "SELECT id,txt FROM " + REGEX_TBL_NAME + " WHERE q_id=? AND id>? "
                 + " GROUP BY txt ORDER BY id ASC";
-  
-  ArrayList<Vector> list = new ArrayList<Vector>();
+
+        ArrayList<Vector> list = new ArrayList<Vector>();
         try {
             createDb();
             PreparedStatement stm = con.prepareStatement(sql);
@@ -234,7 +238,7 @@ public class SQLite {
             synchronized (con) {
                 ResultSet rs = stm.executeQuery();
                 while (rs.next()) {
-                      Vector v = new Vector();
+                    Vector v = new Vector();
                     v.addElement(Integer.valueOf(rs.getInt(1)));
                     v.addElement((rs.getString(2)));
                     list.add(v);
@@ -249,7 +253,8 @@ public class SQLite {
         }
 
         return list;
-  }
+    }
+
     /**
      * Find domain and count (how many times domain is repeated)
      *
@@ -293,16 +298,15 @@ public class SQLite {
 
         return list;
     }
-    
-    public int saveKeyWords(int qId,String word,int cnt)
-    {
+
+    public int saveKeyWords(int qId, String word, int cnt) {
         int generatedKey = 0;
-         try {
+        try {
 
             int ret[] = findKeyWord(qId, word);
             if (ret.length > 0) {
                 // update
-                updateKeyWord(ret[0], ret[1]+cnt);
+                updateKeyWord(ret[0], ret[1] + cnt);
                 return ret[0];
             }
             // int id = findQueryId(projecName, query, searchEngine);
@@ -310,13 +314,13 @@ public class SQLite {
             createDb();
             PreparedStatement prep = con.prepareStatement("insert into " + USED_KEYWORDS_TBL_NAME
                     + " (word,count,q_id) values(?,?,?);");
-           
+
             prep.setString(1, word);
             prep.setInt(2, cnt);
-             prep.setInt(3, qId); // coujnt of the words
+            prep.setInt(3, qId); // coujnt of the words
             //prep.setInt(6, topId);
             synchronized (con) {
-                prep.execute();
+                prep.executeUpdate();
                 ResultSet rs = prep.getGeneratedKeys();
 
                 if (rs.next()) {
@@ -332,14 +336,12 @@ public class SQLite {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        
+
         return generatedKey;
     }
-    
-   
-    public int saveReqex (int qId,String reqexStr)
-    {
-          int generatedKey = 0;
+
+    public int saveReqex(int qId, String reqexStr) {
+        int generatedKey = 0;
         try {
 
             generatedKey = findRegexSearch(qId, reqexStr);
@@ -351,13 +353,13 @@ public class SQLite {
             createDb();
             PreparedStatement prep = con.prepareStatement("insert into " + REGEX_TBL_NAME
                     + " (txt,q_id) values(?,?);");
-           
+
             prep.setString(1, reqexStr);
-            
+
             prep.setInt(2, qId);
             //prep.setInt(6, topId);
             synchronized (con) {
-                prep.execute();
+                prep.executeUpdate();
                 ResultSet rs = prep.getGeneratedKeys();
 
                 if (rs.next()) {
@@ -375,8 +377,7 @@ public class SQLite {
         }
         return generatedKey;
     }
-    
-    
+
     public int saveSearch(int qId, String url, int level, int topId, int page) {
         int generatedKey = 0;
         try {
@@ -407,7 +408,7 @@ public class SQLite {
             prep.setInt(7, qId);
             //prep.setInt(6, topId);
             synchronized (con) {
-                prep.execute();
+                prep.executeUpdate();
                 ResultSet rs = prep.getGeneratedKeys();
 
                 if (rs.next()) {
@@ -445,22 +446,23 @@ public class SQLite {
         ///notifyAll();
         return -1;
     }
-    
+
     public void deleteSearchByQueryId(int id) {
         try {
             String sql = "DELETE FROM " + SRCH_TBL_NAME + " WHERE q_id=?";
             createDb();
             PreparedStatement statement = con.prepareStatement(sql);
             statement.setInt(1, id);
-            int rowsDeleted = statement.executeUpdate();
-            // statement.close();
-            close(statement);
-          
+            synchronized (con) {
+                int rowsDeleted = statement.executeUpdate();
+                // statement.close();
+                close(statement);
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
-    
+
     public void deleteKeywordsQuery(int id) {
         try {
             String sql = "DELETE FROM " + USED_KEYWORDS_TBL_NAME + " WHERE q_id=?";
@@ -470,48 +472,51 @@ public class SQLite {
             int rowsDeleted = statement.executeUpdate();
             // statement.close();
             close(statement);
-          
+
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
-    
+
     public void deleteRegexQuery(int id) {
         try {
             String sql = "DELETE FROM " + REGEX_TBL_NAME + " WHERE q_id=?";
             createDb();
             PreparedStatement statement = con.prepareStatement(sql);
             statement.setInt(1, id);
-            int rowsDeleted = statement.executeUpdate();
-            // statement.close();
-            close(statement);
-          
+            synchronized (con) {
+                int rowsDeleted = statement.executeUpdate();
+                // statement.close();
+                close(statement);
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
-    
+
     public void deleteQuery(int id) {
         try {
-            if (id <= 0) return;
+            if (id <= 0) {
+                return;
+            }
             String sql = "DELETE FROM " + QUERY_TBL_NAME + " WHERE id=?";
             createDb();
             PreparedStatement statement = con.prepareStatement(sql);
             statement.setInt(1, id);
-            int rowsDeleted = statement.executeUpdate();
-            // statement.close();
-            close(statement);
+            synchronized (con) {
+                int rowsDeleted = statement.executeUpdate();
+                // statement.close();
+                close(statement);
+            }
             deleteRegexQuery(id); // delete all assocated queries
             deleteSearchByQueryId(id);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
-    
-    
-    public void updateKeyWord(int id,int count)
-    {
-         String sql = "UPDATE " + USED_KEYWORDS_TBL_NAME + " SET count = ? "
+
+    public void updateKeyWord(int id, int count) {
+        String sql = "UPDATE " + USED_KEYWORDS_TBL_NAME + " SET count = ? "
                 + "WHERE id = ?";
         PreparedStatement stm = null;
         try {
@@ -521,13 +526,14 @@ public class SQLite {
             stm.setInt(1, count);
             stm.setInt(2, id);
             synchronized (con) {
-                stm.execute();
+                stm.executeUpdate();
                 close(stm);
                 con.notifyAll();
             }
 
             // stm.close();
             System.out.println("UPDADE TRANSACTION WORD CNT[" + count + "]");
+            WebToolMainFrame.instance.getConsole().append("UPDADE TRANSACTION WORD CNT[" + count + "]\n");
         } catch (Exception e) {
             if (e.getMessage().indexOf("[SQLITE_BUSY]") > -1) {
                 e.printStackTrace();
@@ -536,6 +542,7 @@ public class SQLite {
             }
         }
     }
+
     public void updatePage(int id, int page) {
         String sql = "UPDATE " + QUERY_TBL_NAME + " SET lastPage = ? "
                 + "WHERE id = ?";
@@ -547,13 +554,14 @@ public class SQLite {
             stm.setInt(1, page);
             stm.setInt(2, id);
             synchronized (con) {
-                stm.execute();
+                stm.executeUpdate();
                 close(stm);
                 con.notifyAll();
             }
 
             // stm.close();
             System.out.println("UPDADE TRANSACTION PAGE[" + page + "]");
+            WebToolMainFrame.instance.getConsole().append("UPDADE TRANSACTION PAGE[" + page + "]\n");
         } catch (Exception e) {
             if (e.getMessage().indexOf("[SQLITE_BUSY]") > -1) {
                 e.printStackTrace();
@@ -625,8 +633,8 @@ public class SQLite {
     public synchronized void createDb() {
         try {
             Class.forName("org.sqlite.JDBC");
-            if (con == null) {
-                con = DriverManager.getConnection("jdbc:sqlite:webtools.db");
+            if (con == null ) {
+                con = DriverManager.getConnection("jdbc:sqlite:webtools1.db");
                 //org.sqlite.SQLiteConnection c =  (SQLiteConnection)DriverManager.getConnection("jdbc:sqlite:webtools.db");
                 //c.
                 con.clearWarnings();
@@ -640,7 +648,7 @@ public class SQLite {
 
     public synchronized void close(Statement stmt) throws Exception {
         stmt.close();
-        // con.close();
+         //con.close();
         //  con = null;
     }
 
@@ -678,9 +686,9 @@ public class SQLite {
 
                 stmt.executeUpdate(sql);
             }
-           
-             res = stmt.executeQuery("SELECT name FROM sqlite_master WHERE type='table' AND name='" + REGEX_TBL_NAME + "'");
-             if (!res.next()) {
+
+            res = stmt.executeQuery("SELECT name FROM sqlite_master WHERE type='table' AND name='" + REGEX_TBL_NAME + "'");
+            if (!res.next()) {
                 System.out.println("Building the User [" + REGEX_TBL_NAME + "] table with prepopulated values.");
 
                 String sql = "CREATE TABLE " + REGEX_TBL_NAME
@@ -690,10 +698,9 @@ public class SQLite {
 
                 stmt.executeUpdate(sql);
             }
-             
-             
-             res = stmt.executeQuery("SELECT name FROM sqlite_master WHERE type='table' AND name='" + USED_KEYWORDS_TBL_NAME + "'");
-             if (!res.next()) {
+
+            res = stmt.executeQuery("SELECT name FROM sqlite_master WHERE type='table' AND name='" + USED_KEYWORDS_TBL_NAME + "'");
+            if (!res.next()) {
                 System.out.println("Building the User [" + USED_KEYWORDS_TBL_NAME + "] table with prepopulated values.");
 
                 String sql = "CREATE TABLE " + USED_KEYWORDS_TBL_NAME
@@ -704,7 +711,7 @@ public class SQLite {
 
                 stmt.executeUpdate(sql);
             }
-           
+
             res = stmt.executeQuery("SELECT name FROM sqlite_master WHERE type='table' AND name='filter'");
             if (!res.next()) {
 
