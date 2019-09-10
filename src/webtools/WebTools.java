@@ -17,6 +17,7 @@ import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
+import webtools.net.WebRequest;
 import za.co.utils.WebConnector;
 
 /**
@@ -50,8 +51,8 @@ public class WebTools {
             System.setProperty("socksProxyHost", "127.0.0.1");
             System.setProperty("socksProxyPort", "9153");
             String ipAddr = "https://www.google.com/search?q=my+ip&ie=utf-8&oe=utf-8&client=firefox-b-ab";
-
-            Document doc = webC.getJsoup(ipAddr, "", true, null,8118, null, null);// new WebTools().search(urlEncode, "", true);
+            WebRequest wr = new WebRequest(ipAddr, ipAddr);
+            Document doc = webC.getJsoup(wr, "", true, null,8118, null, null,null);// new WebTools().search(urlEncode, "", true);
             System.out.print(doc.body().html());
             if (doc != null) {
 

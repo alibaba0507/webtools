@@ -5,7 +5,6 @@
  */
 package webtools.gui;
 
-import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;

@@ -5,11 +5,8 @@
  */
 package webtools.net;
 
-import com.sun.org.apache.xpath.internal.FoundIndex;
 import java.awt.Color;
 import java.awt.Font;
-import java.net.URLDecoder;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;

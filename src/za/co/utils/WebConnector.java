@@ -16,6 +16,7 @@ import java.net.Socket;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.security.Security;
+import java.util.Base64;
 import java.util.Iterator;
 import java.util.Map;
 import javax.net.ssl.HandshakeCompletedEvent;
@@ -385,11 +386,12 @@ public class WebConnector {
             //generate connection string
             String msg = "CONNECT " + host + ":" + port + " HTTP/1.0\n"
                     + "User-Agent: "
-                    + sun.net.www.protocol.http.HttpURLConnection.userAgent;
+                    + WebConnector.USER_AGENT;
             if (tunnelUserName != null && tunnelPassword != null) {
                 //add basic authentication header for the proxy
-                sun.misc.BASE64Encoder enc = new sun.misc.BASE64Encoder();
-                String encodedPassword = enc.encode((tunnelUserName + ":" + tunnelPassword).getBytes());
+              //  sun.misc.BASE64Encoder enc = new sun.misc.BASE64Encoder();
+                
+                String encodedPassword =new String( Base64.getEncoder().encode((tunnelUserName + ":" + tunnelPassword).getBytes()));
                 msg = msg + "\nProxy-Authorization: Basic " + encodedPassword;
             }
             msg = msg + "\nContent-Length: 0";
