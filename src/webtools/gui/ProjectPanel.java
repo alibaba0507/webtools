@@ -27,14 +27,17 @@ import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JInternalFrame;
 import javax.swing.JLabel;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.SpringLayout;
+import javax.swing.border.BevelBorder;
 import javax.swing.event.TableModelEvent;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
@@ -59,6 +62,7 @@ public class ProjectPanel extends JPanel {
     private JTable tblRegexResult;
     private JTable tblKeywordsResult;
     private JTable tblSearchResult;
+    public JPopupMenu popupSearchResultTable;
     private JTable tblPagesResult;
     private TextForm crawlForm;
     private int limitDoaminRecord = 100; // defauult
@@ -128,14 +132,13 @@ public class ProjectPanel extends JPanel {
                         String[] s = crawlForm.getFormValues();
                         int id = db.findQueryId(s[1], s[3]);
                         if (id > 0) {
-                           ArrayList<Vector> list = db.selectRegex(id,0);
-                           for (int i = 0;i < list.size();i++)
-                           {
-                               Vector v = list.get(i);
-                                fw.write((String)v.get(1) + "\n");
-                           }
+                            ArrayList<Vector> list = db.selectRegex(id, 0);
+                            for (int i = 0; i < list.size(); i++) {
+                                Vector v = list.get(i);
+                                fw.write((String) v.get(1) + "\n");
+                            }
                         }
-                        
+
                     } catch (IOException ioe) {
                         ioe.printStackTrace();
                     }
@@ -166,7 +169,7 @@ public class ProjectPanel extends JPanel {
                         new Object[][]{},
                         new String[]{
                             "Most Used words by Sites",
-                             "Count"
+                            "Count"
                         }
                 ) {
             boolean[] canEdit = new boolean[]{
@@ -280,6 +283,39 @@ public class ProjectPanel extends JPanel {
         searchQuerySplit.setDividerLocation(150);
         pnlSearchResult.add(searchQuerySplit, BorderLayout.CENTER);
         tblSearchResult = new JTable();
+        popupSearchResultTable = new JPopupMenu();
+
+        ActionListener menuListener = new ActionListener() {
+            public void actionPerformed(ActionEvent event) {
+                System.out.println("Popup menu item ["
+                        + event.getActionCommand() + "] was pressed.");
+                if (event.getActionCommand().equalsIgnoreCase("Select All")) {
+                    tblSearchResult.setRowSelectionInterval(0, tblSearchResult.getModel().getRowCount() - 1);
+                }
+
+                if (event.getActionCommand().equalsIgnoreCase("De-select All")) {
+                    tblSearchResult.setRowSelectionInterval(0, 0);
+                }
+                if (event.getActionCommand().equalsIgnoreCase("Dwonload Selected")) {
+                    downloadSelectedSearchDomains();
+                }
+            }
+        };
+        JMenuItem item;
+        popupSearchResultTable.add(item = new JMenuItem("Select All"));
+        item.setHorizontalTextPosition(JMenuItem.RIGHT);
+        item.addActionListener(menuListener);
+        popupSearchResultTable.add(item = new JMenuItem("De-select All"));
+        item.setHorizontalTextPosition(JMenuItem.RIGHT);
+        item.addActionListener(menuListener);
+        popupSearchResultTable.add(item = new JMenuItem("Dwonload Selected"));
+        item.setHorizontalTextPosition(JMenuItem.RIGHT);
+        item.addActionListener(menuListener);
+        popupSearchResultTable.setLabel("Search Table Selection");
+        popupSearchResultTable.setBorder(new BevelBorder(BevelBorder.RAISED));
+        //popupSearchResultTable.addPopupMenuListener(new PopupPrintListener());
+
+        addMouseListener(new MousePopupListener());
         tblSearchResult.setModel(new javax.swing.table.DefaultTableModel(
                 new Object[][]{},
                 new String[]{
@@ -331,6 +367,21 @@ public class ProjectPanel extends JPanel {
         });
 
         tblSearchResult.addMouseListener(new MouseAdapter() {
+            public void mousePressed(MouseEvent e) {
+
+                checkPopup(e);
+            }
+
+            public void mouseReleased(MouseEvent e) {
+                checkPopup(e);
+            }
+
+            private void checkPopup(MouseEvent e) {
+                if (e.isPopupTrigger()) {
+                    popupSearchResultTable.show(ProjectPanel.this.tblSearchResult, e.getX(), e.getY());
+                }
+            }
+
             @Override
             public void mouseClicked(MouseEvent e) {
                 //     super.mouseClicked(e); //To change body of generated methods, choose Tools | Templates.
@@ -354,12 +405,15 @@ public class ProjectPanel extends JPanel {
                                 }// end for
                             }// end if 
                         }// end if
+                    } else {
+                        checkPopup(e);
                     }
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
             }
-        });
+        }
+        );
         tblPagesResult = new JTable();
 
         tblPagesResult.setModel(
@@ -386,6 +440,48 @@ public class ProjectPanel extends JPanel {
         tblPagesResult.getColumnModel().getColumn(2).setMaxWidth(250);
         tblPagesResult.getColumnModel().getColumn(3).setMaxWidth(250);
         searchPagesTableScrool.setViewportView(tblPagesResult);
+    }
+
+    private void downloadSelectedSearchDomains() {
+
+        JFileChooser f = new JFileChooser();
+        f.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        // f.showSaveDialog(null);
+        if (f.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+            System.out.println(f.getCurrentDirectory());
+            System.out.println(f.getSelectedFile());
+            FileWriter fr = null;
+            try {
+                fr = new FileWriter(f.getSelectedFile(), true);
+
+                int rows[] = tblSearchResult.getSelectedRows();//Row();
+                WebToolMainFrame.instance.getConsole().append(">>>>>>> downloadSelectedSearchDomains SavingURL to File ... >>>\n");
+
+                for (int i = 0; i < rows.length; i++) {
+                    String domain = (String) ((DefaultTableModel) tblSearchResult.getModel()).getValueAt(rows[i], 0);
+                    SQLite db = SQLite.getInstance();
+                    String[] s = crawlForm.getFormValues();
+                    int id = db.findQueryId(s[1], s[3]);
+                    if (id > 0) {
+                        ArrayList<Vector> list = db.selectURLByDomain(id, domain);
+                        if (list.size() > 0) {
+                            for (int j = 0; j < list.size(); j++) {
+                                Vector v = list.get(j);
+                                String urlToDownload = (String) v.get(0);
+                                fr.write(urlToDownload + "\n");
+                                fr.flush();
+                            }// end for
+                        }// end if 
+                    }// end if
+                }// end  for (int i = 0; i < rows.length; i++)
+                fr.close();
+                WebToolMainFrame.instance.getConsole().append(">>>>>>> downloadSelectedSearchDomains Finish .... >>>\n");
+
+            } catch (IOException e) {
+                WebToolMainFrame.instance.getConsole().append(">>>>>>> downloadSelectedSearchDomains IO Error[" + e.getMessage() + "] >>>\n");
+                return;
+            }
+        }
     }
 
     private void initTabs() {
@@ -554,10 +650,9 @@ public class ProjectPanel extends JPanel {
                         || (!searchEngine.equals("") && !searchEngine.equals(crawlForm.getText(3)))) {
                     String newQuery = crawlForm.getText(1);
                     int qId = SQLite.getInstance().findQueryId(query, searchEngine);
-                    
+
                     SQLite.getInstance().deleteQuery(qId);
-                } else
-                if (!regex.equals("") && !regex.equals(crawlForm.getText(5))) {
+                } else if (!regex.equals("") && !regex.equals(crawlForm.getText(5))) {
                     int qId = SQLite.getInstance().findQueryId(query, searchEngine);
                     SQLite.getInstance().deleteRegexQuery(qId);
                     SQLite.getInstance().deleteKeywordsQuery(qId);
@@ -576,6 +671,28 @@ public class ProjectPanel extends JPanel {
         p.add(submit);
         searchForm.add(p, BorderLayout.CENTER);
 
+    }
+
+    class MousePopupListener extends MouseAdapter {
+
+        public void mousePressed(MouseEvent e) {
+
+            checkPopup(e);
+        }
+
+        public void mouseClicked(MouseEvent e) {
+            checkPopup(e);
+        }
+
+        public void mouseReleased(MouseEvent e) {
+            checkPopup(e);
+        }
+
+        private void checkPopup(MouseEvent e) {
+            if (e.isPopupTrigger()) {
+                popupSearchResultTable.show(ProjectPanel.this, e.getX(), e.getY());
+            }
+        }
     }
 
 }
@@ -615,4 +732,5 @@ class MyComparator implements Comparator {
         }
         return false;
     }
+
 }
