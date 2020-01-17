@@ -44,7 +44,7 @@ public class Main {
             ex.printStackTrace();
         }
         java.lang.System.setProperty(
-                "https.protocols", "TLSv1");
+                "https.protocols", "TLSv1,TLSv1.1,TLSv1.2");
         SSLCertificates.ignoreCertificates();
 
         System.out.println(System.getProperty("https.protocols"));
@@ -81,3 +81,4 @@ public class Main {
 
     }
 }
+

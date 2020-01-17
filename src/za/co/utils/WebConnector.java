@@ -29,6 +29,7 @@ import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import webtools.gui.run.WebToolMainFrame;
+import webtools.net.LastHTTPError;
 import webtools.net.TorSocket;
 import webtools.net.WebRequest;
 
@@ -72,7 +73,10 @@ public class WebConnector {
                 String port = (String) WebToolMainFrame.defaultProjectProperties.get("proxy.port");
                 String user = (String) WebToolMainFrame.defaultProjectProperties.get("proxy.user");
                 String psw = (String) WebToolMainFrame.defaultProjectProperties.get("proxy.pasw");
-                doc = getJsoup(req, "", true, host, Integer.parseInt(port), user, psw,"");
+                if (host.trim().length() > 0 && port.trim().length()>0)
+                    doc = getJsoup(req, "", true, host, Integer.parseInt(port), user, psw,"");
+                else
+                    doc = getJsoup(req, "", true, null, 0, null, null,"");
             } else if (proxyType.equals("TOR")) {
                 String proxyHost = (String) WebToolMainFrame.defaultProjectProperties.get("proxy.tor.host");
                 String proxyPort = (String) WebToolMainFrame.defaultProjectProperties.get("proxy.tor.port");
@@ -94,7 +98,9 @@ public class WebConnector {
             String proxyHost, int proxyPort, String proxyUser, String proxyPassW,String referer) {
         Connection.Response response;
         URL u = null;
+        LastHTTPError.errorCode = 0; // clear last error
         try {
+            
             u = new URL(req.getOriginalURL());
             //set up handler for jsse
             System.setProperty("java.protocol.handler.pkgs", "com.sun.net.ssl.internal.www.protocol");
@@ -148,7 +154,10 @@ public class WebConnector {
             return Jsoup.parse(body);
         } catch (HttpStatusException e) {
             e.printStackTrace();
+            LastHTTPError.errorCode = e.getStatusCode();
             if (e.getStatusCode() == 429) { // to many request
+                return null;
+                /*
                 if (u != null && u.getHost().indexOf("google") > -1) {
                     String ext = u.getHost().substring(u.getHost().indexOf("google.")+"google.".length());
                     if (ext.equals("com")) { // we will try to redirect to come other sites
@@ -170,8 +179,10 @@ public class WebConnector {
                                  proxyHost, proxyPort, proxyUser, proxyPassW,"");
 
                     }
-                }
-            }
+                }// end if (u != null && u.getHost().indexOf("google") > -1)
+                */
+           }else
+                return null;
         }catch (IOException ioe)
         {
             ioe.printStackTrace();
@@ -454,3 +465,9 @@ public class WebConnector {
     }
 
 }
+
+
+
+
+
+
