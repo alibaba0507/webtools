@@ -111,7 +111,7 @@ public class WebCrawler implements Runnable, ConnectorCallback {
                         // if (sleepTimeInSec / maxDelayInSec > 2)
                         // {
                         JOptionPane.showMessageDialog(WebToolMainFrame.getDesckTopInstance(),
-                                 "Too many request.Could be and of search pages or Search engine wait period 5 - 15 min.If you have a proxy you can useit or replace it. Service will be Stoped",
+                                 "Too many request.Could be and of search pages or Search engine wait period 5 - 15 min.If you have a proxy you can useit or replace it, also you can swich Search Engine. Service will be Stoped",
                                  "Service Too many Request", JOptionPane.INFORMATION_MESSAGE);
 
                         WebCrawler.this.stop();
@@ -318,4 +318,5 @@ class MyComparator implements Comparator {
         return false;
     }
 }
+
 

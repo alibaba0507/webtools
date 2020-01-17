@@ -5,9 +5,16 @@
  */
 package webtools.gui;
 
+import de.l3s.boilerpipe.BoilerpipeProcessingException;
+import de.l3s.boilerpipe.document.TextDocument;
+import de.l3s.boilerpipe.extractors.ArticleExtractor;
+import de.l3s.boilerpipe.sax.BoilerpipeSAXInput;
+import de.l3s.boilerpipe.sax.HTMLDocument;
+import de.l3s.boilerpipe.sax.HTMLFetcher;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -17,6 +24,10 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -37,15 +48,18 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.SpringLayout;
+import javax.swing.SwingWorker;
 import javax.swing.border.BevelBorder;
 import javax.swing.event.TableModelEvent;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
+import org.xml.sax.SAXException;
 import webtools.gui.run.Main;
 
 import webtools.gui.run.WebToolMainFrame;
+import webtools.net.WebCrawler;
 import za.co.utils.AWTUtils;
 import za.co.utils.SQLite;
 
@@ -296,8 +310,22 @@ public class ProjectPanel extends JPanel {
                 if (event.getActionCommand().equalsIgnoreCase("De-select All")) {
                     tblSearchResult.setRowSelectionInterval(0, 0);
                 }
-                if (event.getActionCommand().equalsIgnoreCase("Dwonload Selected")) {
+                if (event.getActionCommand().equalsIgnoreCase("Download Selected Links")) {
                     downloadSelectedSearchDomains();
+                }
+                //Download Selected Articles
+                if (event.getActionCommand().equalsIgnoreCase("Download Selected Articles")) {
+                    SwingWorker worker = new SwingWorker() {
+                        @Override
+                        protected Object doInBackground() throws Exception {
+
+                            downloadSelectedArticles();
+                            return new Object();
+                        }
+
+                    };
+                    worker.execute();
+
                 }
             }
         };
@@ -308,9 +336,14 @@ public class ProjectPanel extends JPanel {
         popupSearchResultTable.add(item = new JMenuItem("De-select All"));
         item.setHorizontalTextPosition(JMenuItem.RIGHT);
         item.addActionListener(menuListener);
-        popupSearchResultTable.add(item = new JMenuItem("Dwonload Selected"));
+        popupSearchResultTable.add(item = new JMenuItem("Download Selected Links"));
         item.setHorizontalTextPosition(JMenuItem.RIGHT);
         item.addActionListener(menuListener);
+
+        popupSearchResultTable.add(item = new JMenuItem("Download Selected Articles"));
+        item.setHorizontalTextPosition(JMenuItem.RIGHT);
+        item.addActionListener(menuListener);
+
         popupSearchResultTable.setLabel("Search Table Selection");
         popupSearchResultTable.setBorder(new BevelBorder(BevelBorder.RAISED));
         //popupSearchResultTable.addPopupMenuListener(new PopupPrintListener());
@@ -440,6 +473,73 @@ public class ProjectPanel extends JPanel {
         tblPagesResult.getColumnModel().getColumn(2).setMaxWidth(250);
         tblPagesResult.getColumnModel().getColumn(3).setMaxWidth(250);
         searchPagesTableScrool.setViewportView(tblPagesResult);
+    }
+
+    private void downloadSelectedArticles() {
+        JFileChooser f = new JFileChooser();
+        f.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        // f.showSaveDialog(null);
+        if (f.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+            System.out.println(f.getCurrentDirectory());
+            System.out.println(f.getSelectedFile());
+            FileWriter fr = null;
+            try {
+                //fr = new FileWriter(f.getSelectedFile(), true);
+                String dir = f.getSelectedFile().toString();
+
+                int rows[] = tblSearchResult.getSelectedRows();//Row();
+                WebToolMainFrame.instance.getConsole().append(">>>>>>> downloadSelectedArticles Saving Articles to File ... >>>\n");
+
+                for (int i = 0; i < rows.length; i++) {
+                    String domain = (String) ((DefaultTableModel) tblSearchResult.getModel()).getValueAt(rows[i], 0);
+                    SQLite db = SQLite.getInstance();
+                    String[] s = crawlForm.getFormValues();
+                    int id = db.findQueryId(s[1], s[3]);
+                    if (id > 0) {
+                        ArrayList<Vector> list = db.selectURLByDomain(id, domain);
+                        if (list.size() > 0) {
+                            for (int j = 0; j < list.size(); j++) {
+                                Vector v = list.get(j);
+                                String urlToDownload = (String) v.get(0);
+                                // need to create file based on article title
+                                // if title.len > 10 get only 10 char .
+                                // add extention .html
+                                String articleFileName = "";
+                                URL url = new URL(urlToDownload);
+                                try {
+                                    HTMLDocument htmlDoc = HTMLFetcher.fetch(url);
+                                    TextDocument doc = new BoilerpipeSAXInput(htmlDoc.toInputSource()).getTextDocument();
+                                    String text = ArticleExtractor.INSTANCE.getText(doc);
+                                    
+                                    String filename = Paths.get(url.toURI().getPath()).getFileName().toString();
+                                    articleFileName = filename;// text.trim().substring(0,10) + ".html";
+                                    articleFileName += ".txt";
+                                    fr = new FileWriter(dir + File.separatorChar + articleFileName, true);
+                                    fr.write(text);
+                                    fr.flush();
+                                    fr.close();
+                                    Font fnt = WebToolMainFrame.instance.getConsole().getFont();
+                                    WebToolMainFrame.instance.getConsole().setFont(fnt.deriveFont(Font.BOLD));
+                                    WebToolMainFrame.instance.getConsole().append(">>>> Saving Article " + articleFileName + " >>>>>\n");
+                                } catch (SAXException sax) {
+                                    sax.printStackTrace();
+                                } catch (BoilerpipeProcessingException bp) {
+                                    bp.printStackTrace();
+                                } catch (URISyntaxException synEx) {
+                                    synEx.printStackTrace();;
+                                }
+                            }// end for
+                        }// end if 
+                    }// end if
+                }// end  for (int i = 0; i < rows.length; i++)
+                fr.close();
+                WebToolMainFrame.instance.getConsole().append(">>>>>>> downloadSelectedSearchDomains Finish .... >>>\n");
+
+            } catch (IOException e) {
+                WebToolMainFrame.instance.getConsole().append(">>>>>>> downloadSelectedSearchDomains IO Error[" + e.getMessage() + "] >>>\n");
+                return;
+            }
+        }
     }
 
     private void downloadSelectedSearchDomains() {
@@ -734,3 +834,5 @@ class MyComparator implements Comparator {
     }
 
 }
+
+
