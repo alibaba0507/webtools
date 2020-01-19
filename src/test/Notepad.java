@@ -8,7 +8,7 @@ package test;
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  * 
- * -Redistribution of source code must retain the above copyright notice, this
+ * -Redistribution of soJFileurce code must retain the above copyright notice, this
  *  list of conditions and the following disclaimer.
  * 
  * -Redistribution in binary form must reproduce the above copyright notice, 
@@ -50,6 +50,7 @@ import java.beans.*;
 import java.io.*;
 import java.net.URL;
 import java.util.*;
+import java.util.prefs.Preferences;
 
 import javax.swing.text.*;
 import javax.swing.undo.*;
@@ -68,6 +69,8 @@ class Notepad extends JPanel {
     private static ResourceBundle resources;
     private final static String EXIT_AFTER_PAINT = new String("-exit");
     private static boolean exitAfterFirstPaint;
+    Preferences prefs = Preferences.userRoot().node(getClass().getName());
+    String LAST_USED_FOLDER = System.getProperty("user.home");
 
     static {
         try {
@@ -127,13 +130,84 @@ class Notepad extends JPanel {
             // just use the viewport default
         }
 
+        syntaxEditor = createEditor();
+        JScrollPane scrollerSyntax = new JScrollPane();
+        JViewport portSyntax = scrollerSyntax.getViewport();
+        portSyntax.add(syntaxEditor);
+        try {
+            String vpFlag = resources.getString("ViewportBackingStore");
+            Boolean bs = Boolean.valueOf(vpFlag);
+            portSyntax.setBackingStoreEnabled(bs.booleanValue());
+        } catch (MissingResourceException mre) {
+            // just use the viewport default
+        }
+
         menuItems = new Hashtable();
-        JPanel panel = new JPanel();
-        panel.setLayout(new BorderLayout());
-        panel.add("North", createToolbar());
-        panel.add("Center", scroller);
-        add("Center", panel);
+        JPanel panelEditor = new JPanel();
+        panelEditor.setLayout(new BorderLayout());
+        panelEditor.add("North", createToolbar());
+        panelEditor.add("Center", scroller);
+
+        JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+        splitPane.setContinuousLayout(true);
+        splitPane.setOneTouchExpandable(true);
+        splitPane.setTopComponent(panelEditor);
+
+        JPanel panelSyntax = new JPanel();
+        panelSyntax.setLayout(new BorderLayout());
+
+        panelSyntax.add("Center", scrollerSyntax);
+
+        splitPane.setBottomComponent(panelSyntax);
+        JPanel panelSyntaxActions = new JPanel();
+        panelSyntaxActions.setLayout(new BoxLayout(panelSyntaxActions,BoxLayout.X_AXIS));
+        panelSyntax.add("North", panelSyntaxActions);
+
+        panelSyntaxActions.add(new JButton(createActionSpinSentances()));
+        // createActionSpinWords3
+        panelSyntaxActions.add(new JButton(createActionSpinWords3()));
+        panelSyntaxActions.add(new JButton(createActionSpinWords4()));
+        panelSyntaxActions.add(new JButton(createActionSpinWords5()));
+        add("Center", splitPane);
         add("South", createStatusbar());
+        splitPane.setResizeWeight(0.5);
+        //splitPane.setDividerLocation(50);
+    }
+
+    Action createActionSpinSentances() {
+        return new AbstractAction("Spin Sentences") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            }
+        };
+    }
+
+    Action createActionSpinWords3() {
+        return new AbstractAction("Spin Words > 3 chars") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            }
+        };
+    }
+
+    Action createActionSpinWords4() {
+        return new AbstractAction("Spin Words > 4 chars") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            }
+        };
+    }
+
+    Action createActionSpinWords5() {
+        return new AbstractAction("Spin Words > 5 chars") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            }
+        };
     }
 
     public static void main(String[] args) {
@@ -272,7 +346,7 @@ class Notepad extends JPanel {
     protected URL getResource(String key) {
         String name = getResourceString(key);
         if (name != null) {
-            URL url = this.getClass().getResource(name);
+            URL url = this.getClass().getResource("../" + name);
             return url;
         }
         return null;
@@ -453,6 +527,11 @@ class Notepad extends JPanel {
     }
 
     private JTextComponent editor;
+    // This is the editor where syntax template is made based on
+    // Syntax words {w1|w2|w3 ...}
+    private JTextComponent syntaxEditor;
+    // This is where the spin text is made choose  random from {w1|w2|w3 ...}
+    private JTextComponent spinEditor;
     private Hashtable commands;
     private Hashtable menuItems;
     private JMenuBar menubar;
@@ -611,13 +690,15 @@ class Notepad extends JPanel {
 
         public void actionPerformed(ActionEvent e) {
             Frame frame = getFrame();
-            JFileChooser chooser = new JFileChooser();
+            JFileChooser chooser = new JFileChooser(prefs.get(LAST_USED_FOLDER,
+                    new File(".").getAbsolutePath()));
             chooser.setMultiSelectionEnabled(true);
             int ret = chooser.showOpenDialog(frame);
 
             if (ret != JFileChooser.APPROVE_OPTION) {
                 return;
             }
+            prefs.put(LAST_USED_FOLDER, chooser.getSelectedFile().getParent());
             // cause multiselection is on always will be array of files
             File[] fs = chooser.getSelectedFiles();//File();
             Document oldDoc = getEditor().getDocument();
@@ -659,8 +740,8 @@ class Notepad extends JPanel {
                     for (final String word : new WordIterator(s)) {
                         System.out.println(word);
                     }
-                    */
-                    /*
+                     */
+ /*
                     System.out.println("------------------------ SENTANCES --------------------------");
                     for (final String word : new SentenceIterator(s, Locale.ENGLISH)) {
                         System.out.println(word);
@@ -674,7 +755,7 @@ class Notepad extends JPanel {
                     for (final String ngram : new NGramIterator(3, s, Locale.ENGLISH, StopWords.English)) {
                         System.out.println(ngram);
                     }
-                */
+                     */
                     System.out.println("-------------------  MOST COMMON WORDS -------------------");
                     // find the most common 3-grams of the Baskervilles 
                     final Counter<String> ngrams = new Counter<String>();
