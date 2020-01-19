@@ -160,7 +160,7 @@ class Notepad extends JPanel {
 
         splitPane.setBottomComponent(panelSyntax);
         JPanel panelSyntaxActions = new JPanel();
-        panelSyntaxActions.setLayout(new BoxLayout(panelSyntaxActions,BoxLayout.X_AXIS));
+        panelSyntaxActions.setLayout(new BoxLayout(panelSyntaxActions, BoxLayout.X_AXIS));
         panelSyntax.add("North", panelSyntaxActions);
 
         panelSyntaxActions.add(new JButton(createActionSpinSentances()));
@@ -178,9 +178,57 @@ class Notepad extends JPanel {
         return new AbstractAction("Spin Sentences") {
             @Override
             public void actionPerformed(ActionEvent e) {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+                String s = editor.getText();
+                if (s.trim().length() <= 0) {
+                    JOptionPane.showMessageDialog(Notepad.this, "Nothing To Spin", "Empty Text", JOptionPane.INFORMATION_MESSAGE);
+                    return;
+                }
+                Map m = spinSencanses();
             }
         };
+    }
+
+    Map<String, String> spinSencanses() {
+        Map m = new HashMap();
+        //String syntax = getResourceString("syntax");// getResourceString("syntax");
+        // InputStreamReader inr = getResourceAsStream("syntax");
+        // BufferedReader br = getResourceAsBuffer("../" + syntax);
+        String s = editor.getText();
+        StopWords sw = StopWords.English;
+        for (final String word : new SentenceIterator(s, Locale.ENGLISH)) {
+            //System.out.println(word);
+
+            for (final String w : new WordIterator(word)) {
+                //System.out.println(word);
+                boolean found = false;
+                if (m.containsKey(w)) {
+                    continue; // we have this one 
+                }
+                if (w.trim().length() >= 4 && !sw.isStopWord(w)) {
+                    try {
+                        // inr.mark(0);
+                        //inr.reset();
+                        BufferedReader br = new BufferedReader(getResourceAsStream("syntax"));
+                        String readLine = "";
+                        while ((readLine = br.readLine()) != null) {
+                            if (readLine.indexOf("," + w + ",") > -1) { // we found 
+                                m.put(w, "{" + readLine.replaceAll(",", "|") + "}");
+                                found = true;
+                                //br.close();
+                                break;
+                            }
+                        }// end while
+                        br.close();
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
+                }// end if
+                if (found) {
+                    break;
+                }
+            }// end for 
+        }// end for
+        return m;
     }
 
     Action createActionSpinWords3() {
@@ -341,6 +389,25 @@ class Notepad extends JPanel {
             str = null;
         }
         return str;
+    }
+
+    protected InputStreamReader getResourceAsStream(String key) {
+        String name = getResourceString(key);
+        if (name != null) {
+            return new InputStreamReader(
+                    this.getClass().getResourceAsStream("../" + name));
+
+            //BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+        }
+        return null;
+    }
+
+    protected BufferedReader getResourceAsBuffer(String key) {
+        InputStreamReader in = getResourceAsStream(key);
+        if (in != null) {
+            return new BufferedReader(in);//new InputStreamReader(in));
+        }
+        return null;
     }
 
     protected URL getResource(String key) {

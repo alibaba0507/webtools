@@ -21,16 +21,22 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.BufferedWriter;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringReader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.Vector;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -55,13 +61,17 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
+import org.jsoup.nodes.Document;
+import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import webtools.gui.run.Main;
 
 import webtools.gui.run.WebToolMainFrame;
 import webtools.net.WebCrawler;
+import webtools.net.WebRequest;
 import za.co.utils.AWTUtils;
 import za.co.utils.SQLite;
+import za.co.utils.WebConnector;
 
 /**
  *
@@ -313,13 +323,27 @@ public class ProjectPanel extends JPanel {
                 if (event.getActionCommand().equalsIgnoreCase("Download Selected Links")) {
                     downloadSelectedSearchDomains();
                 }
+                //Merge Selected Articles
+                if (event.getActionCommand().equalsIgnoreCase("Merge Selected Articles")) {
+                    SwingWorker worker = new SwingWorker() {
+                        @Override
+                        protected Object doInBackground() throws Exception {
+
+                            downloadSelectedArticles(true);
+                            return new Object();
+                        }
+
+                    };
+                    worker.execute();
+
+                }
                 //Download Selected Articles
                 if (event.getActionCommand().equalsIgnoreCase("Download Selected Articles")) {
                     SwingWorker worker = new SwingWorker() {
                         @Override
                         protected Object doInBackground() throws Exception {
 
-                            downloadSelectedArticles();
+                            downloadSelectedArticles(false);
                             return new Object();
                         }
 
@@ -341,6 +365,10 @@ public class ProjectPanel extends JPanel {
         item.addActionListener(menuListener);
 
         popupSearchResultTable.add(item = new JMenuItem("Download Selected Articles"));
+        item.setHorizontalTextPosition(JMenuItem.RIGHT);
+        item.addActionListener(menuListener);
+
+        popupSearchResultTable.add(item = new JMenuItem("Merge Selected Articles"));
         item.setHorizontalTextPosition(JMenuItem.RIGHT);
         item.addActionListener(menuListener);
 
@@ -475,7 +503,7 @@ public class ProjectPanel extends JPanel {
         searchPagesTableScrool.setViewportView(tblPagesResult);
     }
 
-    private void downloadSelectedArticles() {
+    private void downloadSelectedArticles(boolean merge) {
         JFileChooser f = new JFileChooser();
         f.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
         // f.showSaveDialog(null);
@@ -483,9 +511,17 @@ public class ProjectPanel extends JPanel {
             System.out.println(f.getCurrentDirectory());
             System.out.println(f.getSelectedFile());
             FileWriter fr = null;
+            
+            WebConnector wc = new WebConnector();
             try {
-                //fr = new FileWriter(f.getSelectedFile(), true);
                 String dir = f.getSelectedFile().toString();
+                String timeStamp = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss").format(new Date());
+                BufferedWriter bw = null;
+                if (merge) {
+                    bw = new BufferedWriter(fr = new FileWriter(dir + File.separatorChar + "Merge-" + timeStamp + ".txt", true));
+                }
+
+                
 
                 int rows[] = tblSearchResult.getSelectedRows();//Row();
                 WebToolMainFrame.instance.getConsole().append(">>>>>>> downloadSelectedArticles Saving Articles to File ... >>>\n");
@@ -507,31 +543,51 @@ public class ProjectPanel extends JPanel {
                                 String articleFileName = "";
                                 URL url = new URL(urlToDownload);
                                 try {
-                                    HTMLDocument htmlDoc = HTMLFetcher.fetch(url);
-                                    TextDocument doc = new BoilerpipeSAXInput(htmlDoc.toInputSource()).getTextDocument();
+                                    Document docm = wc.get(new WebRequest(urlToDownload, urlToDownload));
+                                    String s_doc = docm.text();
+                                  //  InputStream targetStream = new ByteArrayInputStream(s_doc.getBytes());
+                                    InputSource inputSource = new InputSource( new StringReader( s_doc ) );
+                                   // HTMLDocument htmlDoc = HTMLFetcher.fetch(url);
+                                    //TextDocument doc = new BoilerpipeSAXInput(htmlDoc.toInputSource()).getTextDocument();
+                                    TextDocument doc = new BoilerpipeSAXInput(inputSource).getTextDocument();
                                     String text = ArticleExtractor.INSTANCE.getText(doc);
-                                    
+
                                     String filename = Paths.get(url.toURI().getPath()).getFileName().toString();
                                     articleFileName = filename;// text.trim().substring(0,10) + ".html";
-                                    articleFileName += ".txt";
-                                    fr = new FileWriter(dir + File.separatorChar + articleFileName, true);
-                                    fr.write(text);
-                                    fr.flush();
-                                    fr.close();
+                                    if (!merge) {
+                                        articleFileName += ".txt";
+                                        fr = new FileWriter(dir + File.separatorChar + articleFileName, true);
+                                        fr.write(text);
+                                        fr.flush();
+                                        fr.close();
+                                    } else if (bw != null){
+                                        bw.write(text);
+                                        bw.newLine();
+                                        bw.flush();
+                                    }
                                     Font fnt = WebToolMainFrame.instance.getConsole().getFont();
                                     WebToolMainFrame.instance.getConsole().setFont(fnt.deriveFont(Font.BOLD));
                                     WebToolMainFrame.instance.getConsole().append(">>>> Saving Article " + articleFileName + " >>>>>\n");
-                                } catch (SAXException sax) {
+                                } catch (Exception exc)
+                                {
+                                    exc.printStackTrace();
+                                    Font fnt = WebToolMainFrame.instance.getConsole().getFont();
+                                    WebToolMainFrame.instance.getConsole().setFont(fnt.deriveFont(Font.BOLD));
+                                    WebToolMainFrame.instance.getConsole().append(">>> ERROR >>>> " + exc.getMessage() + " >>>>>\n");
+                                }
+                                /*catch (SAXException sax) {
                                     sax.printStackTrace();
                                 } catch (BoilerpipeProcessingException bp) {
                                     bp.printStackTrace();
                                 } catch (URISyntaxException synEx) {
                                     synEx.printStackTrace();;
-                                }
+                                }*/
                             }// end for
                         }// end if 
                     }// end if
                 }// end  for (int i = 0; i < rows.length; i++)
+                if (merge && bw != null)
+                    bw.close();
                 fr.close();
                 WebToolMainFrame.instance.getConsole().append(">>>>>>> downloadSelectedSearchDomains Finish .... >>>\n");
 
@@ -834,5 +890,11 @@ class MyComparator implements Comparator {
     }
 
 }
+
+
+
+
+
+
 
 
