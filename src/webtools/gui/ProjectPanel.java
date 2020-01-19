@@ -511,17 +511,16 @@ public class ProjectPanel extends JPanel {
             System.out.println(f.getCurrentDirectory());
             System.out.println(f.getSelectedFile());
             FileWriter fr = null;
-            
+
             WebConnector wc = new WebConnector();
             try {
                 String dir = f.getSelectedFile().toString();
                 String timeStamp = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss").format(new Date());
+                String mergFile = dir + File.separatorChar + "Merge-" + timeStamp + ".txt";
                 BufferedWriter bw = null;
                 if (merge) {
-                    bw = new BufferedWriter(fr = new FileWriter(dir + File.separatorChar + "Merge-" + timeStamp + ".txt", true));
+                    bw = new BufferedWriter(fr = new FileWriter(mergFile, true));
                 }
-
-                
 
                 int rows[] = tblSearchResult.getSelectedRows();//Row();
                 WebToolMainFrame.instance.getConsole().append(">>>>>>> downloadSelectedArticles Saving Articles to File ... >>>\n");
@@ -545,9 +544,9 @@ public class ProjectPanel extends JPanel {
                                 try {
                                     Document docm = wc.get(new WebRequest(urlToDownload, urlToDownload));
                                     String s_doc = docm.text();
-                                  //  InputStream targetStream = new ByteArrayInputStream(s_doc.getBytes());
-                                    InputSource inputSource = new InputSource( new StringReader( s_doc ) );
-                                   // HTMLDocument htmlDoc = HTMLFetcher.fetch(url);
+                                    //  InputStream targetStream = new ByteArrayInputStream(s_doc.getBytes());
+                                    InputSource inputSource = new InputSource(new StringReader(s_doc));
+                                    // HTMLDocument htmlDoc = HTMLFetcher.fetch(url);
                                     //TextDocument doc = new BoilerpipeSAXInput(htmlDoc.toInputSource()).getTextDocument();
                                     TextDocument doc = new BoilerpipeSAXInput(inputSource).getTextDocument();
                                     String text = ArticleExtractor.INSTANCE.getText(doc);
@@ -560,7 +559,7 @@ public class ProjectPanel extends JPanel {
                                         fr.write(text);
                                         fr.flush();
                                         fr.close();
-                                    } else if (bw != null){
+                                    } else if (bw != null) {
                                         bw.write(text);
                                         bw.newLine();
                                         bw.flush();
@@ -568,8 +567,7 @@ public class ProjectPanel extends JPanel {
                                     Font fnt = WebToolMainFrame.instance.getConsole().getFont();
                                     WebToolMainFrame.instance.getConsole().setFont(fnt.deriveFont(Font.BOLD));
                                     WebToolMainFrame.instance.getConsole().append(">>>> Saving Article " + articleFileName + " >>>>>\n");
-                                } catch (Exception exc)
-                                {
+                                } catch (Exception exc) {
                                     exc.printStackTrace();
                                     Font fnt = WebToolMainFrame.instance.getConsole().getFont();
                                     WebToolMainFrame.instance.getConsole().setFont(fnt.deriveFont(Font.BOLD));
@@ -586,8 +584,12 @@ public class ProjectPanel extends JPanel {
                         }// end if 
                     }// end if
                 }// end  for (int i = 0; i < rows.length; i++)
-                if (merge && bw != null)
+                if (merge && bw != null) {
                     bw.close();
+                    Font fnt = WebToolMainFrame.instance.getConsole().getFont();
+                    WebToolMainFrame.instance.getConsole().setFont(fnt.deriveFont(Font.BOLD));
+                    WebToolMainFrame.instance.getConsole().append(">>> Merge File [" + mergFile +"] >>>> \n");
+                }
                 fr.close();
                 WebToolMainFrame.instance.getConsole().append(">>>>>>> downloadSelectedSearchDomains Finish .... >>>\n");
 
@@ -890,11 +892,4 @@ class MyComparator implements Comparator {
     }
 
 }
-
-
-
-
-
-
-
 

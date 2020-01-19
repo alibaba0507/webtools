@@ -1,4 +1,4 @@
-package test;
+package editor;
 
 /*
  * @(#)Notepad.java	1.31 05/11/17
@@ -56,6 +56,7 @@ import javax.swing.text.*;
 import javax.swing.undo.*;
 import javax.swing.event.*;
 import javax.swing.*;
+import webtools.gui.run.WebToolMainFrame;
 
 /**
  * Sample application using the simple text editor component that supports only
@@ -64,11 +65,13 @@ import javax.swing.*;
  * @author Timothy Prinzing
  * @version 1.31 11/17/05
  */
-class Notepad extends JPanel {
+public class Notepad extends JPanel {
 
     private static ResourceBundle resources;
     private final static String EXIT_AFTER_PAINT = new String("-exit");
     private static boolean exitAfterFirstPaint;
+    private String title;
+    private JButton submit;
     Preferences prefs = Preferences.userRoot().node(getClass().getName());
     String LAST_USED_FOLDER = System.getProperty("user.home");
 
@@ -87,6 +90,24 @@ class Notepad extends JPanel {
         if (exitAfterFirstPaint) {
             System.exit(0);
         }
+    }
+
+    public Notepad(String title, JInternalFrame jif) {
+        this();
+        this.title = title;
+        jif.addPropertyChangeListener(JInternalFrame.IS_CLOSED_PROPERTY, new PropertyChangeListener() {
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+                if (evt.getNewValue() == Boolean.TRUE) {
+                    // System.out.println(">>>>> JINTERNAL FRAME CLOSING >>>> " + evt.getOldValue() + " ] NEW [" + evt.getNewValue() + "] >>>>>>>>>>");
+                    if (!WebToolMainFrame.isDelete) {
+                        submit.doClick();
+                    }
+                }
+            }
+        });
+        
     }
 
     Notepad() {

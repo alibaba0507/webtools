@@ -13,6 +13,14 @@
                     "icon":".\\images\\newProject.jpg",
                     "accelerator":"N"
                     },
+                     {
+                    "class":"webtools.gui.actions.OpenFileEditorAction",
+                    "name":"Open File Editor",
+                    "key":"o",
+                    "button":"1",
+                    "icon":".\\images\\Open24.gif",
+                    "accelerator":"O"
+                    },
                     {
                     "class":"webtools.gui.actions.ExitAction",
                     "name":"Exit",
