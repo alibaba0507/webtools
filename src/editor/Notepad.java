@@ -48,6 +48,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.beans.*;
 import java.io.*;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.util.*;
 import java.util.prefs.Preferences;
@@ -110,7 +111,7 @@ public class Notepad extends JPanel {
 
     }
 
-    Notepad() {
+    public Notepad() {
         super(true);
 
         // Force SwingSet to come up in the Cross Platform L&F
@@ -130,7 +131,7 @@ public class Notepad extends JPanel {
         editor = createEditor();
         // Add this as a listener for undoable edits.
         editor.getDocument().addUndoableEditListener(undoHandler);
-
+        editor.setPreferredSize(new Dimension(250, 250));
         // install the command table
         commands = new Hashtable();
         Action[] actions = getActions();
@@ -149,11 +150,12 @@ public class Notepad extends JPanel {
         //nlEditor.add("Center", port);
         JScrollPane scrollerList = new JScrollPane();
         JViewport porList = scrollerList.getViewport();
-        scrollerList.setMaximumSize(new Dimension(250,140));
-        scrollerList.setPreferredSize(new Dimension(250,140));
+        scrollerList.setMaximumSize(new Dimension(250, 140));
+        scrollerList.setPreferredSize(new Dimension(250, 140));
         list = new JList();
         //list.setMaximumSize(new Dimension(150,40));
         list.setModel(new DefaultListModel());
+        list.setPreferredSize(new Dimension(250, 140));
         porList.add(list);
         pnlEditor.add("North", scrollerList);
         pnlEditor.add("Center", scroller);
@@ -167,17 +169,20 @@ public class Notepad extends JPanel {
         }
 
         syntaxEditor = createEditor();
+        syntaxEditor.setPreferredSize(new Dimension(250, 250));
         JScrollPane scrollerSyntax = new JScrollPane();
         JViewport portSyntax = scrollerSyntax.getViewport();
+        scrollerSyntax.setMaximumSize(new Dimension(250, 140));
+        scrollerSyntax.setPreferredSize(new Dimension(250, 140));
         portSyntax.add(syntaxEditor);
-       /* try {
+        /* try {
             String vpFlag = resources.getString("ViewportBackingStore");
             Boolean bs = Boolean.valueOf(vpFlag);
             portSyntax.setBackingStoreEnabled(bs.booleanValue());
         } catch (MissingResourceException mre) {
             // just use the viewport default
         }
-       */
+         */
         menuItems = new Hashtable();
         JPanel panelEditor = new JPanel();
         panelEditor.setLayout(new BorderLayout());
@@ -204,7 +209,7 @@ public class Notepad extends JPanel {
         panelSyntaxActions.add(new JButton(createActionSpinWords3()));
         panelSyntaxActions.add(new JButton(createActionSpinWords4()));
         panelSyntaxActions.add(new JButton(createActionSpinWords5()));
-       // add("North", panelEditor);
+        // add("North", panelEditor);
         add("Center", splitPane);
         add("South", createStatusbar());
         splitPane.setResizeWeight(0.5);
@@ -220,20 +225,44 @@ public class Notepad extends JPanel {
                     JOptionPane.showMessageDialog(Notepad.this, "Nothing To Spin", "Empty Text", JOptionPane.INFORMATION_MESSAGE);
                     return;
                 }
-                Map m = spinSencanses();
-                Iterator it = m.keySet().iterator();
-                while (it.hasNext()) {
-                    String key = it.next().toString();
-                    String val = m.get(key).toString();
-                    s = s.replaceAll(" " + key + " ", " " + val + " ");
-                    s = s.replaceAll("\n" + key + " ", "\n" + val + " ");
-                    s = s.replaceAll("\r" + key + " ", "\r" + val + " ");
-                    s = s.replaceAll("," + key + " ", "," + val + " ");
-                    s = s.replaceAll("." + key + " ", "." + val + " ");
-                    s = s.replaceAll(" " + key + ",", " " + val + ",");
-                    s = s.replaceAll(" " + key + ".", " " + val + ".");
-                    syntaxEditor.setText(s);
-                }
+                SwingWorker worker = new SwingWorker() {
+                    @Override
+                    protected Object doInBackground() throws Exception {
+                        if (WebToolMainFrame.instance != null) {
+                            Font fnt = WebToolMainFrame.instance.getConsole().getFont();
+                            WebToolMainFrame.instance.getConsole().setFont(fnt.deriveFont(Font.BOLD));
+                            WebToolMainFrame.instance.getConsole().append(">>>> Start Text Spin ... >>>>>\n");
+                            WebToolMainFrame.instance.getConsole().setForeground(Color.BLACK);
+                        }
+
+                        String s = editor.getText();
+                        Map m = spinSencanses();
+                        Iterator it = m.keySet().iterator();
+
+                        while (it.hasNext()) {
+
+                            String key = it.next().toString();
+                            String val = m.get(key).toString();
+                            s = s.replaceAll(" " + key + " ", " " + val + " ");
+                            s = s.replaceAll("\n" + key + " ", "\n" + val + " ");
+                            s = s.replaceAll("\r" + key + " ", "\r" + val + " ");
+                            s = s.replaceAll("," + key + " ", "," + val + " ");
+                            s = s.replaceAll("." + key + " ", "." + val + " ");
+                            s = s.replaceAll(" " + key + ",", " " + val + ",");
+                            s = s.replaceAll(" " + key + ".", " " + val + ".");
+                            syntaxEditor.setText(s);
+                        }
+                        if (WebToolMainFrame.instance != null) {
+                            Font fnt = WebToolMainFrame.instance.getConsole().getFont();
+                            WebToolMainFrame.instance.getConsole().setFont(fnt.deriveFont(Font.BOLD));
+                            WebToolMainFrame.instance.getConsole().append(">>>> Finish Text Spin ... >>>>>\n");
+                            WebToolMainFrame.instance.getConsole().setForeground(Color.BLACK);
+                        }
+                        return Boolean.TRUE;
+                    }
+                };
+                worker.execute();
+
             }
         };
     }
@@ -832,17 +861,28 @@ public class Notepad extends JPanel {
                     }
 
                     frame.setTitle(f.getName());
-                    synchronized (OpenAction.this) {
-                        Thread loader = new FileLoader(f, editor.getDocument());
-                        loader.start();
-                        while (!((FileLoader) loader).hasFinish) {
-                            try {
-                                wait(100);
-                            } catch (InterruptedException iex) {
-
-                            }
-                        }
+                    //   synchronized (OpenAction.this) {
+                    if (WebToolMainFrame.instance != null) {
+                        Font fnt = WebToolMainFrame.instance.getConsole().getFont();
+                        WebToolMainFrame.instance.getConsole().setFont(fnt.deriveFont(Font.BOLD));
+                        WebToolMainFrame.instance.getConsole().append(">>>> Start Open Selected File(s) ... >>>>>\n");
+                        WebToolMainFrame.instance.getConsole().setForeground(Color.BLACK);
                     }
+                    Thread loader = new FileLoader(f, editor /*editor.getDocument()*/);
+                    // loader.start();
+                    //try {
+                    // SwingUtilities.invokeLater(loader);
+                    SwingWorker workerLoader = new SwingWorker() {
+                        @Override
+                        protected Object doInBackground() throws Exception {
+                            //parseOpenFiles();
+                            loader.run();
+                            return Boolean.TRUE;
+                        }
+                    };
+                    workerLoader.execute();
+
+                    //       } // end synchronized
                 } else {
                     JOptionPane.showMessageDialog(getFrame(),
                             "Could not open file: " + f,
@@ -850,16 +890,35 @@ public class Notepad extends JPanel {
                             JOptionPane.ERROR_MESSAGE);
                 }
             } // end for 
-            try {
-                if (editor.getDocument().getLength() > 0) {
-                    String s = editor.getDocument().getText(0, editor.getDocument().getLength());
-                    ((DefaultListModel) list.getModel()).clear();
-                    /*
+            /*SwingWorker worker = new SwingWorker() {
+                @Override
+                protected Object doInBackground() throws Exception {
+                    parseOpenFiles();
+                    return Boolean.TRUE;
+                }
+            };
+            worker.execute();
+             */
+        }
+    }
+
+    public void parseOpenFiles() {
+        try {
+            if (editor.getDocument().getLength() > 0) {
+                if (WebToolMainFrame.instance != null) {
+                    Font fnt = WebToolMainFrame.instance.getConsole().getFont();
+                    WebToolMainFrame.instance.getConsole().setFont(fnt.deriveFont(Font.BOLD));
+                    WebToolMainFrame.instance.getConsole().append(">>>> Start Process  Open File(s) ... >>>>>\n");
+                    WebToolMainFrame.instance.getConsole().setForeground(Color.BLACK);
+                }
+                String s = editor.getDocument().getText(0, editor.getDocument().getLength());
+                ((DefaultListModel) list.getModel()).clear();
+                /*
                     System.out.println("---------------------------- WORDS ---------------------------");
                     for (final String word : new WordIterator(s)) {
                         System.out.println(word);
                     }
-                     */
+                 */
  /*
                     System.out.println("------------------------ SENTANCES --------------------------");
                     for (final String word : new SentenceIterator(s, Locale.ENGLISH)) {
@@ -874,21 +933,33 @@ public class Notepad extends JPanel {
                     for (final String ngram : new NGramIterator(3, s, Locale.ENGLISH, StopWords.English)) {
                         System.out.println(ngram);
                     }
-                     */
-                    System.out.println("-------------------  MOST COMMON WORDS -------------------");
-                    // find the most common 3-grams of the Baskervilles 
-                    final Counter<String> ngrams = new Counter<String>();
-                    for (final String ngram : new NGramIterator(3, s, Locale.ENGLISH, StopWords.English)) {
-                        ngrams.note(ngram.toLowerCase(Locale.ENGLISH));
-                    }
-                    for (final Map.Entry<String, Integer> en : ngrams.getAllByFrequency().subList(0, 10)) {
-                        System.out.println(en.getKey() + ": " + en.getValue());
-                        ((DefaultListModel) list.getModel()).addElement(en.getKey() + ": " + en.getValue());
-                    }
-
-                }// end if
-            } catch (Exception ex) {
-                ex.printStackTrace();
+                 */
+                System.out.println("-------------------  MOST COMMON WORDS -------------------");
+                // find the most common 3-grams of the Baskervilles 
+                final Counter<String> ngrams = new Counter<String>();
+                for (final String ngram : new NGramIterator(3, s, Locale.ENGLISH, StopWords.English)) {
+                    ngrams.note(ngram.toLowerCase(Locale.ENGLISH));
+                }
+                for (final Map.Entry<String, Integer> en : ngrams.getAllByFrequency().subList(0, 10)) {
+                    System.out.println(en.getKey() + ": " + en.getValue());
+                    ((DefaultListModel) list.getModel()).addElement(en.getKey() + ": " + en.getValue());
+                }
+                if (WebToolMainFrame.instance != null) {
+                    Font fnt = WebToolMainFrame.instance.getConsole().getFont();
+                    WebToolMainFrame.instance.getConsole().setFont(fnt.deriveFont(Font.BOLD));
+                    WebToolMainFrame.instance.getConsole().append(">>>> Finish Process Open File(s) ... >>>>>\n");
+                    WebToolMainFrame.instance.getConsole().setForeground(Color.BLACK);
+                }
+            }// end if
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            if (WebToolMainFrame.instance != null) {
+                Font fnt = WebToolMainFrame.instance.getConsole().getFont();
+                WebToolMainFrame.instance.getConsole().setFont(fnt.deriveFont(Font.BOLD));
+                WebToolMainFrame.instance.getConsole().setForeground(Color.RED);
+                WebToolMainFrame.instance.getConsole().append(">>>> parseOpenFiles Error"
+                        + ex.getMessage() + " ... >>>>>\n");
+                WebToolMainFrame.instance.getConsole().setForeground(Color.BLACK);
             }
         }
     }
@@ -1005,11 +1076,13 @@ public class Notepad extends JPanel {
     class FileLoader extends Thread {
 
         public boolean hasFinish;
+        private JTextComponent txt;
 
-        FileLoader(File f, Document doc) {
+        FileLoader(File f, /*Document doc*/ JTextComponent txt) {
             setPriority(4);
             this.f = f;
-            this.doc = doc;
+            this.doc = txt.getDocument();//doc;
+            this.txt = txt;
         }
 
         public void run() {
@@ -1024,11 +1097,24 @@ public class Notepad extends JPanel {
 
                 // try to start reading
                 Reader in = new FileReader(f);
+                BufferedReader r = new BufferedReader(in);
+                //  txt.read(in, null);
+
+                //doc.render();
                 char[] buff = new char[4096];
                 int nch;
-                while ((nch = in.read(buff, 0, buff.length)) != -1) {
+                
+                //while ((nch = in.read(buff, 0, buff.length)) != -1) {
+                while ((nch = r.read(buff, 0, buff.length)) != -1) {
                     doc.insertString(doc.getLength(), new String(buff, 0, nch), null);
                     progress.setValue(progress.getValue() + nch);
+                }
+                parseOpenFiles();
+                if (WebToolMainFrame.instance != null) {
+                    Font fnt = WebToolMainFrame.instance.getConsole().getFont();
+                    WebToolMainFrame.instance.getConsole().setFont(fnt.deriveFont(Font.BOLD));
+                    WebToolMainFrame.instance.getConsole().append(">>>> Finish Open Selected File(s) ... >>>>>\n");
+                    WebToolMainFrame.instance.getConsole().setForeground(Color.BLACK);
                 }
             } catch (IOException e) {
                 final String msg = e.getMessage();

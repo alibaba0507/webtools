@@ -47,6 +47,7 @@ public class OpenFileEditorAction extends AbstractAction {
             }
             MyFileEditorInternalFrame jif = new MyFileEditorInternalFrame(title, true, true, true, true);
             Notepad np = new Notepad(title, jif);
+           //Notepad np = new Notepad();
             jif.setNotepad(np);
             
              JScrollPane scroller = new JScrollPane(np, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
@@ -75,6 +76,8 @@ public class OpenFileEditorAction extends AbstractAction {
     }
 
 }
+
+
 
 
 
