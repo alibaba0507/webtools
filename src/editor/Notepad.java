@@ -107,7 +107,7 @@ public class Notepad extends JPanel {
                 }
             }
         });
-        
+
     }
 
     Notepad() {
@@ -143,6 +143,19 @@ public class Notepad extends JPanel {
         JScrollPane scroller = new JScrollPane();
         JViewport port = scroller.getViewport();
         port.add(editor);
+
+        JPanel pnlEditor = new JPanel();
+        pnlEditor.setLayout(new BorderLayout());
+        //nlEditor.add("Center", port);
+        JScrollPane scrollerList = new JScrollPane();
+        JViewport porList = scrollerList.getViewport();
+
+        list = new JList();
+        list.setModel(new DefaultListModel());
+        porList.add(list);
+        pnlEditor.add("North", scrollerList);
+        pnlEditor.add("Center", scroller);
+
         try {
             String vpFlag = resources.getString("ViewportBackingStore");
             Boolean bs = Boolean.valueOf(vpFlag);
@@ -155,20 +168,20 @@ public class Notepad extends JPanel {
         JScrollPane scrollerSyntax = new JScrollPane();
         JViewport portSyntax = scrollerSyntax.getViewport();
         portSyntax.add(syntaxEditor);
-        try {
+       /* try {
             String vpFlag = resources.getString("ViewportBackingStore");
             Boolean bs = Boolean.valueOf(vpFlag);
             portSyntax.setBackingStoreEnabled(bs.booleanValue());
         } catch (MissingResourceException mre) {
             // just use the viewport default
         }
-
+       */
         menuItems = new Hashtable();
         JPanel panelEditor = new JPanel();
         panelEditor.setLayout(new BorderLayout());
         panelEditor.add("North", createToolbar());
-        panelEditor.add("Center", scroller);
-
+        //panelEditor.add("Center", scroller);
+        panelEditor.add("Center", pnlEditor);
         JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
         splitPane.setContinuousLayout(true);
         splitPane.setOneTouchExpandable(true);
@@ -189,6 +202,7 @@ public class Notepad extends JPanel {
         panelSyntaxActions.add(new JButton(createActionSpinWords3()));
         panelSyntaxActions.add(new JButton(createActionSpinWords4()));
         panelSyntaxActions.add(new JButton(createActionSpinWords5()));
+       // add("North", panelEditor);
         add("Center", splitPane);
         add("South", createStatusbar());
         splitPane.setResizeWeight(0.5);
@@ -205,6 +219,19 @@ public class Notepad extends JPanel {
                     return;
                 }
                 Map m = spinSencanses();
+                Iterator it = m.keySet().iterator();
+                while (it.hasNext()) {
+                    String key = it.next().toString();
+                    String val = m.get(key).toString();
+                    s = s.replaceAll(" " + key + " ", " " + val + " ");
+                    s = s.replaceAll("\n" + key + " ", "\n" + val + " ");
+                    s = s.replaceAll("\r" + key + " ", "\r" + val + " ");
+                    s = s.replaceAll("," + key + " ", "," + val + " ");
+                    s = s.replaceAll("." + key + " ", "." + val + " ");
+                    s = s.replaceAll(" " + key + ",", " " + val + ",");
+                    s = s.replaceAll(" " + key + ".", " " + val + ".");
+                    syntaxEditor.setText(s);
+                }
             }
         };
     }
@@ -620,6 +647,7 @@ public class Notepad extends JPanel {
     private JTextComponent syntaxEditor;
     // This is where the spin text is made choose  random from {w1|w2|w3 ...}
     private JTextComponent spinEditor;
+    private JList list;
     private Hashtable commands;
     private Hashtable menuItems;
     private JMenuBar menubar;
@@ -823,6 +851,7 @@ public class Notepad extends JPanel {
             try {
                 if (editor.getDocument().getLength() > 0) {
                     String s = editor.getDocument().getText(0, editor.getDocument().getLength());
+                    ((DefaultListModel) list.getModel()).clear();
                     /*
                     System.out.println("---------------------------- WORDS ---------------------------");
                     for (final String word : new WordIterator(s)) {
@@ -852,6 +881,7 @@ public class Notepad extends JPanel {
                     }
                     for (final Map.Entry<String, Integer> en : ngrams.getAllByFrequency().subList(0, 10)) {
                         System.out.println(en.getKey() + ": " + en.getValue());
+                        ((DefaultListModel) list.getModel()).addElement(en.getKey() + ": " + en.getValue());
                     }
 
                 }// end if
