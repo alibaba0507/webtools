@@ -149,8 +149,10 @@ public class Notepad extends JPanel {
         //nlEditor.add("Center", port);
         JScrollPane scrollerList = new JScrollPane();
         JViewport porList = scrollerList.getViewport();
-
+        scrollerList.setMaximumSize(new Dimension(250,140));
+        scrollerList.setPreferredSize(new Dimension(250,140));
         list = new JList();
+        //list.setMaximumSize(new Dimension(150,40));
         list.setModel(new DefaultListModel());
         porList.add(list);
         pnlEditor.add("North", scrollerList);
