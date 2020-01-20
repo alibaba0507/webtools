@@ -1,0 +1,73 @@
+
+ {
+     "menu":[
+            {
+                "name":"File",
+                "key":"f",
+                "actions":[
+                    {
+                    "class":"webtools.gui.actions.NewProjectAction",
+                    "name":"New Project",
+                    "key":"n",
+                    "button":"1",
+                    "icon":".\\images\\newProject.jpg",
+                    "accelerator":"N"
+                    },
+                     {
+                    "class":"webtools.gui.actions.OpenFileEditorAction",
+                    "name":"Open File Editor",
+                    "key":"o",
+                    "button":"1",
+                    "icon":".\\images\\Open24.gif",
+                    "accelerator":"O"
+                    },
+                    {
+                    "class":"webtools.gui.actions.ExitAction",
+                    "name":"Exit",
+                    "key":"e",
+                    "icon":".\\images\\exit.png",
+                    "accelerator":"X"
+                    }
+                ]
+             },
+             {
+              "name":"Settings",
+              "key":"s",
+              "actions":[
+                   {
+                    "class":"webtools.gui.actions.NettworkSettingsAction",
+                    "name":"Nettwork Settings",
+                    "key":"w",
+                    "button":"1",
+                    "icon":".\\images\\anonymus_v1.png",
+                    "accelerator":"W"
+                   }
+              ]
+             }
+         ],
+      "popup":
+          {
+            "Project Tree":
+                [
+                    {
+                        "class":"webtools.gui.actions.CrawlProjectAction",
+                        "name":"Resume Crawling ...",
+                        "icon":".\\images\\network.png"
+                    },
+                    {
+                        "class":"webtools.gui.actions.DeleteProjectAction",
+                        "name":"Delete Project ...",
+                        "icon":".\\images\\delete.png"
+                    },
+                     {
+                        "class":"webtools.gui.actions.StopCrawlingAction",
+                        "name":"Stop Crawling ...",
+                        "icon":".\\images\\Stop24.gif"
+                    }
+            ],
+            "Search Table":
+             [
+             ]
+         }
+       
+ }

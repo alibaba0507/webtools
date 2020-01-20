@@ -46,12 +46,14 @@ import cue.lang.WordIterator;
 import cue.lang.stop.StopWords;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.image.BufferedImage;
 import java.beans.*;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.util.*;
 import java.util.prefs.Preferences;
+import javax.imageio.ImageIO;
 
 import javax.swing.text.*;
 import javax.swing.undo.*;
@@ -93,7 +95,7 @@ public class Notepad extends JPanel {
         }
     }
 
-    public Notepad(String title, JInternalFrame jif) {
+    public Notepad(String title, JInternalFrame jif) throws IOException{
         this();
         this.title = title;
         jif.addPropertyChangeListener(JInternalFrame.IS_CLOSED_PROPERTY, new PropertyChangeListener() {
@@ -111,7 +113,7 @@ public class Notepad extends JPanel {
 
     }
 
-    public Notepad() {
+    public Notepad() throws IOException{
         super(true);
 
         // Force SwingSet to come up in the Cross Platform L&F
@@ -464,12 +466,21 @@ public class Notepad extends JPanel {
         String str;
         try {
             str = resources.getString(nm);
+           // System.out.println("Get " + nm + " = " + str);
         } catch (MissingResourceException mre) {
             str = null;
         }
         return str;
     }
-
+    
+    protected InputStream getResourceAsInputStream(String key)
+    {
+        String name = getResourceString(key);
+        if (name != null) {
+            return ClassLoader.getSystemClassLoader().getResourceAsStream(/*"../" +*/ name);
+        }
+        return null;
+    }
     protected InputStreamReader getResourceAsStream(String key) {
         String name = getResourceString(key);
         if (name != null) {
@@ -528,7 +539,7 @@ public class Notepad extends JPanel {
      * Create the toolbar. By default this reads the resource file for the
      * definition of the toolbar.
      */
-    private Component createToolbar() {
+    private Component createToolbar() throws IOException{
         toolbar = new JToolBar();
         String[] toolKeys = tokenize(getResourceString("toolbar"));
         for (int i = 0; i < toolKeys.length; i++) {
@@ -545,7 +556,7 @@ public class Notepad extends JPanel {
     /**
      * Hook through which every toolbar item is created.
      */
-    protected Component createTool(String key) {
+    protected Component createTool(String key) throws IOException{
         return createToolbarButton(key);
     }
 
@@ -557,9 +568,12 @@ public class Notepad extends JPanel {
      *
      * @param key The key in the resource file to serve as the basis of lookups.
      */
-    protected JButton createToolbarButton(String key) {
-        URL url = getResource(key + imageSuffix);
-        JButton b = new JButton(new ImageIcon(url)) {
+    protected JButton createToolbarButton(String key) throws IOException{
+       // URL url = getResource(key + imageSuffix);
+        //getResourceAsStream(key + imageSuffix).
+        //System.out.println(">>>> Selected Key is >>> "+ key);
+        BufferedImage image = ImageIO.read(getResourceAsInputStream(key + imageSuffix));
+       JButton b = new JButton(new ImageIcon( image/*url*/)) {
             public float getAlignmentY() {
                 return 0.5f;
             }
