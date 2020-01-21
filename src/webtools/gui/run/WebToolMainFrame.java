@@ -32,6 +32,7 @@ import java.util.Hashtable;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.DefaultListModel;
+import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import static javax.swing.JComponent.WHEN_IN_FOCUSED_WINDOW;
@@ -97,7 +98,9 @@ public class WebToolMainFrame extends JFrame {
     }
     public WebToolMainFrame() {
         super("WebTools");
-        setIconImage(AWTUtils.getIcon(null, ".\\images\\anonymous_mask_48.png"));
+        //setIconImage(AWTUtils.getIcon(null, ".\\images\\anonymous_mask_48.png"));
+        
+        setIconImage(AWTUtils.getIcon(null, "resources/img/anonymous_mask_48.png"));
         desktop = new JDesktopPane();
         toolBar = new JToolBar();
         menuBar = new JMenuBar();
@@ -216,7 +219,14 @@ public class WebToolMainFrame extends JFrame {
 
     public static void loadProjectPropFromFile() {
         String propDir = Main.prop.getProperty("project.properties.dir");
-        File file = new File(propDir + "defaultProperties");
+        String jarDir = AWTUtils.getJarDirectory();
+        System.out.println(">>>>>> JAR PATH >>> " + jarDir + "  >>>>>");
+        File fileDir = new File(jarDir + File.separatorChar +  propDir);// + "defaultProperties");
+        if (!fileDir.exists() )
+        {
+            fileDir.mkdir();
+        }
+         File file = new File(jarDir + File.separatorChar +  propDir + "defaultProperties");
         if (!file.exists()) {
             WebToolMainFrame.defaultProjectProperties = new Hashtable();
             try {
@@ -507,3 +517,12 @@ public class WebToolMainFrame extends JFrame {
         }
     }
 }
+
+
+
+
+
+
+
+
+

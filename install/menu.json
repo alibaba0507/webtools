@@ -10,7 +10,7 @@
                     "name":"New Project",
                     "key":"n",
                     "button":"1",
-                    "icon":".\\images\\newProject.jpg",
+                    "icon":"\\resources\\img\\newProject.jpg",
                     "accelerator":"N"
                     },
                      {
@@ -18,14 +18,14 @@
                     "name":"Open File Editor",
                     "key":"o",
                     "button":"1",
-                    "icon":".\\images\\Open24.gif",
+                    "icon":"\\resources\\img\\Open24.gif",
                     "accelerator":"O"
                     },
                     {
                     "class":"webtools.gui.actions.ExitAction",
                     "name":"Exit",
                     "key":"e",
-                    "icon":".\\images\\exit.png",
+                    "icon":"\\resources\\img\\exit.png",
                     "accelerator":"X"
                     }
                 ]
@@ -39,7 +39,7 @@
                     "name":"Nettwork Settings",
                     "key":"w",
                     "button":"1",
-                    "icon":".\\images\\anonymus_v1.png",
+                    "icon":"\\resources\\img\\anonymus_v1.png",
                     "accelerator":"W"
                    }
               ]
@@ -52,17 +52,17 @@
                     {
                         "class":"webtools.gui.actions.CrawlProjectAction",
                         "name":"Resume Crawling ...",
-                        "icon":".\\images\\network.png"
+                        "icon":"\\resources\\img\\network.png"
                     },
                     {
                         "class":"webtools.gui.actions.DeleteProjectAction",
                         "name":"Delete Project ...",
-                        "icon":".\\images\\delete.png"
+                        "icon":"\\resources\\img\\delete.png"
                     },
                      {
                         "class":"webtools.gui.actions.StopCrawlingAction",
                         "name":"Stop Crawling ...",
-                        "icon":".\\images\\Stop24.gif"
+                        "icon":"\\resources\\img\\Stop24.gif"
                     }
             ],
             "Search Table":

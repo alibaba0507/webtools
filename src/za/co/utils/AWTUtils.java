@@ -2,6 +2,7 @@
 // :tabSize=4:indentSize=4:noTabs=true:folding=explicit:collapseFolds=1:
 package za.co.utils;
 
+import static editor.Notepad.imageSuffix;
 import java.awt.AWTKeyStroke;
 import java.awt.Color;
 import java.awt.Component;
@@ -16,17 +17,21 @@ import java.awt.event.KeyEvent;
 import java.awt.font.FontRenderContext;
 import java.awt.font.TextLayout;
 import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.StringTokenizer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import webtools.gui.run.WebToolMainFrame;
 
@@ -237,13 +242,15 @@ public class AWTUtils {
      * component, e.g. "icons/icon.gif".
      */
     public static Image getIcon(Component component, String path) {
-        URL url = null;
+        /* URL url = null;
         if (component == null) {
             url = WebToolMainFrame.class.getResource(path);
         } else {
             url = component.getClass().getResource(path);
-        }
-        Image img = new ImageIcon(/*url*/path).getImage();
+        }*/
+
+        //Image img = new ImageIcon(/*url*/path).getImage();
+        Image img = AWTUtils.getResourceAsIcon(path).getImage();
         return img;//getIcon(component, url);
     }
 
@@ -321,4 +328,56 @@ public class AWTUtils {
         }
     }
 
+    public static String getJarDirectory() {
+        //ClassLoader.getSystemClassLoader().getClass().getProtectionDomain().getCodeSource().getLocation().toURI();
+        try {
+          return new File(AWTUtils.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getParent();//.getPath();
+        } catch (URISyntaxException ex) {
+           return null;
+        }
+    }
+
+    /**
+     *
+     * @param key this is relative path inside jar file basically it is a
+     * package path
+     * @return
+     */
+    public static InputStream getResourceAsStream(String key) {
+        key = key.replace('\\', '/');
+        if (key.startsWith("/")) {
+            key = key.substring(1);
+        }
+        return ClassLoader.getSystemClassLoader().getResourceAsStream(key);
+    }
+
+    public static BufferedImage getResourceAsImage(String key) {
+        try {
+            InputStream is = AWTUtils.getResourceAsStream(key);
+            if (is != null) {
+                return ImageIO.read(is);
+            }
+            return null;
+        } catch (IOException io) {
+            return null;
+        }
+    }
+
+    /**
+     * Construct Icon to be used By JButtons , Action , JLabels and so on ...
+     *
+     * @param key this is relative path inside jar file basically it is a
+     * package path
+     * @return Icon Object
+     */
+    public static ImageIcon getResourceAsIcon(String key) {
+        BufferedImage bimg = AWTUtils.getResourceAsImage(key);
+        if (bimg != null) {
+            return new ImageIcon(bimg);
+        }
+        return null;
+    }
 }
+
+
+

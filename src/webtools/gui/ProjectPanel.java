@@ -53,14 +53,20 @@ import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.RowFilter;
 import javax.swing.SpringLayout;
 import javax.swing.SwingWorker;
 import javax.swing.border.BevelBorder;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.event.TableModelEvent;
+import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableColumnModel;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
+import javax.swing.table.TableRowSorter;
 import org.jsoup.nodes.Document;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -93,6 +99,9 @@ public class ProjectPanel extends JPanel {
     private int lastSearchSort = 0;
     private int lastregexSort = 0;
     private int lastKeywordSort = 0;
+    private TableRowSorter<DefaultTableModel> sorter;
+    // this issearch text field for Crawl Result table
+    private JTextField filterText;
 
     //private JInternalFrame jif;
     public ProjectPanel(String title, JInternalFrame jif) {
@@ -141,7 +150,7 @@ public class ProjectPanel extends JPanel {
         JPanel pnlButtons = new JPanel();
         pnlRegexResults.add(searchQuerySplit, BorderLayout.CENTER);
         pnlRegexResults.add(pnlButtons, BorderLayout.SOUTH);
-        JButton btnSaveRegex = new JButton("Save Regex To File", new ImageIcon(AWTUtils.getIcon(this, ".\\images\\Save24.gif")));
+        JButton btnSaveRegex = new JButton("Save Regex To File", new ImageIcon(AWTUtils.getIcon(this, "\\resources\\img\\Save24.gif")));
         pnlButtons.setLayout(new FlowLayout());
         pnlButtons.add(btnSaveRegex);
         btnSaveRegex.addActionListener(new ActionListener() {
@@ -170,7 +179,7 @@ public class ProjectPanel extends JPanel {
             }
         });
 
-        JButton btnRefreshKeywords = new JButton("Refresh keyword table", new ImageIcon(AWTUtils.getIcon(this, ".\\images\\Redo24.gif")));
+        JButton btnRefreshKeywords = new JButton("Refresh keyword table", new ImageIcon(AWTUtils.getIcon(this, "/resources/img/Redo24.gif")));
         //pnlButtons.setLayout(new FlowLayout());
 
         pnlButtons.add(btnRefreshKeywords);
@@ -291,6 +300,11 @@ public class ProjectPanel extends JPanel {
 
     }
 
+    /**
+     * Constructing Tab "Crawl Results"
+     *
+     * @param pnlSearchResult
+     */
     private void initSearchTab(JPanel pnlSearchResult) {
 
         pnlSearchResult.setLayout(new BorderLayout());
@@ -301,8 +315,11 @@ public class ProjectPanel extends JPanel {
 
         searchPagesTableScrool.setMaximumSize(new Dimension(350, 50));
         searchPagesTableScrool.setPreferredSize(new Dimension(0, 50));
+        // Extra Panael for search TextField filter
+        JPanel pnlSearch = new JPanel(new BorderLayout());
+        pnlSearch.add("Center", searchTableScrool);
 
-        JSplitPane searchQuerySplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT, searchTableScrool, searchPagesTableScrool);
+        JSplitPane searchQuerySplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT, /*searchTableScrool*/ pnlSearch, searchPagesTableScrool);
         searchQuerySplit.setOneTouchExpandable(true);
         searchQuerySplit.setDividerLocation(150);
         pnlSearchResult.add(searchQuerySplit, BorderLayout.CENTER);
@@ -322,6 +339,10 @@ public class ProjectPanel extends JPanel {
                 }
                 if (event.getActionCommand().equalsIgnoreCase("Download Selected Links")) {
                     downloadSelectedSearchDomains();
+                }
+                //Export Selected as CSV
+                if (event.getActionCommand().equalsIgnoreCase("Export Selected as CSV")) {
+                    downloadSelectedSearchDomainsAsCSV();
                 }
                 //Merge Selected Articles
                 if (event.getActionCommand().equalsIgnoreCase("Merge Selected Articles")) {
@@ -364,6 +385,10 @@ public class ProjectPanel extends JPanel {
         item.setHorizontalTextPosition(JMenuItem.RIGHT);
         item.addActionListener(menuListener);
 
+        popupSearchResultTable.add(item = new JMenuItem("Export Selected as CSV"));
+        item.setHorizontalTextPosition(JMenuItem.RIGHT);
+        item.addActionListener(menuListener);
+
         popupSearchResultTable.add(item = new JMenuItem("Download Selected Articles"));
         item.setHorizontalTextPosition(JMenuItem.RIGHT);
         item.addActionListener(menuListener);
@@ -375,7 +400,8 @@ public class ProjectPanel extends JPanel {
         popupSearchResultTable.setLabel("Search Table Selection");
         popupSearchResultTable.setBorder(new BevelBorder(BevelBorder.RAISED));
         //popupSearchResultTable.addPopupMenuListener(new PopupPrintListener());
-
+        // TODO: Change DefaultTableModel to custom class
+        // add this as global var
         addMouseListener(new MousePopupListener());
         tblSearchResult.setModel(new javax.swing.table.DefaultTableModel(
                 new Object[][]{},
@@ -391,6 +417,30 @@ public class ProjectPanel extends JPanel {
                 return canEdit[columnIndex];
             }
         });
+        filterText = new JTextField();
+        // Whenever filterText changes, invoke newFilter.
+        filterText.getDocument().addDocumentListener(new DocumentListener() {
+            public void changedUpdate(DocumentEvent e) {
+                newFilter();
+            }
+
+            public void insertUpdate(DocumentEvent e) {
+                newFilter();
+            }
+
+            public void removeUpdate(DocumentEvent e) {
+                newFilter();
+            }
+        });
+        filterText.setColumns(30);
+        JPanel pnlSearchFilter = new JPanel();
+        pnlSearchFilter.add(new JLabel("Search Filter:"));
+        pnlSearchFilter.add(filterText);
+        pnlSearch.add("North", pnlSearchFilter);
+        DefaultTableModel model = (DefaultTableModel) tblSearchResult.getModel();
+        sorter = new TableRowSorter<DefaultTableModel>(model);
+        //tblSearchResult.setModel(model);
+        tblSearchResult.setRowSorter(sorter);
         tblSearchResult.getColumnModel().getColumn(0).setMinWidth(350);
         tblSearchResult.getColumnModel().getColumn(1).setMaxWidth(150);
         searchTableScrool.setViewportView(tblSearchResult);
@@ -503,6 +553,21 @@ public class ProjectPanel extends JPanel {
         searchPagesTableScrool.setViewportView(tblPagesResult);
     }
 
+    /**
+     * Update the row filter regular expression from the expression in the text
+     * box.
+     */
+    private void newFilter() {
+        RowFilter<DefaultTableModel, Object> rf = null;
+        // If current expression doesn't parse, don't update.
+        try {
+            rf = RowFilter.regexFilter(filterText.getText(), 0);
+        } catch (java.util.regex.PatternSyntaxException e) {
+            return;
+        }
+        sorter.setRowFilter(rf);
+    }
+
     private void downloadSelectedArticles(boolean merge) {
         JFileChooser f = new JFileChooser();
         f.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
@@ -588,8 +653,60 @@ public class ProjectPanel extends JPanel {
                     bw.close();
                     Font fnt = WebToolMainFrame.instance.getConsole().getFont();
                     WebToolMainFrame.instance.getConsole().setFont(fnt.deriveFont(Font.BOLD));
-                    WebToolMainFrame.instance.getConsole().append(">>> Merge File [" + mergFile +"] >>>> \n");
+                    WebToolMainFrame.instance.getConsole().append(">>> Merge File [" + mergFile + "] >>>> \n");
                 }
+                fr.close();
+                WebToolMainFrame.instance.getConsole().append(">>>>>>> downloadSelectedSearchDomains Finish .... >>>\n");
+
+            } catch (IOException e) {
+                WebToolMainFrame.instance.getConsole().append(">>>>>>> downloadSelectedSearchDomains IO Error[" + e.getMessage() + "] >>>\n");
+                return;
+            }
+        }
+    }
+
+    private void downloadSelectedSearchDomainsAsCSV() {
+        JFileChooser f = new JFileChooser();
+        f.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        // f.showSaveDialog(null);
+        if (f.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+            System.out.println(f.getCurrentDirectory());
+            System.out.println(f.getSelectedFile());
+            FileWriter fr = null;
+            try {
+                fr = new FileWriter(f.getSelectedFile(), true);
+                fr.write("URL,Google Page,Crawl Level,Parent ID" + "\n");
+                int rows[] = tblSearchResult.getSelectedRows();//Row();
+                WebToolMainFrame.instance.getConsole().append(">>>>>>> downloadSelectedSearchDomainsAsCSV SavingURL to File ... >>>\n");
+
+                for (int i = 0; i < rows.length; i++) {
+                    String domain = (String) ((DefaultTableModel) tblSearchResult.getModel()).getValueAt(rows[i], 0);
+                    SQLite db = SQLite.getInstance();
+                    String[] s = crawlForm.getFormValues();
+                    int id = db.findQueryId(s[1], s[3]);
+                    if (id > 0) {
+                        ArrayList<Vector> list = db.selectURLByDomain(id, domain);
+                        if (list.size() > 0) {
+                            for (int j = 0; j < list.size(); j++) {
+                                Vector v = list.get(j);
+                                String urlToDownload = (String) v.get(0);
+                                String parentId = (String) v.get(3);
+                                String parentURL = "N/A";
+                               if (!parentId.equals("0"))
+                                {
+                                    ArrayList<Vector> parentList = db.selectURLById(Integer.parseInt(parentId));
+                                    parentURL =(String) parentList.get(0).get(0);
+                                    
+                                }
+                                fr.write(urlToDownload + "," 
+                                        + ((String) v.get(1))+ "," 
+                                    + ((String) v.get(2)) + ","
+                                        + parentURL + "\n");
+                                fr.flush();
+                            }// end for
+                        }// end if 
+                    }// end  
+                }// end  for (int i = 0; i < rows.length; i++)
                 fr.close();
                 WebToolMainFrame.instance.getConsole().append(">>>>>>> downloadSelectedSearchDomains Finish .... >>>\n");
 
@@ -710,6 +827,8 @@ public class ProjectPanel extends JPanel {
         if (id > 0) {
             ArrayList<Vector> list = db.selectCoutDomains(id, limitDoaminRecord);
             DefaultTableModel m = (DefaultTableModel) tblSearchResult.getModel();
+            int columnCnt = m.getColumnCount();
+            int rowCnt = m.getRowCount();
             if (list.size() != m.getRowCount()) {
                 while (m.getRowCount() > 0) {
                     m.removeRow(0);
@@ -769,7 +888,7 @@ public class ProjectPanel extends JPanel {
             "Regex for parsing links",
             "Regex For Parsing Page"};
         crawlForm = new SearchForm(labels, mnemonics, widths, descs);
-        submit = new JButton("Save Project", new ImageIcon(AWTUtils.getIcon(this, ".\\images\\Save24.gif")));
+        submit = new JButton("Save Project", new ImageIcon(AWTUtils.getIcon(this, "/resources/img/Save24.gif")));
         final Object list = WebToolMainFrame.defaultProjectProperties.get(this.title);
         if (list != null) {
             crawlForm.setFormValues((String[]) list);
@@ -892,4 +1011,6 @@ class MyComparator implements Comparator {
     }
 
 }
+
+
 
