@@ -340,6 +340,10 @@ public class ProjectPanel extends JPanel {
                 if (event.getActionCommand().equalsIgnoreCase("Download Selected Links")) {
                     downloadSelectedSearchDomains();
                 }
+                //Lookup Pages
+                if (event.getActionCommand().equalsIgnoreCase("Lookup Pages")) {
+                    findLinksToDomains();
+                }
                 //Export Selected as CSV
                 if (event.getActionCommand().equalsIgnoreCase("Export Selected as CSV")) {
                     downloadSelectedSearchDomainsAsCSV();
@@ -381,6 +385,11 @@ public class ProjectPanel extends JPanel {
         popupSearchResultTable.add(item = new JMenuItem("De-select All"));
         item.setHorizontalTextPosition(JMenuItem.RIGHT);
         item.addActionListener(menuListener);
+        
+        popupSearchResultTable.add(item = new JMenuItem("Lookup Pages"));
+        item.setHorizontalTextPosition(JMenuItem.RIGHT);
+        item.addActionListener(menuListener);
+        
         popupSearchResultTable.add(item = new JMenuItem("Download Selected Links"));
         item.setHorizontalTextPosition(JMenuItem.RIGHT);
         item.addActionListener(menuListener);
@@ -498,24 +507,8 @@ public class ProjectPanel extends JPanel {
                 //     super.mouseClicked(e); //To change body of generated methods, choose Tools | Templates.
                 try {
                     if (e.getClickCount() == 2) {
-                        // System.out.println("double clicked");
-                        int row = tblSearchResult.getSelectedRow();
-                        String domain = (String) ((DefaultTableModel) tblSearchResult.getModel()).getValueAt(row, 0);
-                        SQLite db = SQLite.getInstance();
-                        String[] s = crawlForm.getFormValues();
-                        int id = db.findQueryId(s[1], s[3]);
-                        if (id > 0) {
-                            ArrayList<Vector> list = db.selectURLByDomain(id, domain);
-                            DefaultTableModel m = (DefaultTableModel) tblPagesResult.getModel();
-                            if (list.size() > 0) {
-                                while (m.getRowCount() > 0) {
-                                    m.removeRow(0);
-                                }
-                                for (int i = 0; i < list.size(); i++) {
-                                    m.addRow(list.get(i));
-                                }// end for
-                            }// end if 
-                        }// end if
+                        findLinksToDomains();                
+
                     } else {
                         checkPopup(e);
                     }
@@ -551,6 +544,40 @@ public class ProjectPanel extends JPanel {
         tblPagesResult.getColumnModel().getColumn(2).setMaxWidth(250);
         tblPagesResult.getColumnModel().getColumn(3).setMaxWidth(250);
         searchPagesTableScrool.setViewportView(tblPagesResult);
+    }
+
+    private void findLinksToDomains() {
+        // System.out.println("double clicked");
+        // int row = tblSearchResult.getSelectedRow();
+        DefaultTableModel m = (DefaultTableModel) tblPagesResult.getModel();
+        while (m.getRowCount() > 0) {
+            m.removeRow(0);
+        }
+        int row[] = tblSearchResult.getSelectedRows();
+        String domain[] = new String[row.length];
+        SQLite db = null;
+        String[] s = null;
+        if (row.length > 0) {
+            db = SQLite.getInstance();
+            s = crawlForm.getFormValues();
+        }
+        for (int i = 0; i < row.length; i++) {
+            domain[i] = (String) ((DefaultTableModel) tblSearchResult.getModel()).getValueAt(row[i], 0);
+
+            int id = db.findQueryId(s[1], s[3]);
+            if (id > 0) {
+                ArrayList<Vector> list = db.selectURLByDomain(id, domain[i]);
+                //DefaultTableModel m = (DefaultTableModel) tblPagesResult.getModel();
+                if (list.size() > 0) {
+                    /* while (m.getRowCount() > 0) {
+                                    m.removeRow(0);
+                                }*/
+                    for (int ii = 0; ii < list.size(); ii++) {
+                        m.addRow(list.get(ii));
+                    }// end for
+                }// end if 
+            }// end if
+        }// end for
     }
 
     /**
@@ -692,15 +719,14 @@ public class ProjectPanel extends JPanel {
                                 String urlToDownload = (String) v.get(0);
                                 String parentId = (String) v.get(3);
                                 String parentURL = "N/A";
-                               if (!parentId.equals("0"))
-                                {
+                                if (!parentId.equals("0")) {
                                     ArrayList<Vector> parentList = db.selectURLById(Integer.parseInt(parentId));
-                                    parentURL =(String) parentList.get(0).get(0);
-                                    
+                                    parentURL = (String) parentList.get(0).get(0);
+
                                 }
-                                fr.write(urlToDownload + "," 
-                                        + ((String) v.get(1))+ "," 
-                                    + ((String) v.get(2)) + ","
+                                fr.write(urlToDownload + ","
+                                        + ((String) v.get(1)) + ","
+                                        + ((String) v.get(2)) + ","
                                         + parentURL + "\n");
                                 fr.flush();
                             }// end for
@@ -1011,6 +1037,5 @@ class MyComparator implements Comparator {
     }
 
 }
-
 
 

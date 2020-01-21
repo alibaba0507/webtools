@@ -1,0 +1,73 @@
+
+ {
+     "menu":[
+            {
+                "name":"File",
+                "key":"f",
+                "actions":[
+                    {
+                    "class":"webtools.gui.actions.NewProjectAction",
+                    "name":"New Project",
+                    "key":"n",
+                    "button":"1",
+                    "icon":"\\resources\\img\\newProject.jpg",
+                    "accelerator":"N"
+                    },
+                     {
+                    "class":"webtools.gui.actions.OpenFileEditorAction",
+                    "name":"Open File Editor",
+                    "key":"o",
+                    "button":"1",
+                    "icon":"\\resources\\img\\Open24.gif",
+                    "accelerator":"O"
+                    },
+                    {
+                    "class":"webtools.gui.actions.ExitAction",
+                    "name":"Exit",
+                    "key":"e",
+                    "icon":"\\resources\\img\\exit.png",
+                    "accelerator":"X"
+                    }
+                ]
+             },
+             {
+              "name":"Settings",
+              "key":"s",
+              "actions":[
+                   {
+                    "class":"webtools.gui.actions.NettworkSettingsAction",
+                    "name":"Nettwork Settings",
+                    "key":"w",
+                    "button":"1",
+                    "icon":"\\resources\\img\\anonymus_v1.png",
+                    "accelerator":"W"
+                   }
+              ]
+             }
+         ],
+      "popup":
+          {
+            "Project Tree":
+                [
+                    {
+                        "class":"webtools.gui.actions.CrawlProjectAction",
+                        "name":"Resume Crawling ...",
+                        "icon":"\\resources\\img\\network.png"
+                    },
+                    {
+                        "class":"webtools.gui.actions.DeleteProjectAction",
+                        "name":"Delete Project ...",
+                        "icon":"\\resources\\img\\delete.png"
+                    },
+                     {
+                        "class":"webtools.gui.actions.StopCrawlingAction",
+                        "name":"Stop Crawling ...",
+                        "icon":"\\resources\\img\\Stop24.gif"
+                    }
+            ],
+            "Search Table":
+             [
+             ]
+         }
+       
+ }
