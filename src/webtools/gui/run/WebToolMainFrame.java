@@ -26,8 +26,10 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Reader;
 import java.util.Hashtable;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -83,7 +85,8 @@ public class WebToolMainFrame extends JFrame {
     private JList projectList;
     private JPopupMenu projectPopUp;
     private JPopupMenu searchTablePopUp;
-    private JTextArea console; 
+    private JTextArea console;
+
     public static JDesktopPane getDesckTopInstance() {
         if (desktop == null) {
             new WebToolMainFrame();
@@ -91,15 +94,15 @@ public class WebToolMainFrame extends JFrame {
 
         return desktop;
     }
-    
-    public JTextArea getConsole()
-    {
+
+    public JTextArea getConsole() {
         return console;
     }
+
     public WebToolMainFrame() {
         super("WebTools");
         //setIconImage(AWTUtils.getIcon(null, ".\\images\\anonymous_mask_48.png"));
-        
+
         setIconImage(AWTUtils.getIcon(null, "resources/img/anonymous_mask_48.png"));
         desktop = new JDesktopPane();
         toolBar = new JToolBar();
@@ -171,8 +174,8 @@ public class WebToolMainFrame extends JFrame {
         hSplit.setDividerLocation(180);
         hSplit.setMinimumSize(new Dimension(0, 0));
 
-         console = new JTextArea();
-         console.setEditable(false);
+        console = new JTextArea();
+        console.setEditable(false);
         JScrollPane jsp = new JScrollPane(console,
                 JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
                 JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
@@ -221,12 +224,11 @@ public class WebToolMainFrame extends JFrame {
         String propDir = Main.prop.getProperty("project.properties.dir");
         String jarDir = AWTUtils.getJarDirectory();
         System.out.println(">>>>>> JAR PATH >>> " + jarDir + "  >>>>>");
-        File fileDir = new File(jarDir + File.separatorChar +  propDir);// + "defaultProperties");
-        if (!fileDir.exists() )
-        {
+        File fileDir = new File(jarDir + File.separatorChar + propDir);// + "defaultProperties");
+        if (!fileDir.exists()) {
             fileDir.mkdir();
         }
-         File file = new File(jarDir + File.separatorChar +  propDir + "defaultProperties");
+        File file = new File(jarDir + File.separatorChar + propDir + "defaultProperties");
         if (!file.exists()) {
             WebToolMainFrame.defaultProjectProperties = new Hashtable();
             try {
@@ -266,7 +268,8 @@ public class WebToolMainFrame extends JFrame {
 
         JSONParser jsonParser = new JSONParser();
         String menuFile = Main.prop.getProperty("menu.file");
-        try (FileReader reader = new FileReader(menuFile)) {
+        // try (FileReader reader = new FileReader(menuFile)) {
+        try (Reader reader = new InputStreamReader(AWTUtils.getResourceAsStream(menuFile))) {
             //Read JSON file
             Object obj = jsonParser.parse(reader);
             JSONObject jsonMenu = (JSONObject) obj;
@@ -517,12 +520,4 @@ public class WebToolMainFrame extends JFrame {
         }
     }
 }
-
-
-
-
-
-
-
-
 

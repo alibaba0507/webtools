@@ -8,6 +8,8 @@ package webtools.gui.actions;
 import java.awt.event.ActionEvent;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import javax.swing.AbstractAction;
 import static javax.swing.Action.NAME;
 import static javax.swing.Action.SMALL_ICON;
@@ -24,23 +26,23 @@ import za.co.utils.AWTUtils;
  * @author alibaba0507
  */
 public class CopyAction extends AbstractAction {
-    public CopyAction(){
-         String menuFile = Main.prop.getProperty("menu.file");
-           try (FileReader reader = new FileReader(menuFile)) {
+
+    public CopyAction() {
+        String menuFile = Main.prop.getProperty("menu.file");
+        // AWTUtils.getResourceAsStream(menuFile);
+        //try (FileReader reader = new FileReader(menuFile)) {
+        try (Reader reader = new InputStreamReader(AWTUtils.getResourceAsStream(menuFile))) {
             //Read JSON file
             JSONParser jsonParser = new JSONParser();
             Object obj = jsonParser.parse(reader);
             JSONObject jsonMenu = (JSONObject) obj;
-            JSONArray jsnMenu =  (JSONArray) jsonMenu.get("actions");
-            for (int i = 0;i < jsnMenu.size();i++)
-            {
-                JSONObject jsonAction = (JSONObject)jsnMenu.get(i);
-                if (jsonAction.get("name") == "copy")
-                {
+            JSONArray jsnMenu = (JSONArray) jsonMenu.get("actions");
+            for (int i = 0; i < jsnMenu.size(); i++) {
+                JSONObject jsonAction = (JSONObject) jsnMenu.get(i);
+                if (jsonAction.get("name") == "copy") {
                     this.putValue(NAME, "Copy");
                     String icn = (String) jsonAction.get("icon");
-                    if ( icn != null)
-                    {
+                    if (icn != null) {
                         putValue(SMALL_ICON, new ImageIcon(AWTUtils.getIcon(null, icn)));
                     }
                     break;
@@ -50,14 +52,14 @@ public class CopyAction extends AbstractAction {
             e.printStackTrace();
         } catch (org.json.simple.parser.ParseException jsEx) {
             jsEx.printStackTrace();
-        } 
-    }
-    
-    
-     public void actionPerformed(ActionEvent e) {
-            // openProjectFile(null, "New Project");
-            JOptionPane.showConfirmDialog(null, "Exit Not Implemented yet ...");
-            //openFile(null);
-
         }
+    }
+
+    public void actionPerformed(ActionEvent e) {
+        // openProjectFile(null, "New Project");
+        JOptionPane.showConfirmDialog(null, "Exit Not Implemented yet ...");
+        //openFile(null);
+
+    }
 }
+

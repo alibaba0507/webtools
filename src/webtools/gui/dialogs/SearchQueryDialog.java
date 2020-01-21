@@ -11,12 +11,16 @@ import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import javax.swing.JTextField;
 import javax.swing.WindowConstants;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import webtools.gui.run.Main;
+import za.co.utils.AWTUtils;
 
 /**
  *
@@ -29,78 +33,85 @@ public class SearchQueryDialog extends javax.swing.JDialog {
     /**
      * Creates new form SearchQueryDialog
      */
-    public SearchQueryDialog(java.awt.Frame parent, boolean modal, JTextField txt,JTextField txtRegex) {
+    public SearchQueryDialog(java.awt.Frame parent, boolean modal, JTextField txt, JTextField txtRegex) {
         super(parent, modal);
         //this.setUndecorated(true);
-       // this.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE) ;
-        
+        // this.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE) ;
+
         this.txt = txt;
         initComponents();
         btnClose.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-         //       throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-             SearchQueryDialog.this.dispose();
+                //       throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+                SearchQueryDialog.this.dispose();
             }
         });
-         btnClose1.addActionListener(new ActionListener() {
+        btnClose1.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-         //       throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-             SearchQueryDialog.this.dispose();
+                //       throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+                SearchQueryDialog.this.dispose();
             }
         });
         txtDexcr.setEditable(false);
         //txtDexcr.setEnabled(false);
         txtDexcr.setLineWrap(true);
-        
+
         txtDexcr1.setEditable(false);
         txtDexcr1.setLineWrap(true);
         //txtDexcr.setFont(f);
         txtExample.setEditable(false);
         //txtExample.setEnabled(false);
         txtExample.setLineWrap(true);
-        if (txt != null)
-        txtSearchString.setText(txt.getText());
-        
+        if (txt != null) {
+            txtSearchString.setText(txt.getText());
+        }
+
         txtExample1.setEditable(false);
         //txtExample.setEnabled(false);
         txtExample1.setLineWrap(true);
-        if (txtRegex != null)
-        txtSearchString1.setText(txtRegex.getText());
-        
-        
+        if (txtRegex != null) {
+            txtSearchString1.setText(txtRegex.getText());
+        }
+
         btnUse.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-              txt.setText(txtSearchString.getText());
-              SearchQueryDialog.this.dispose();
+                txt.setText(txtSearchString.getText());
+                SearchQueryDialog.this.dispose();
             }
         });
-        
+
         btnUse1.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-              txtRegex.setText(txtSearchString1.getText());
-              SearchQueryDialog.this.dispose();
+                txtRegex.setText(txtSearchString1.getText());
+                SearchQueryDialog.this.dispose();
             }
         });
-        
+
         loadSearchJson();
         loadRegexJson();
 
     }
-    
-    private void loadRegexJson()
-    {
+
+    private void loadRegexJson() {
         JSONParser jsonParser = new JSONParser();
         String menuFile = Main.prop.getProperty("search.regex.keywords");
-          try (FileReader reader = new FileReader(menuFile)) {
+        //try (FileReader reader = new FileReader(menuFile)) {
+        try (Reader reader = new InputStreamReader(AWTUtils.getResourceAsStream(menuFile))) {
             //Read JSON file
             Object obj = jsonParser.parse(reader);
             JSONObject jsonKeywords = (JSONObject) obj;
             JSONArray jsnSearch = (JSONArray) jsonKeywords.get("search");
-              for (int i = 0; i < jsnSearch.size(); i++) {
+            for (int i = 0;
+
+            i< jsnSearch.size ();
+            i
+
+            
+                ++) {
                 JSONObject menuJSON = (JSONObject) jsnSearch.get(i);
                 CboItem itm = new CboItem((String) menuJSON.get("keyword"),
                         (String) menuJSON.get("descr"),
@@ -113,8 +124,8 @@ public class SearchQueryDialog extends javax.swing.JDialog {
                             CboItem itm = (CboItem) cboKeywords1.getSelectedItem();
                             //String s = txtSearchString1.getText();
                             //if (s.indexOf(" " + itm.toString() + " ") < 0) {
-                             //   s += " " + itm.toString() + " ";
-                                txtSearchString1.setText(itm.toString());
+                            //   s += " " + itm.toString() + " ";
+                            txtSearchString1.setText(itm.toString());
                             //}
                             txtDexcr1.setText(itm.getDescr());
                             txtExample1.setText(itm.getExamp());
@@ -124,14 +135,17 @@ public class SearchQueryDialog extends javax.swing.JDialog {
                     }
                 });
             }
-          }catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
-    }
+        }
+    
+
     private void loadSearchJson() {
         JSONParser jsonParser = new JSONParser();
         String menuFile = Main.prop.getProperty("search.query.keywords");
-        try (FileReader reader = new FileReader(menuFile)) {
+        //try (FileReader reader = new FileReader(menuFile)) {
+        try(Reader reader = new InputStreamReader(AWTUtils.getResourceAsStream(menuFile))){
             //Read JSON file
             Object obj = jsonParser.parse(reader);
             JSONObject jsonKeywords = (JSONObject) obj;
@@ -425,7 +439,7 @@ public class SearchQueryDialog extends javax.swing.JDialog {
         /* Create and display the dialog */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                final SearchQueryDialog dialog = new SearchQueryDialog(new javax.swing.JFrame(), true, null,null);
+                final SearchQueryDialog dialog = new SearchQueryDialog(new javax.swing.JFrame(), true, null, null);
                 dialog.addWindowListener(new java.awt.event.WindowAdapter() {
                     @Override
                     public void windowClosing(java.awt.event.WindowEvent e) {

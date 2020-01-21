@@ -5,12 +5,12 @@
             <url>src/webtools/gui/ProjectPanel.java</url>
             <bookmark id="10">
                 <name/>
-                <line>402</line>
+                <line>411</line>
                 <key/>
             </bookmark>
             <bookmark id="11">
                 <name/>
-                <line>975</line>
+                <line>1001</line>
                 <key/>
             </bookmark>
         </file>
@@ -25,7 +25,10 @@
     </editor-bookmarks>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
+            <file>file:/C:/Users/Sh4D0W/Documents/java/webtools/src/za/co/utils/SQLite.java</file>
             <file>file:/C:/Users/Sh4D0W/Documents/java/webtools/src/webtools/gui/ProjectPanel.java</file>
+            <file>file:/C:/Users/Sh4D0W/Documents/java/webtools/src/webtools/net/WebCrawler.java</file>
+            <file>file:/C:/Users/Sh4D0W/Documents/java/webtools/src/resources/regex.json</file>
         </group>
     </open-files>
 </project-private>
