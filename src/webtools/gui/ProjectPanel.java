@@ -93,6 +93,7 @@ public class ProjectPanel extends JPanel {
     private JTable tblKeywordsResult;
     private JTable tblSearchResult;
     public JPopupMenu popupSearchResultTable;
+    public JPopupMenu popupRegexResultTable;
     private JTable tblPagesResult;
     private TextForm crawlForm;
     private int limitDoaminRecord = 100; // defauult
@@ -264,6 +265,32 @@ public class ProjectPanel extends JPanel {
                 return canEdit[columnIndex];
             }
         });
+        tblRegexResult.addMouseListener(new MouseAdapter() {
+            public void mousePressed(MouseEvent e) {
+
+                checkPopup(e);
+            }
+
+            public void mouseReleased(MouseEvent e) {
+                checkPopup(e);
+            }
+
+            private void checkPopup(MouseEvent e) {
+                if (e.isPopupTrigger()) {
+                    popupRegexResultTable.show(ProjectPanel.this.tblRegexResult, e.getX(), e.getY());
+                }
+            }
+
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                //     super.mouseClicked(e); //To change body of generated methods, choose Tools | Templates.
+                try {
+                    checkPopup(e);
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
         searchTableScrool.setViewportView(tblRegexResult);
         JTableHeader header = tblRegexResult.getTableHeader();
         header.setUpdateTableInRealTime(true);
@@ -325,6 +352,7 @@ public class ProjectPanel extends JPanel {
         pnlSearchResult.add(searchQuerySplit, BorderLayout.CENTER);
         tblSearchResult = new JTable();
         popupSearchResultTable = new JPopupMenu();
+        popupRegexResultTable = new JPopupMenu();
 
         ActionListener menuListener = new ActionListener() {
             public void actionPerformed(ActionEvent event) {
@@ -333,12 +361,21 @@ public class ProjectPanel extends JPanel {
                 if (event.getActionCommand().equalsIgnoreCase("Select All")) {
                     tblSearchResult.setRowSelectionInterval(0, tblSearchResult.getModel().getRowCount() - 1);
                 }
+                if (event.getActionCommand().equalsIgnoreCase("Select All(R)")) {
+                    tblRegexResult.setRowSelectionInterval(0, tblRegexResult.getModel().getRowCount() - 1);
+                }
 
                 if (event.getActionCommand().equalsIgnoreCase("De-select All")) {
                     tblSearchResult.setRowSelectionInterval(0, 0);
                 }
+                if (event.getActionCommand().equalsIgnoreCase("De-select All(R)")) {
+                    tblRegexResult.setRowSelectionInterval(0, 0);
+                }
                 if (event.getActionCommand().equalsIgnoreCase("Download Selected Links")) {
                     downloadSelectedSearchDomains();
+                }
+                if (event.getActionCommand().equalsIgnoreCase("Download Selected(R)")) {
+                    downloadSelectedSearchRegex();
                 }
                 //Lookup Pages
                 if (event.getActionCommand().equalsIgnoreCase("Lookup Pages")) {
@@ -385,11 +422,11 @@ public class ProjectPanel extends JPanel {
         popupSearchResultTable.add(item = new JMenuItem("De-select All"));
         item.setHorizontalTextPosition(JMenuItem.RIGHT);
         item.addActionListener(menuListener);
-        
+
         popupSearchResultTable.add(item = new JMenuItem("Lookup Pages"));
         item.setHorizontalTextPosition(JMenuItem.RIGHT);
         item.addActionListener(menuListener);
-        
+
         popupSearchResultTable.add(item = new JMenuItem("Download Selected Links"));
         item.setHorizontalTextPosition(JMenuItem.RIGHT);
         item.addActionListener(menuListener);
@@ -403,6 +440,17 @@ public class ProjectPanel extends JPanel {
         item.addActionListener(menuListener);
 
         popupSearchResultTable.add(item = new JMenuItem("Merge Selected Articles"));
+        item.setHorizontalTextPosition(JMenuItem.RIGHT);
+        item.addActionListener(menuListener);
+
+        // Init popup for tableRegexSearchResult
+        popupRegexResultTable.add(item = new JMenuItem("Select All(R)"));
+        item.setHorizontalTextPosition(JMenuItem.RIGHT);
+        item.addActionListener(menuListener);
+        popupRegexResultTable.add(item = new JMenuItem("De-select All(R)"));
+        item.setHorizontalTextPosition(JMenuItem.RIGHT);
+        item.addActionListener(menuListener);
+        popupRegexResultTable.add(item = new JMenuItem("Download Selected(R)"));
         item.setHorizontalTextPosition(JMenuItem.RIGHT);
         item.addActionListener(menuListener);
 
@@ -507,7 +555,7 @@ public class ProjectPanel extends JPanel {
                 //     super.mouseClicked(e); //To change body of generated methods, choose Tools | Templates.
                 try {
                     if (e.getClickCount() == 2) {
-                        findLinksToDomains();                
+                        findLinksToDomains();
 
                     } else {
                         checkPopup(e);
@@ -738,6 +786,35 @@ public class ProjectPanel extends JPanel {
 
             } catch (IOException e) {
                 WebToolMainFrame.instance.getConsole().append(">>>>>>> downloadSelectedSearchDomains IO Error[" + e.getMessage() + "] >>>\n");
+                return;
+            }
+        }
+    }
+
+    private void downloadSelectedSearchRegex() {
+        JFileChooser f = new JFileChooser();
+        f.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        // f.showSaveDialog(null);
+        if (f.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+            System.out.println(f.getCurrentDirectory());
+            System.out.println(f.getSelectedFile());
+            FileWriter fr = null;
+            try {
+                fr = new FileWriter(f.getSelectedFile(), true);
+
+                int rows[] = tblRegexResult.getSelectedRows();//Row();
+                WebToolMainFrame.instance.getConsole().append(">>>>>>> downloadSelectedSearchRegex Saving Regex Items to File ... >>>\n");
+
+                for (int i = 0; i < rows.length; i++) {
+                    String regexToSave = (String) ((DefaultTableModel) tblRegexResult.getModel()).getValueAt(rows[i], 1);
+                    fr.write(regexToSave + "\n");
+                    fr.flush();
+                }// end  for (int i = 0; i < rows.length; i++)
+                fr.close();
+                WebToolMainFrame.instance.getConsole().append(">>>>>>> downloadSelectedSearchRegex Finish .... >>>\n");
+
+            } catch (IOException e) {
+                WebToolMainFrame.instance.getConsole().append(">>>>>>> downloadSelectedSearchRegex IO Error[" + e.getMessage() + "] >>>\n");
                 return;
             }
         }

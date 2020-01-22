@@ -95,7 +95,7 @@ public class Notepad extends JPanel {
         }
     }
 
-    public Notepad(String title, JInternalFrame jif) throws IOException{
+    public Notepad(String title, JInternalFrame jif) throws IOException {
         this();
         this.title = title;
         jif.addPropertyChangeListener(JInternalFrame.IS_CLOSED_PROPERTY, new PropertyChangeListener() {
@@ -113,7 +113,7 @@ public class Notepad extends JPanel {
 
     }
 
-    public Notepad() throws IOException{
+    public Notepad() throws IOException {
         super(true);
 
         // Force SwingSet to come up in the Cross Platform L&F
@@ -171,6 +171,27 @@ public class Notepad extends JPanel {
         }
 
         syntaxEditor = createEditor();
+        syntaxEditor.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2) // double click
+                {
+                    try {
+                        JTextArea textArea = (JTextArea) syntaxEditor;
+                        int offset = textArea.viewToModel(e.getPoint());
+                        int start = Utilities.getWordStart(textArea, offset);
+                        int end = Utilities.getWordEnd(textArea, offset);
+                        String text = textArea.getText(start, end - start);
+                        String pattern[] = {text};
+                        highLight(editor, pattern);
+                    } catch (BadLocationException bes) {
+
+                    }
+                }
+            }
+
+        });
+
         syntaxEditor.setPreferredSize(new Dimension(250, 250));
         JScrollPane scrollerSyntax = new JScrollPane();
         JViewport portSyntax = scrollerSyntax.getViewport();
@@ -252,6 +273,9 @@ public class Notepad extends JPanel {
                             s = s.replaceAll("." + key + " ", "." + val + " ");
                             s = s.replaceAll(" " + key + ",", " " + val + ",");
                             s = s.replaceAll(" " + key + ".", " " + val + ".");
+                            ((JTextArea) syntaxEditor).setLineWrap(true);
+                            ((JTextArea) syntaxEditor).setWrapStyleWord(true);
+
                             syntaxEditor.setText(s);
                         }
                         if (WebToolMainFrame.instance != null) {
@@ -466,21 +490,21 @@ public class Notepad extends JPanel {
         String str;
         try {
             str = resources.getString(nm);
-           // System.out.println("Get " + nm + " = " + str);
+            // System.out.println("Get " + nm + " = " + str);
         } catch (MissingResourceException mre) {
             str = null;
         }
         return str;
     }
-    
-    protected InputStream getResourceAsInputStream(String key)
-    {
+
+    protected InputStream getResourceAsInputStream(String key) {
         String name = getResourceString(key);
         if (name != null) {
-            return ClassLoader.getSystemClassLoader().getResourceAsStream(/*"../" +*/ name);
+            return ClassLoader.getSystemClassLoader().getResourceAsStream(/*"../" +*/name);
         }
         return null;
     }
+
     protected InputStreamReader getResourceAsStream(String key) {
         String name = getResourceString(key);
         if (name != null) {
@@ -539,7 +563,7 @@ public class Notepad extends JPanel {
      * Create the toolbar. By default this reads the resource file for the
      * definition of the toolbar.
      */
-    private Component createToolbar() throws IOException{
+    private Component createToolbar() throws IOException {
         toolbar = new JToolBar();
         String[] toolKeys = tokenize(getResourceString("toolbar"));
         for (int i = 0; i < toolKeys.length; i++) {
@@ -556,7 +580,7 @@ public class Notepad extends JPanel {
     /**
      * Hook through which every toolbar item is created.
      */
-    protected Component createTool(String key) throws IOException{
+    protected Component createTool(String key) throws IOException {
         return createToolbarButton(key);
     }
 
@@ -568,12 +592,12 @@ public class Notepad extends JPanel {
      *
      * @param key The key in the resource file to serve as the basis of lookups.
      */
-    protected JButton createToolbarButton(String key) throws IOException{
-       // URL url = getResource(key + imageSuffix);
+    protected JButton createToolbarButton(String key) throws IOException {
+        // URL url = getResource(key + imageSuffix);
         //getResourceAsStream(key + imageSuffix).
         //System.out.println(">>>> Selected Key is >>> "+ key);
         BufferedImage image = ImageIO.read(getResourceAsInputStream(key + imageSuffix));
-       JButton b = new JButton(new ImageIcon( image/*url*/)) {
+        JButton b = new JButton(new ImageIcon(image/*url*/)) {
             public float getAlignmentY() {
                 return 0.5f;
             }
@@ -662,6 +686,61 @@ public class Notepad extends JPanel {
     // Yarked from JMenu, ideally this would be public.
     protected PropertyChangeListener createActionChangeListener(JMenuItem b) {
         return new ActionChangedListener(b);
+    }
+
+    // Creates highlights around all occurrences of pattern in textComp
+    public void highLight(JTextComponent textComp, String[] pattern) {
+        // First remove all old highlights
+        removeHighlights(textComp);
+
+        try {
+
+            Highlighter hilite = textComp.getHighlighter();
+            Document doc = textComp.getDocument();
+            String text = doc.getText(0, doc.getLength());
+            for (int i = 0; i < pattern.length; i++) {
+                int pos = 0;
+                // Search for pattern
+                while ((pos = text.indexOf(pattern[i], pos)) >= 0) {
+
+                    hilite.addHighlight(pos, pos + pattern[i].length(),
+                            myHighlighter);
+                    pos += pattern[i].length();
+
+                }
+            }
+        } catch (BadLocationException e) {
+        }
+
+    }
+
+// Removes only our private highlights
+    public void removeHighlights(JTextComponent textComp) {
+
+        Highlighter hilite = textComp.getHighlighter();
+
+        Highlighter.Highlight[] hilites = hilite.getHighlights();
+
+        for (int i = 0; i < hilites.length; i++) {
+
+            if (hilites[i].getPainter() instanceof MyHighlightPainter) {
+
+                hilite.removeHighlight(hilites[i]);
+            }
+        }
+    }
+
+    // An instance of the private subclass of the default highlight painter
+    Highlighter.HighlightPainter myHighlighter = new MyHighlightPainter(Color.LIGHT_GRAY);
+
+// A class of the default highlight painter
+    private class MyHighlightPainter extends DefaultHighlighter.DefaultHighlightPainter {
+
+        public MyHighlightPainter(Color color) {
+
+            super(color);
+
+        }
     }
 
     // Yarked from JMenu, ideally this would be public.
@@ -864,6 +943,8 @@ public class Notepad extends JPanel {
             File[] fs = chooser.getSelectedFiles();//File();
             Document oldDoc = getEditor().getDocument();
             getEditor().setDocument(new PlainDocument());
+            ((JTextArea) editor).setLineWrap(true);
+            ((JTextArea) editor).setWrapStyleWord(true);
             for (File f : fs) {
                 if (f.isFile() && f.canRead()) {
 
@@ -954,10 +1035,14 @@ public class Notepad extends JPanel {
                 for (final String ngram : new NGramIterator(3, s, Locale.ENGLISH, StopWords.English)) {
                     ngrams.note(ngram.toLowerCase(Locale.ENGLISH));
                 }
+                list.setVisible(false);
                 for (final Map.Entry<String, Integer> en : ngrams.getAllByFrequency().subList(0, 10)) {
                     System.out.println(en.getKey() + ": " + en.getValue());
                     ((DefaultListModel) list.getModel()).addElement(en.getKey() + ": " + en.getValue());
                 }
+                list.setVisible(true);
+                list.revalidate();
+                list.repaint();
                 if (WebToolMainFrame.instance != null) {
                     Font fnt = WebToolMainFrame.instance.getConsole().getFont();
                     WebToolMainFrame.instance.getConsole().setFont(fnt.deriveFont(Font.BOLD));
@@ -1117,7 +1202,7 @@ public class Notepad extends JPanel {
                 //doc.render();
                 char[] buff = new char[4096];
                 int nch;
-                
+
                 //while ((nch = in.read(buff, 0, buff.length)) != -1) {
                 while ((nch = r.read(buff, 0, buff.length)) != -1) {
                     doc.insertString(doc.getLength(), new String(buff, 0, nch), null);
