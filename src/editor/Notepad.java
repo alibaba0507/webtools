@@ -71,7 +71,7 @@ import webtools.gui.run.WebToolMainFrame;
  * @version 1.31 11/17/05
  */
 public class Notepad extends JPanel {
-
+    
     private static ResourceBundle resources;
     private final static String EXIT_AFTER_PAINT = new String("-exit");
     private static boolean exitAfterFirstPaint;
@@ -79,7 +79,7 @@ public class Notepad extends JPanel {
     private JButton submit;
     Preferences prefs = Preferences.userRoot().node(getClass().getName());
     String LAST_USED_FOLDER = System.getProperty("user.home");
-
+    
     static {
         try {
             resources = ResourceBundle.getBundle("resources.Notepad",
@@ -89,14 +89,14 @@ public class Notepad extends JPanel {
             System.exit(1);
         }
     }
-
+    
     public void paintChildren(Graphics g) {
         super.paintChildren(g);
         if (exitAfterFirstPaint) {
             System.exit(0);
         }
     }
-
+    
     public Notepad(String title, JInternalFrame jif) throws IOException {
         this();
         this.title = title;
@@ -112,9 +112,9 @@ public class Notepad extends JPanel {
                 }
             }
         });
-
+        
     }
-
+    
     public Notepad() throws IOException {
         super(true);
 
@@ -127,7 +127,7 @@ public class Notepad extends JPanel {
         } catch (Exception exc) {
             System.err.println("Error loading L&F: " + exc);
         }
-
+        
         setBorder(BorderFactory.createEtchedBorder());
         setLayout(new BorderLayout());
 
@@ -144,13 +144,13 @@ public class Notepad extends JPanel {
             //commands.put(a.getText(Action.NAME), a);
             commands.put(a.getValue(Action.NAME), a);
         }
-
+        
         JScrollPane scroller = new JScrollPane();
         scroller.setMaximumSize(new Dimension(250, 140));
         scroller.setPreferredSize(new Dimension(250, 140));
         JViewport port = scroller.getViewport();
         port.add(editor);
-
+        
         JPanel pnlEditor = new JPanel();
         pnlEditor.setLayout(new BorderLayout());
         //nlEditor.add("Center", port);
@@ -169,7 +169,7 @@ public class Notepad extends JPanel {
                     highLight(editor, pattern);
                 }
             }
-
+            
         });
         //list.setMaximumSize(new Dimension(150,40));
         list.setModel(new DefaultListModel());
@@ -177,7 +177,7 @@ public class Notepad extends JPanel {
         porList.add(list);
         pnlEditor.add("North", scrollerList);
         pnlEditor.add("Center", scroller);
-
+        
         try {
             String vpFlag = resources.getString("ViewportBackingStore");
             Boolean bs = Boolean.valueOf(vpFlag);
@@ -185,7 +185,7 @@ public class Notepad extends JPanel {
         } catch (MissingResourceException mre) {
             // just use the viewport default
         }
-
+        
         syntaxEditor = createEditor();
         syntaxEditor.addMouseListener(new MouseAdapter() {
             @Override
@@ -201,11 +201,11 @@ public class Notepad extends JPanel {
                         String pattern[] = {text};
                         highLight(editor, pattern);
                     } catch (BadLocationException bes) {
-
+                        
                     }
                 }
             }
-
+            
         });
 
         //syntaxEditor.setPreferredSize(new Dimension(250, 250));
@@ -232,17 +232,17 @@ public class Notepad extends JPanel {
         splitPane.setContinuousLayout(true);
         splitPane.setOneTouchExpandable(true);
         splitPane.setTopComponent(panelEditor);
-
+        
         JPanel panelSyntax = new JPanel();
         panelSyntax.setLayout(new BorderLayout());
-
+        
         panelSyntax.add("Center", scrollerSyntax);
-
+        
         splitPane.setBottomComponent(panelSyntax);
         JPanel panelSyntaxActions = new JPanel();
         panelSyntaxActions.setLayout(new BoxLayout(panelSyntaxActions, BoxLayout.X_AXIS));
         panelSyntax.add("North", panelSyntaxActions);
-
+        
         panelSyntaxActions.add(new JButton(createActionSpinSentances()));
         // createActionSpinWords3
         panelSyntaxActions.add(new JButton(createActionSpinWords3()));
@@ -254,7 +254,7 @@ public class Notepad extends JPanel {
         splitPane.setResizeWeight(0.5);
         //splitPane.setDividerLocation(50);
     }
-
+    
     Action createActionSpinSentances() {
         return new AbstractAction("Spin Sentences") {
             @Override
@@ -264,7 +264,8 @@ public class Notepad extends JPanel {
                     JOptionPane.showMessageDialog(Notepad.this, "Nothing To Spin", "Empty Text", JOptionPane.INFORMATION_MESSAGE);
                     return;
                 }
-                SwingWorker worker = new SwingWorker() {
+                SwingWorker worker;
+                worker = new SwingWorker() {
                     @Override
                     protected Object doInBackground() throws Exception {
                         if (WebToolMainFrame.instance != null) {
@@ -273,13 +274,16 @@ public class Notepad extends JPanel {
                             WebToolMainFrame.instance.getConsole().append(">>>> Start Text Spin ... >>>>>\n");
                             WebToolMainFrame.instance.getConsole().setForeground(Color.BLACK);
                         }
-
+                        
                         String s = editor.getText();
                         Map m = spinSencanses();
                         Iterator it = m.keySet().iterator();
-
+                        String toBeReplacedList[] = new String[m.keySet().size()];
+                        String replaceWithList[] = new String[m.keySet().size() * 8];
+                        int wrdCnt = 0;
+                        int replaceWithCnt = 0;
                         while (it.hasNext()) {
-
+                            
                             String key = it.next().toString();
                             String val = m.get(key).toString();
                             //int indx = 
@@ -292,20 +296,50 @@ public class Notepad extends JPanel {
                             }
                             String replaceWith[] = val.split("\\|");
                             int randomInt = ThreadLocalRandom.current().nextInt(0, replaceWith.length - 1);
-                            s = s.replaceAll("\n" + key + " ", "\n " + replaceWith[ThreadLocalRandom.current().nextInt(0, replaceWith.length - 1)] + " ");
-                            s = s.replaceAll("\r" + key + " ", "\r " + replaceWith[ThreadLocalRandom.current().nextInt(0, replaceWith.length - 1)] + " ");
-                            s = s.replaceAll(" " + key + "\n", " " + replaceWith[ThreadLocalRandom.current().nextInt(0, replaceWith.length - 1)] + " \n");
-                            s = s.replaceAll(" " + key + "\r", " " + replaceWith[ThreadLocalRandom.current().nextInt(0, replaceWith.length - 1)] + " \r");
-                            s = s.replaceAll("," + key + " ", ", " + replaceWith[ThreadLocalRandom.current().nextInt(0, replaceWith.length - 1)] + " ");
-                            s = s.replaceAll("." + key + " ", ". " + replaceWith[ThreadLocalRandom.current().nextInt(0, replaceWith.length - 1)] + " ");
-                            s = s.replaceAll(" " + key + ",", " " + replaceWith[ThreadLocalRandom.current().nextInt(0, replaceWith.length - 1)] + " ,");
-                            s = s.replaceAll(" " + key + ".", " " + replaceWith[ThreadLocalRandom.current().nextInt(0, replaceWith.length - 1)] + " .");
+                            toBeReplacedList[wrdCnt++] = (" " + key + " ");
+                            String repl = replaceWith[ThreadLocalRandom.current().nextInt(0, replaceWith.length - 1)];
+                            replaceWithList[replaceWithCnt++] = (" " + repl + " ");
+                            s = s.replaceAll(" " + key + " ", " " + repl + " ");
+                            
+                            repl = replaceWith[ThreadLocalRandom.current().nextInt(0, replaceWith.length - 1)];
+                            s = s.replaceAll("\n" + key + " ", "\n " + repl + " ");
+                            replaceWithList[replaceWithCnt++] = ("\n" + repl + " ");
+                            
+                            repl = replaceWith[ThreadLocalRandom.current().nextInt(0, replaceWith.length - 1)];
+                            s = s.replaceAll("\r" + key + " ", "\r " + repl + " ");
+                            replaceWithList[replaceWithCnt++] = ("\r" + repl + " ");
+                            
+                            repl = replaceWith[ThreadLocalRandom.current().nextInt(0, replaceWith.length - 1)];
+                            s = s.replaceAll(" " + key + "\n", " " + repl + "\n");
+                            
+                            replaceWithList[replaceWithCnt++] = (" " + repl + "\n");
+                            
+                            repl = replaceWith[ThreadLocalRandom.current().nextInt(0, replaceWith.length - 1)];
+                            s = s.replaceAll(" " + key + "\r", " " + repl + "\r");
+                            replaceWithList[replaceWithCnt++] = (" " + repl + "\r");
+                            /*  
+                             replaceWithList[replaceWithCnt++] = ("," + repl + " ");
+                            s = s.replaceAll("," + key + " ", "," + repl + " ");
+                             repl = replaceWith[ThreadLocalRandom.current().nextInt(0, replaceWith.length - 1)] ;
+                              replaceWithList[replaceWithCnt++] = ("." + repl + " ");
+                            s = s.replaceAll("." + key + " ", "." + repl + " ");
+                             repl = replaceWith[ThreadLocalRandom.current().nextInt(0, replaceWith.length - 1)] ;
+                             replaceWithList[replaceWithCnt++] = (" " + repl + ",");
+                            s = s.replaceAll(" " + key + ",", " " + repl + ",");
+                             repl = replaceWith[ThreadLocalRandom.current().nextInt(0, replaceWith.length - 1)] ;
+                              replaceWithList[replaceWithCnt++] = (" " + repl + ".");
+                            s = s.replaceAll(" " + key + ".", " " + repl+ ".");
+                             */
                             // s = s.replaceAll(" " + key + " ", " " + val + " ");
                             ((JTextArea) syntaxEditor).setLineWrap(true);
                             ((JTextArea) syntaxEditor).setWrapStyleWord(true);
-
+                            
                             syntaxEditor.setText(s);
-                        }
+                        }// end while(it.next)
+                        // String pattern[] = (String[])toBeReplacedList.toArray();
+                        highLight(editor, toBeReplacedList);
+                        //pattern = (String[])replaceWithList.toArray();
+                        highLight(syntaxEditor, replaceWithList);
                         if (WebToolMainFrame.instance != null) {
                             Font fnt = WebToolMainFrame.instance.getConsole().getFont();
                             WebToolMainFrame.instance.getConsole().setFont(fnt.deriveFont(Font.BOLD));
@@ -316,11 +350,58 @@ public class Notepad extends JPanel {
                     }
                 };
                 worker.execute();
-
-            }
+                
+            }//end public void actionPerformed(ActionEvent e)
         };
     }
-
+    
+    Map<String, String> spinWords(int minLen) {
+        Map m = new HashMap();
+        //String syntax = getResourceString("syntax");// getResourceString("syntax");
+        // InputStreamReader inr = getResourceAsStream("syntax");
+        // BufferedReader br = getResourceAsBuffer("../" + syntax);
+        String s = editor.getText();
+        StopWords sw = StopWords.English;
+        // for (final String word : new SentenceIterator(s, Locale.ENGLISH)) {
+        //System.out.println(word);
+        String word_clean = s.replaceAll("\\p{Punct}", " ");
+        for (final String w : new WordIterator(word_clean)) {
+            //System.out.println(word);
+            boolean found = false;
+            if (m.containsKey(" " + w + " ")) {
+                continue; // we have this one 
+            }
+            if (w.trim().length() >= minLen && !sw.isStopWord(w)) {
+                try {
+                    // inr.mark(0);
+                    //inr.reset();
+                    BufferedReader br = new BufferedReader(getResourceAsStream("syntax"));
+                    String readLine = "";
+                    int cnt = 0;
+                    while ((readLine = br.readLine()) != null) {
+                        if (readLine.indexOf("," + w + ",") > -1) { // we found 
+                            m.put(w, "{" + readLine.replaceAll(",", "|") + "}");
+                            found = true;
+                            //br.close();
+                            cnt++;
+                            if (cnt > 1) {
+                                break;
+                            }
+                        }
+                    }// end while
+                    br.close();
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }// end if
+            if (found) {
+                break;
+            }
+        }// end for 
+        //}// end for
+        return m;
+    }
+    
     Map<String, String> spinSencanses() {
         Map m = new HashMap();
         //String syntax = getResourceString("syntax");// getResourceString("syntax");
@@ -367,34 +448,307 @@ public class Notepad extends JPanel {
         }// end for
         return m;
     }
-
+    
     Action createActionSpinWords3() {
         return new AbstractAction("Spin Words > 3 chars") {
             @Override
             public void actionPerformed(ActionEvent e) {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+                String s = editor.getText();
+                if (s.trim().length() <= 0) {
+                    JOptionPane.showMessageDialog(Notepad.this, "Nothing To Spin", "Empty Text", JOptionPane.INFORMATION_MESSAGE);
+                    return;
+                }
+                SwingWorker worker;
+                worker = new SwingWorker() {
+                    @Override
+                    protected Object doInBackground() throws Exception {
+                        if (WebToolMainFrame.instance != null) {
+                            Font fnt = WebToolMainFrame.instance.getConsole().getFont();
+                            WebToolMainFrame.instance.getConsole().setFont(fnt.deriveFont(Font.BOLD));
+                            WebToolMainFrame.instance.getConsole().append(">>>> Start Text Spin ... >>>>>\n");
+                            WebToolMainFrame.instance.getConsole().setForeground(Color.BLACK);
+                        }
+                        
+                        String s = editor.getText();
+                        Map m = spinWords(3);
+                        Iterator it = m.keySet().iterator();
+                        String toBeReplacedList[] = new String[m.keySet().size()];
+                        String replaceWithList[] = new String[m.keySet().size() * 8];
+                        int wrdCnt = 0;
+                        int replaceWithCnt = 0;
+                        while (it.hasNext()) {
+                            
+                            String key = it.next().toString();
+                            String val = m.get(key).toString();
+                            //int indx = 
+                            // we need clear space for a key word
+                            if (val.startsWith("{")) {
+                                val = val.substring(1);
+                            }
+                            if (val.endsWith("}")) {
+                                val = val.substring(0, val.length() - 2);
+                            }
+                            String replaceWith[] = val.split("\\|");
+                            int randomInt = ThreadLocalRandom.current().nextInt(0, replaceWith.length - 1);
+                            toBeReplacedList[wrdCnt++] = (" " + key + " ");
+                            String repl = replaceWith[ThreadLocalRandom.current().nextInt(0, replaceWith.length - 1)];
+                            replaceWithList[replaceWithCnt++] = (" " + repl + " ");
+                            s = s.replaceAll(" " + key + " ", " " + repl + " ");
+                            
+                            repl = replaceWith[ThreadLocalRandom.current().nextInt(0, replaceWith.length - 1)];
+                            s = s.replaceAll("\n" + key + " ", "\n " + repl + " ");
+                            replaceWithList[replaceWithCnt++] = ("\n" + repl + " ");
+                            
+                            repl = replaceWith[ThreadLocalRandom.current().nextInt(0, replaceWith.length - 1)];
+                            s = s.replaceAll("\r" + key + " ", "\r " + repl + " ");
+                            replaceWithList[replaceWithCnt++] = ("\r" + repl + " ");
+                            
+                            repl = replaceWith[ThreadLocalRandom.current().nextInt(0, replaceWith.length - 1)];
+                            s = s.replaceAll(" " + key + "\n", " " + repl + "\n");
+                            
+                            replaceWithList[replaceWithCnt++] = (" " + repl + "\n");
+                            
+                            repl = replaceWith[ThreadLocalRandom.current().nextInt(0, replaceWith.length - 1)];
+                            s = s.replaceAll(" " + key + "\r", " " + repl + "\r");
+                            replaceWithList[replaceWithCnt++] = (" " + repl + "\r");
+                            /*  
+                             replaceWithList[replaceWithCnt++] = ("," + repl + " ");
+                            s = s.replaceAll("," + key + " ", "," + repl + " ");
+                             repl = replaceWith[ThreadLocalRandom.current().nextInt(0, replaceWith.length - 1)] ;
+                              replaceWithList[replaceWithCnt++] = ("." + repl + " ");
+                            s = s.replaceAll("." + key + " ", "." + repl + " ");
+                             repl = replaceWith[ThreadLocalRandom.current().nextInt(0, replaceWith.length - 1)] ;
+                             replaceWithList[replaceWithCnt++] = (" " + repl + ",");
+                            s = s.replaceAll(" " + key + ",", " " + repl + ",");
+                             repl = replaceWith[ThreadLocalRandom.current().nextInt(0, replaceWith.length - 1)] ;
+                              replaceWithList[replaceWithCnt++] = (" " + repl + ".");
+                            s = s.replaceAll(" " + key + ".", " " + repl+ ".");
+                             */
+                            // s = s.replaceAll(" " + key + " ", " " + val + " ");
+                            ((JTextArea) syntaxEditor).setLineWrap(true);
+                            ((JTextArea) syntaxEditor).setWrapStyleWord(true);
+                            
+                            syntaxEditor.setText(s);
+                        }// end while(it.next)
+                        // String pattern[] = (String[])toBeReplacedList.toArray();
+                        highLight(editor, toBeReplacedList);
+                        //pattern = (String[])replaceWithList.toArray();
+                        highLight(syntaxEditor, replaceWithList);
+                        if (WebToolMainFrame.instance != null) {
+                            Font fnt = WebToolMainFrame.instance.getConsole().getFont();
+                            WebToolMainFrame.instance.getConsole().setFont(fnt.deriveFont(Font.BOLD));
+                            WebToolMainFrame.instance.getConsole().append(">>>> Finish Text Spin ... >>>>>\n");
+                            WebToolMainFrame.instance.getConsole().setForeground(Color.BLACK);
+                        }
+                        return Boolean.TRUE;
+                    }
+                };
+                worker.execute();
+                
             }
         };
     }
-
+    
     Action createActionSpinWords4() {
         return new AbstractAction("Spin Words > 4 chars") {
             @Override
             public void actionPerformed(ActionEvent e) {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+                String s = editor.getText();
+                if (s.trim().length() <= 0) {
+                    JOptionPane.showMessageDialog(Notepad.this, "Nothing To Spin", "Empty Text", JOptionPane.INFORMATION_MESSAGE);
+                    return;
+                }
+                SwingWorker worker;
+                worker = new SwingWorker() {
+                    @Override
+                    protected Object doInBackground() throws Exception {
+                        if (WebToolMainFrame.instance != null) {
+                            Font fnt = WebToolMainFrame.instance.getConsole().getFont();
+                            WebToolMainFrame.instance.getConsole().setFont(fnt.deriveFont(Font.BOLD));
+                            WebToolMainFrame.instance.getConsole().append(">>>> Start Text Spin ... >>>>>\n");
+                            WebToolMainFrame.instance.getConsole().setForeground(Color.BLACK);
+                        }
+                        
+                        String s = editor.getText();
+                        Map m = spinWords(4);
+                        Iterator it = m.keySet().iterator();
+                        String toBeReplacedList[] = new String[m.keySet().size()];
+                        String replaceWithList[] = new String[m.keySet().size() * 8];
+                        int wrdCnt = 0;
+                        int replaceWithCnt = 0;
+                        while (it.hasNext()) {
+                            
+                            String key = it.next().toString();
+                            String val = m.get(key).toString();
+                            //int indx = 
+                            // we need clear space for a key word
+                            if (val.startsWith("{")) {
+                                val = val.substring(1);
+                            }
+                            if (val.endsWith("}")) {
+                                val = val.substring(0, val.length() - 2);
+                            }
+                            String replaceWith[] = val.split("\\|");
+                            int randomInt = ThreadLocalRandom.current().nextInt(0, replaceWith.length - 1);
+                            toBeReplacedList[wrdCnt++] = (" " + key + " ");
+                            String repl = replaceWith[ThreadLocalRandom.current().nextInt(0, replaceWith.length - 1)];
+                            replaceWithList[replaceWithCnt++] = (" " + repl + " ");
+                            s = s.replaceAll(" " + key + " ", " " + repl + " ");
+                            
+                            repl = replaceWith[ThreadLocalRandom.current().nextInt(0, replaceWith.length - 1)];
+                            s = s.replaceAll("\n" + key + " ", "\n " + repl + " ");
+                            replaceWithList[replaceWithCnt++] = ("\n" + repl + " ");
+                            
+                            repl = replaceWith[ThreadLocalRandom.current().nextInt(0, replaceWith.length - 1)];
+                            s = s.replaceAll("\r" + key + " ", "\r " + repl + " ");
+                            replaceWithList[replaceWithCnt++] = ("\r" + repl + " ");
+                            
+                            repl = replaceWith[ThreadLocalRandom.current().nextInt(0, replaceWith.length - 1)];
+                            s = s.replaceAll(" " + key + "\n", " " + repl + "\n");
+                            
+                            replaceWithList[replaceWithCnt++] = (" " + repl + "\n");
+                            
+                            repl = replaceWith[ThreadLocalRandom.current().nextInt(0, replaceWith.length - 1)];
+                            s = s.replaceAll(" " + key + "\r", " " + repl + "\r");
+                            replaceWithList[replaceWithCnt++] = (" " + repl + "\r");
+                            /*  
+                             replaceWithList[replaceWithCnt++] = ("," + repl + " ");
+                            s = s.replaceAll("," + key + " ", "," + repl + " ");
+                             repl = replaceWith[ThreadLocalRandom.current().nextInt(0, replaceWith.length - 1)] ;
+                              replaceWithList[replaceWithCnt++] = ("." + repl + " ");
+                            s = s.replaceAll("." + key + " ", "." + repl + " ");
+                             repl = replaceWith[ThreadLocalRandom.current().nextInt(0, replaceWith.length - 1)] ;
+                             replaceWithList[replaceWithCnt++] = (" " + repl + ",");
+                            s = s.replaceAll(" " + key + ",", " " + repl + ",");
+                             repl = replaceWith[ThreadLocalRandom.current().nextInt(0, replaceWith.length - 1)] ;
+                              replaceWithList[replaceWithCnt++] = (" " + repl + ".");
+                            s = s.replaceAll(" " + key + ".", " " + repl+ ".");
+                             */
+                            // s = s.replaceAll(" " + key + " ", " " + val + " ");
+                            ((JTextArea) syntaxEditor).setLineWrap(true);
+                            ((JTextArea) syntaxEditor).setWrapStyleWord(true);
+                            
+                            syntaxEditor.setText(s);
+                        }// end while(it.next)
+                        // String pattern[] = (String[])toBeReplacedList.toArray();
+                        highLight(editor, toBeReplacedList);
+                        //pattern = (String[])replaceWithList.toArray();
+                        highLight(syntaxEditor, replaceWithList);
+                        if (WebToolMainFrame.instance != null) {
+                            Font fnt = WebToolMainFrame.instance.getConsole().getFont();
+                            WebToolMainFrame.instance.getConsole().setFont(fnt.deriveFont(Font.BOLD));
+                            WebToolMainFrame.instance.getConsole().append(">>>> Finish Text Spin ... >>>>>\n");
+                            WebToolMainFrame.instance.getConsole().setForeground(Color.BLACK);
+                        }
+                        return Boolean.TRUE;
+                    }
+                };
+                worker.execute();
+                
             }
         };
     }
-
+    
     Action createActionSpinWords5() {
         return new AbstractAction("Spin Words > 5 chars") {
             @Override
             public void actionPerformed(ActionEvent e) {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+                String s = editor.getText();
+                if (s.trim().length() <= 0) {
+                    JOptionPane.showMessageDialog(Notepad.this, "Nothing To Spin", "Empty Text", JOptionPane.INFORMATION_MESSAGE);
+                    return;
+                }
+                SwingWorker worker;
+                worker = new SwingWorker() {
+                    @Override
+                    protected Object doInBackground() throws Exception {
+                        if (WebToolMainFrame.instance != null) {
+                            Font fnt = WebToolMainFrame.instance.getConsole().getFont();
+                            WebToolMainFrame.instance.getConsole().setFont(fnt.deriveFont(Font.BOLD));
+                            WebToolMainFrame.instance.getConsole().append(">>>> Start Text Spin ... >>>>>\n");
+                            WebToolMainFrame.instance.getConsole().setForeground(Color.BLACK);
+                        }
+                        
+                        String s = editor.getText();
+                        Map m = spinWords(5);
+                        Iterator it = m.keySet().iterator();
+                        String toBeReplacedList[] = new String[m.keySet().size()];
+                        String replaceWithList[] = new String[m.keySet().size() * 8];
+                        int wrdCnt = 0;
+                        int replaceWithCnt = 0;
+                        while (it.hasNext()) {
+                            
+                            String key = it.next().toString();
+                            String val = m.get(key).toString();
+                            //int indx = 
+                            // we need clear space for a key word
+                            if (val.startsWith("{")) {
+                                val = val.substring(1);
+                            }
+                            if (val.endsWith("}")) {
+                                val = val.substring(0, val.length() - 2);
+                            }
+                            String replaceWith[] = val.split("\\|");
+                            int randomInt = ThreadLocalRandom.current().nextInt(0, replaceWith.length - 1);
+                            toBeReplacedList[wrdCnt++] = (" " + key + " ");
+                            String repl = replaceWith[ThreadLocalRandom.current().nextInt(0, replaceWith.length - 1)];
+                            replaceWithList[replaceWithCnt++] = (" " + repl + " ");
+                            s = s.replaceAll(" " + key + " ", " " + repl + " ");
+                            
+                            repl = replaceWith[ThreadLocalRandom.current().nextInt(0, replaceWith.length - 1)];
+                            s = s.replaceAll("\n" + key + " ", "\n " + repl + " ");
+                            replaceWithList[replaceWithCnt++] = ("\n" + repl + " ");
+                            
+                            repl = replaceWith[ThreadLocalRandom.current().nextInt(0, replaceWith.length - 1)];
+                            s = s.replaceAll("\r" + key + " ", "\r " + repl + " ");
+                            replaceWithList[replaceWithCnt++] = ("\r" + repl + " ");
+                            
+                            repl = replaceWith[ThreadLocalRandom.current().nextInt(0, replaceWith.length - 1)];
+                            s = s.replaceAll(" " + key + "\n", " " + repl + "\n");
+                            
+                            replaceWithList[replaceWithCnt++] = (" " + repl + "\n");
+                            
+                            repl = replaceWith[ThreadLocalRandom.current().nextInt(0, replaceWith.length - 1)];
+                            s = s.replaceAll(" " + key + "\r", " " + repl + "\r");
+                            replaceWithList[replaceWithCnt++] = (" " + repl + "\r");
+                            /*  
+                             replaceWithList[replaceWithCnt++] = ("," + repl + " ");
+                            s = s.replaceAll("," + key + " ", "," + repl + " ");
+                             repl = replaceWith[ThreadLocalRandom.current().nextInt(0, replaceWith.length - 1)] ;
+                              replaceWithList[replaceWithCnt++] = ("." + repl + " ");
+                            s = s.replaceAll("." + key + " ", "." + repl + " ");
+                             repl = replaceWith[ThreadLocalRandom.current().nextInt(0, replaceWith.length - 1)] ;
+                             replaceWithList[replaceWithCnt++] = (" " + repl + ",");
+                            s = s.replaceAll(" " + key + ",", " " + repl + ",");
+                             repl = replaceWith[ThreadLocalRandom.current().nextInt(0, replaceWith.length - 1)] ;
+                              replaceWithList[replaceWithCnt++] = (" " + repl + ".");
+                            s = s.replaceAll(" " + key + ".", " " + repl+ ".");
+                             */
+                            // s = s.replaceAll(" " + key + " ", " " + val + " ");
+                            ((JTextArea) syntaxEditor).setLineWrap(true);
+                            ((JTextArea) syntaxEditor).setWrapStyleWord(true);
+                            
+                            syntaxEditor.setText(s);
+                        }// end while(it.next)
+                        // String pattern[] = (String[])toBeReplacedList.toArray();
+                        highLight(editor, toBeReplacedList);
+                        //pattern = (String[])replaceWithList.toArray();
+                        highLight(syntaxEditor, replaceWithList);
+                        if (WebToolMainFrame.instance != null) {
+                            Font fnt = WebToolMainFrame.instance.getConsole().getFont();
+                            WebToolMainFrame.instance.getConsole().setFont(fnt.deriveFont(Font.BOLD));
+                            WebToolMainFrame.instance.getConsole().append(">>>> Finish Text Spin ... >>>>>\n");
+                            WebToolMainFrame.instance.getConsole().setForeground(Color.BLACK);
+                        }
+                        return Boolean.TRUE;
+                    }
+                };
+                worker.execute();
+                
             }
         };
     }
-
+    
     public static void main(String[] args) {
         try {
             String vers = System.getProperty("java.version");
@@ -454,7 +808,7 @@ public class Notepad extends JPanel {
      * check to see if a save was needed.
      */
     protected static final class AppCloser extends WindowAdapter {
-
+        
         public void windowClosing(WindowEvent e) {
             System.exit(0);
         }
@@ -513,11 +867,11 @@ public class Notepad extends JPanel {
     protected JMenuItem getMenuItem(String cmd) {
         return (JMenuItem) menuItems.get(cmd);
     }
-
+    
     protected Action getAction(String cmd) {
         return (Action) commands.get(cmd);
     }
-
+    
     protected String getResourceString(String nm) {
         String str;
         try {
@@ -528,7 +882,7 @@ public class Notepad extends JPanel {
         }
         return str;
     }
-
+    
     protected InputStream getResourceAsInputStream(String key) {
         String name = getResourceString(key);
         if (name != null) {
@@ -536,7 +890,7 @@ public class Notepad extends JPanel {
         }
         return null;
     }
-
+    
     protected InputStreamReader getResourceAsStream(String key) {
         String name = getResourceString(key);
         if (name != null) {
@@ -547,7 +901,7 @@ public class Notepad extends JPanel {
         }
         return null;
     }
-
+    
     protected BufferedReader getResourceAsBuffer(String key) {
         InputStreamReader in = getResourceAsStream(key);
         if (in != null) {
@@ -555,7 +909,7 @@ public class Notepad extends JPanel {
         }
         return null;
     }
-
+    
     protected URL getResource(String key) {
         String name = getResourceString(key);
         if (name != null) {
@@ -564,11 +918,11 @@ public class Notepad extends JPanel {
         }
         return null;
     }
-
+    
     protected Container getToolbar() {
         return toolbar;
     }
-
+    
     protected JMenuBar getMenubar() {
         return menubar;
     }
@@ -636,7 +990,7 @@ public class Notepad extends JPanel {
         };
         b.setRequestFocusEnabled(false);
         b.setMargin(new Insets(1, 1, 1, 1));
-
+        
         String astr = getResourceString(key + actionSuffix);
         if (astr == null) {
             astr = key;
@@ -648,12 +1002,12 @@ public class Notepad extends JPanel {
         } else {
             b.setEnabled(false);
         }
-
+        
         String tip = getResourceString(key + tipSuffix);
         if (tip != null) {
             b.setToolTipText(tip);
         }
-
+        
         return b;
     }
 
@@ -666,7 +1020,7 @@ public class Notepad extends JPanel {
         Vector v = new Vector();
         StringTokenizer t = new StringTokenizer(input);
         String cmd[];
-
+        
         while (t.hasMoreTokens()) {
             v.addElement(t.nextToken());
         }
@@ -674,7 +1028,7 @@ public class Notepad extends JPanel {
         for (int i = 0; i < cmd.length; i++) {
             cmd[i] = (String) v.elementAt(i);
         }
-
+        
         return cmd;
     }
 
@@ -685,7 +1039,7 @@ public class Notepad extends JPanel {
     protected JMenuBar createMenubar() {
         JMenuItem mi;
         JMenuBar mb = new JMenuBar();
-
+        
         String[] menuKeys = tokenize(getResourceString("menubar"));
         for (int i = 0; i < menuKeys.length; i++) {
             JMenu m = createMenu(menuKeys[i]);
@@ -724,9 +1078,9 @@ public class Notepad extends JPanel {
     public void highLight(JTextComponent textComp, String[] pattern) {
         // First remove all old highlights
         removeHighlights(textComp);
-
+        
         try {
-
+            
             Highlighter hilite = textComp.getHighlighter();
             Document doc = textComp.getDocument();
             String text = doc.getText(0, doc.getLength());
@@ -739,25 +1093,25 @@ public class Notepad extends JPanel {
                     hilite.addHighlight(pos, pos + pattern[i].length(),
                             myHighlighter);
                     pos += pattern[i].length();
-
+                    
                 }
             }
         } catch (BadLocationException e) {
         }
-
+        
     }
 
 // Removes only our private highlights
     public void removeHighlights(JTextComponent textComp) {
-
+        
         Highlighter hilite = textComp.getHighlighter();
-
+        
         Highlighter.Highlight[] hilites = hilite.getHighlights();
-
+        
         for (int i = 0; i < hilites.length; i++) {
-
+            
             if (hilites[i].getPainter() instanceof MyHighlightPainter) {
-
+                
                 hilite.removeHighlight(hilites[i]);
             }
         }
@@ -768,24 +1122,24 @@ public class Notepad extends JPanel {
 
 // A class of the default highlight painter
     private class MyHighlightPainter extends DefaultHighlighter.DefaultHighlightPainter {
-
+        
         public MyHighlightPainter(Color color) {
-
+            
             super(color);
-
+            
         }
     }
 
     // Yarked from JMenu, ideally this would be public.
     private class ActionChangedListener implements PropertyChangeListener {
-
+        
         JMenuItem menuItem;
-
+        
         ActionChangedListener(JMenuItem mi) {
             super();
             this.menuItem = mi;
         }
-
+        
         public void propertyChange(PropertyChangeEvent e) {
             String propertyName = e.getPropertyName();
             if (e.getPropertyName().equals(Action.NAME)) {
@@ -797,7 +1151,7 @@ public class Notepad extends JPanel {
             }
         }
     }
-
+    
     private JTextComponent editor;
     // This is the editor where syntax template is made based on
     // Syntax words {w1|w2|w3 ...}
@@ -812,7 +1166,7 @@ public class Notepad extends JPanel {
     private JComponent status;
     private JFrame elementTreeFrame;
     protected ElementTreePanel elementTreePanel;
-
+    
     protected FileDialog fileDialog;
 
     /**
@@ -844,13 +1198,13 @@ public class Notepad extends JPanel {
      * Suffix applied to the key used in resource file lookups for tooltip text.
      */
     public static final String tipSuffix = "Tooltip";
-
+    
     public static final String openAction = "open";
     public static final String newAction = "new";
     public static final String saveAction = "save";
     public static final String exitAction = "exit";
     public static final String showElementTreeAction = "showElementTree";
-
+    
     class UndoHandler implements UndoableEditListener {
 
         /**
@@ -868,16 +1222,16 @@ public class Notepad extends JPanel {
      * FIXME - I'm not very useful yet
      */
     class StatusBar extends JComponent {
-
+        
         public StatusBar() {
             super();
             setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
         }
-
+        
         public void paint(Graphics g) {
             super.paint(g);
         }
-
+        
     }
 
     // --- action implementations -----------------------------------
@@ -896,14 +1250,14 @@ public class Notepad extends JPanel {
         undoAction,
         redoAction
     };
-
+    
     class UndoAction extends AbstractAction {
-
+        
         public UndoAction() {
             super("Undo");
             setEnabled(false);
         }
-
+        
         public void actionPerformed(ActionEvent e) {
             try {
                 undo.undo();
@@ -914,7 +1268,7 @@ public class Notepad extends JPanel {
             update();
             redoAction.update();
         }
-
+        
         protected void update() {
             if (undo.canUndo()) {
                 setEnabled(true);
@@ -925,14 +1279,14 @@ public class Notepad extends JPanel {
             }
         }
     }
-
+    
     class RedoAction extends AbstractAction {
-
+        
         public RedoAction() {
             super("Redo");
             setEnabled(false);
         }
-
+        
         public void actionPerformed(ActionEvent e) {
             try {
                 undo.redo();
@@ -943,7 +1297,7 @@ public class Notepad extends JPanel {
             update();
             undoAction.update();
         }
-
+        
         protected void update() {
             if (undo.canRedo()) {
                 setEnabled(true);
@@ -954,20 +1308,20 @@ public class Notepad extends JPanel {
             }
         }
     }
-
+    
     class OpenAction extends NewAction {
-
+        
         OpenAction() {
             super(openAction);
         }
-
+        
         public void actionPerformed(ActionEvent e) {
             Frame frame = getFrame();
             JFileChooser chooser = new JFileChooser(prefs.get(LAST_USED_FOLDER,
                     new File(".").getAbsolutePath()));
             chooser.setMultiSelectionEnabled(true);
             int ret = chooser.showOpenDialog(frame);
-
+            
             if (ret != JFileChooser.APPROVE_OPTION) {
                 return;
             }
@@ -980,14 +1334,14 @@ public class Notepad extends JPanel {
             ((JTextArea) editor).setWrapStyleWord(true);
             for (File f : fs) {
                 if (f.isFile() && f.canRead()) {
-
+                    
                     if (oldDoc != null) {
                         oldDoc.removeUndoableEditListener(undoHandler);
                     }
                     if (elementTreePanel != null) {
                         elementTreePanel.setEditor(null);
                     }
-
+                    
                     frame.setTitle(f.getName());
                     //   synchronized (OpenAction.this) {
                     if (WebToolMainFrame.instance != null) {
@@ -1029,7 +1383,7 @@ public class Notepad extends JPanel {
              */
         }
     }
-
+    
     public void parseOpenFiles() {
         try {
             if (editor.getDocument().getLength() > 0) {
@@ -1095,28 +1449,28 @@ public class Notepad extends JPanel {
             }
         }
     }
-
+    
     class SaveAction extends AbstractAction {
-
+        
         Boolean openStart;
-
+        
         SaveAction() {
             super(saveAction);
         }
-
+        
         public void actionPerformed(ActionEvent e) {
             Frame frame = getFrame();
             JFileChooser chooser = new JFileChooser();
             // JFileChooser jf = new JFileChooser();
             FileNameExtensionFilter filter = new FileNameExtensionFilter("TEXT FILES", "txt", "text");
             chooser.setFileFilter(filter);
-
+            
             int ret = chooser.showSaveDialog(frame);
-
+            
             if (ret != JFileChooser.APPROVE_OPTION) {
                 return;
             }
-
+            
             File f = chooser.getSelectedFile();
             frame.setTitle(f.getName());
             // synchronized (SaveAction.this) {
@@ -1139,17 +1493,17 @@ public class Notepad extends JPanel {
             //}
         }
     }
-
+    
     class NewAction extends AbstractAction {
-
+        
         NewAction() {
             super(newAction);
         }
-
+        
         NewAction(String nm) {
             super(nm);
         }
-
+        
         public void actionPerformed(ActionEvent e) {
             Document oldDoc = getEditor().getDocument();
             if (oldDoc != null) {
@@ -1167,11 +1521,11 @@ public class Notepad extends JPanel {
      * Really lame implementation of an exit command
      */
     class ExitAction extends AbstractAction {
-
+        
         ExitAction() {
             super(exitAction);
         }
-
+        
         public void actionPerformed(ActionEvent e) {
             System.exit(0);
         }
@@ -1182,15 +1536,15 @@ public class Notepad extends JPanel {
      * document.
      */
     class ShowElementTreeAction extends AbstractAction {
-
+        
         ShowElementTreeAction() {
             super(showElementTreeAction);
         }
-
+        
         ShowElementTreeAction(String nm) {
             super(nm);
         }
-
+        
         public void actionPerformed(ActionEvent e) {
             if (elementTreeFrame == null) {
                 // Create a frame containing an instance of 
@@ -1201,14 +1555,14 @@ public class Notepad extends JPanel {
                 } catch (MissingResourceException mre) {
                     elementTreeFrame = new JFrame();
                 }
-
+                
                 elementTreeFrame.addWindowListener(new WindowAdapter() {
                     public void windowClosing(WindowEvent weeee) {
                         elementTreeFrame.setVisible(false);
                     }
                 });
                 Container fContentPane = elementTreeFrame.getContentPane();
-
+                
                 fContentPane.setLayout(new BorderLayout());
                 elementTreePanel = new ElementTreePanel(getEditor());
                 fContentPane.add(elementTreePanel);
@@ -1222,17 +1576,17 @@ public class Notepad extends JPanel {
      * Thread to load a file into the text storage model
      */
     class FileLoader extends Thread {
-
+        
         public boolean hasFinish;
         private JTextComponent txt;
-
+        
         FileLoader(File f, /*Document doc*/ JTextComponent txt) {
             setPriority(4);
             this.f = f;
             this.doc = txt.getDocument();//doc;
             this.txt = txt;
         }
-
+        
         public void run() {
             try {
                 // initialize the statusbar
@@ -1283,9 +1637,9 @@ public class Notepad extends JPanel {
             // we are done... get rid of progressbar
             status.removeAll();
             status.revalidate();
-
+            
             resetUndoManager();
-
+            
             if (elementTreePanel != null) {
                 SwingUtilities.invokeLater(new Runnable() {
                     public void run() {
@@ -1294,7 +1648,7 @@ public class Notepad extends JPanel {
                 });
             }
         }
-
+        
         Document doc;
         File f;
     }
@@ -1303,17 +1657,17 @@ public class Notepad extends JPanel {
      * Thread to save a document to file
      */
     class FileSaver extends Thread {
-
+        
         Document doc;
         File f;
         public boolean hasFinish;
-
+        
         FileSaver(File f, Document doc) {
             setPriority(4);
             this.f = f;
             this.doc = doc;
         }
-
+        
         public void run() {
             try {
                 // initialize the statusbar
