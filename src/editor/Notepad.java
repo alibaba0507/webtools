@@ -133,7 +133,7 @@ public class Notepad extends JPanel {
         editor = createEditor();
         // Add this as a listener for undoable edits.
         editor.getDocument().addUndoableEditListener(undoHandler);
-        editor.setPreferredSize(new Dimension(250, 250));
+        //editor.setPreferredSize(new Dimension(250, 250));
         // install the command table
         commands = new Hashtable();
         Action[] actions = getActions();
@@ -144,6 +144,8 @@ public class Notepad extends JPanel {
         }
 
         JScrollPane scroller = new JScrollPane();
+        scroller.setMaximumSize(new Dimension(250, 140));
+        scroller.setPreferredSize(new Dimension(250, 140));
         JViewport port = scroller.getViewport();
         port.add(editor);
 
@@ -152,9 +154,22 @@ public class Notepad extends JPanel {
         //nlEditor.add("Center", port);
         JScrollPane scrollerList = new JScrollPane();
         JViewport porList = scrollerList.getViewport();
-        scrollerList.setMaximumSize(new Dimension(250, 140));
-        scrollerList.setPreferredSize(new Dimension(250, 140));
+        scrollerList.setMaximumSize(new Dimension(250, 80));
+        scrollerList.setPreferredSize(new Dimension(250, 80));
         list = new JList();
+        list.addMouseListener(new MouseAdapter(){
+            @Override
+            public void mouseClicked(MouseEvent e) {
+              if (e.getClickCount() == 1)
+              {
+                  String s = (String)list.getSelectedValue();
+                  s = s.split(":")[0];
+                  String pattern[] = {s};
+                  highLight(editor, pattern);
+              }
+            }
+          
+        });
         //list.setMaximumSize(new Dimension(150,40));
         list.setModel(new DefaultListModel());
         list.setPreferredSize(new Dimension(250, 140));
@@ -192,7 +207,7 @@ public class Notepad extends JPanel {
 
         });
 
-        syntaxEditor.setPreferredSize(new Dimension(250, 250));
+        //syntaxEditor.setPreferredSize(new Dimension(250, 250));
         JScrollPane scrollerSyntax = new JScrollPane();
         JViewport portSyntax = scrollerSyntax.getViewport();
         scrollerSyntax.setMaximumSize(new Dimension(250, 140));
@@ -266,13 +281,18 @@ public class Notepad extends JPanel {
 
                             String key = it.next().toString();
                             String val = m.get(key).toString();
+                            //int indx = 
+                            // we need clear space for a key word
+                            
+                            s = s.replaceAll("\n" + key + " ", "\n " + key + " ");
+                            s = s.replaceAll("\r" + key + " ", "\r " + key + " ");
+                            s = s.replaceAll(" " + key + "\n", " " + key + " \n");
+                            s = s.replaceAll(" " + key + "\r", " " + key + " \r");
+                            s = s.replaceAll("," + key + " ", ", " + key + " ");
+                            s = s.replaceAll("." + key + " ", ". " + key + " ");
+                            s = s.replaceAll(" " + key + ",", " " + key + " ,");
+                            s = s.replaceAll(" " + key + ".", " " + key + " .");
                             s = s.replaceAll(" " + key + " ", " " + val + " ");
-                            s = s.replaceAll("\n" + key + " ", "\n" + val + " ");
-                            s = s.replaceAll("\r" + key + " ", "\r" + val + " ");
-                            s = s.replaceAll("," + key + " ", "," + val + " ");
-                            s = s.replaceAll("." + key + " ", "." + val + " ");
-                            s = s.replaceAll(" " + key + ",", " " + val + ",");
-                            s = s.replaceAll(" " + key + ".", " " + val + ".");
                             ((JTextArea) syntaxEditor).setLineWrap(true);
                             ((JTextArea) syntaxEditor).setWrapStyleWord(true);
 
@@ -302,11 +322,11 @@ public class Notepad extends JPanel {
         StopWords sw = StopWords.English;
         for (final String word : new SentenceIterator(s, Locale.ENGLISH)) {
             //System.out.println(word);
-
-            for (final String w : new WordIterator(word)) {
+           String word_clean = word.replaceAll("\\p{Punct}"," "); 
+            for (final String w : new WordIterator(word_clean)) {
                 //System.out.println(word);
                 boolean found = false;
-                if (m.containsKey(w)) {
+                if (m.containsKey(" " + w + " ")) {
                     continue; // we have this one 
                 }
                 if (w.trim().length() >= 4 && !sw.isStopWord(w)) {
@@ -698,11 +718,12 @@ public class Notepad extends JPanel {
             Highlighter hilite = textComp.getHighlighter();
             Document doc = textComp.getDocument();
             String text = doc.getText(0, doc.getLength());
+            text = text.toLowerCase();
             for (int i = 0; i < pattern.length; i++) {
                 int pos = 0;
                 // Search for pattern
                 while ((pos = text.indexOf(pattern[i], pos)) >= 0) {
-
+                    pattern[i] = pattern[i].toLowerCase();
                     hilite.addHighlight(pos, pos + pattern[i].length(),
                             myHighlighter);
                     pos += pattern[i].length();
