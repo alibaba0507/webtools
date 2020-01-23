@@ -52,6 +52,7 @@ import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.prefs.Preferences;
 import javax.imageio.ImageIO;
 
@@ -59,6 +60,7 @@ import javax.swing.text.*;
 import javax.swing.undo.*;
 import javax.swing.event.*;
 import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import webtools.gui.run.WebToolMainFrame;
 
 /**
@@ -157,18 +159,17 @@ public class Notepad extends JPanel {
         scrollerList.setMaximumSize(new Dimension(250, 80));
         scrollerList.setPreferredSize(new Dimension(250, 80));
         list = new JList();
-        list.addMouseListener(new MouseAdapter(){
+        list.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-              if (e.getClickCount() == 1)
-              {
-                  String s = (String)list.getSelectedValue();
-                  s = s.split(":")[0];
-                  String pattern[] = {s};
-                  highLight(editor, pattern);
-              }
+                if (e.getClickCount() == 1) {
+                    String s = (String) list.getSelectedValue();
+                    s = s.split(":")[0];
+                    String pattern[] = {s};
+                    highLight(editor, pattern);
+                }
             }
-          
+
         });
         //list.setMaximumSize(new Dimension(150,40));
         list.setModel(new DefaultListModel());
@@ -283,16 +284,23 @@ public class Notepad extends JPanel {
                             String val = m.get(key).toString();
                             //int indx = 
                             // we need clear space for a key word
-                            
-                            s = s.replaceAll("\n" + key + " ", "\n " + key + " ");
-                            s = s.replaceAll("\r" + key + " ", "\r " + key + " ");
-                            s = s.replaceAll(" " + key + "\n", " " + key + " \n");
-                            s = s.replaceAll(" " + key + "\r", " " + key + " \r");
-                            s = s.replaceAll("," + key + " ", ", " + key + " ");
-                            s = s.replaceAll("." + key + " ", ". " + key + " ");
-                            s = s.replaceAll(" " + key + ",", " " + key + " ,");
-                            s = s.replaceAll(" " + key + ".", " " + key + " .");
-                            s = s.replaceAll(" " + key + " ", " " + val + " ");
+                            if (val.startsWith("{")) {
+                                val = val.substring(1);
+                            }
+                            if (val.endsWith("}")) {
+                                val = val.substring(0, val.length() - 2);
+                            }
+                            String replaceWith[] = val.split("\\|");
+                            int randomInt = ThreadLocalRandom.current().nextInt(0, replaceWith.length - 1);
+                            s = s.replaceAll("\n" + key + " ", "\n " + replaceWith[ThreadLocalRandom.current().nextInt(0, replaceWith.length - 1)] + " ");
+                            s = s.replaceAll("\r" + key + " ", "\r " + replaceWith[ThreadLocalRandom.current().nextInt(0, replaceWith.length - 1)] + " ");
+                            s = s.replaceAll(" " + key + "\n", " " + replaceWith[ThreadLocalRandom.current().nextInt(0, replaceWith.length - 1)] + " \n");
+                            s = s.replaceAll(" " + key + "\r", " " + replaceWith[ThreadLocalRandom.current().nextInt(0, replaceWith.length - 1)] + " \r");
+                            s = s.replaceAll("," + key + " ", ", " + replaceWith[ThreadLocalRandom.current().nextInt(0, replaceWith.length - 1)] + " ");
+                            s = s.replaceAll("." + key + " ", ". " + replaceWith[ThreadLocalRandom.current().nextInt(0, replaceWith.length - 1)] + " ");
+                            s = s.replaceAll(" " + key + ",", " " + replaceWith[ThreadLocalRandom.current().nextInt(0, replaceWith.length - 1)] + " ,");
+                            s = s.replaceAll(" " + key + ".", " " + replaceWith[ThreadLocalRandom.current().nextInt(0, replaceWith.length - 1)] + " .");
+                            // s = s.replaceAll(" " + key + " ", " " + val + " ");
                             ((JTextArea) syntaxEditor).setLineWrap(true);
                             ((JTextArea) syntaxEditor).setWrapStyleWord(true);
 
@@ -322,7 +330,7 @@ public class Notepad extends JPanel {
         StopWords sw = StopWords.English;
         for (final String word : new SentenceIterator(s, Locale.ENGLISH)) {
             //System.out.println(word);
-           String word_clean = word.replaceAll("\\p{Punct}"," "); 
+            String word_clean = word.replaceAll("\\p{Punct}", " ");
             for (final String w : new WordIterator(word_clean)) {
                 //System.out.println(word);
                 boolean found = false;
@@ -335,12 +343,16 @@ public class Notepad extends JPanel {
                         //inr.reset();
                         BufferedReader br = new BufferedReader(getResourceAsStream("syntax"));
                         String readLine = "";
+                        int cnt = 0;
                         while ((readLine = br.readLine()) != null) {
                             if (readLine.indexOf("," + w + ",") > -1) { // we found 
                                 m.put(w, "{" + readLine.replaceAll(",", "|") + "}");
                                 found = true;
                                 //br.close();
-                                break;
+                                cnt++;
+                                if (cnt > 1) {
+                                    break;
+                                }
                             }
                         }// end while
                         br.close();
@@ -1095,6 +1107,10 @@ public class Notepad extends JPanel {
         public void actionPerformed(ActionEvent e) {
             Frame frame = getFrame();
             JFileChooser chooser = new JFileChooser();
+            // JFileChooser jf = new JFileChooser();
+            FileNameExtensionFilter filter = new FileNameExtensionFilter("TEXT FILES", "txt", "text");
+            chooser.setFileFilter(filter);
+
             int ret = chooser.showSaveDialog(frame);
 
             if (ret != JFileChooser.APPROVE_OPTION) {
@@ -1107,7 +1123,19 @@ public class Notepad extends JPanel {
             Thread saver = new FileSaver(f, editor.getDocument());
             //saver.join();
             saver.start();
-
+            if (syntaxEditor.getText().trim().length() > 0) {
+                ret = chooser.showSaveDialog(frame);
+                chooser.setDialogTitle("Save SPIN File ...");
+                if (ret != JFileChooser.APPROVE_OPTION) {
+                    return;
+                }
+                f = chooser.getSelectedFile();
+                frame.setTitle(f.getName());
+                // synchronized (SaveAction.this) {
+                Thread saver_spin = new FileSaver(f, syntaxEditor.getDocument());
+                //saver.join();
+                saver_spin.start();
+            }
             //}
         }
     }
