@@ -12,12 +12,16 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.util.ArrayList;
+import java.util.List;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.SwingConstants;
 import webtools.gui.dialogs.SearchQueryDialog;
 import webtools.gui.run.Main;
 import webtools.gui.run.WebToolMainFrame;
@@ -32,11 +36,42 @@ import za.co.utils.AWTUtils;
 public class SearchForm extends TextForm {
 
     private JComboBox cSearch;
-
+    private  JCheckBox chkRegexSearchResultOnly;
+    
     public SearchForm(String[] labels, char[] mnemonics, int[] widths, String[] tips) {
         super(labels, mnemonics, widths, tips);
     }
 
+    @Override
+    public void setFormValues(String[] s) {
+        super.setFormValues(s); //To change body of generated methods, choose Tools | Templates.
+        if (s[s.length - 1].equals("1"))
+            chkRegexSearchResultOnly.setSelected(true);
+        else
+            chkRegexSearchResultOnly.setSelected(false);
+        
+    }
+   
+    @Override
+    public String[] getFormValues() {
+        String[]s = super.getFormValues(); //To change body of generated methods, choose Tools | Templates.
+        
+        List<String> arrlist 
+            = new ArrayList<String>(
+               java.util.Arrays.asList(s)); 
+        
+        if (chkRegexSearchResultOnly.isSelected())
+            // Add the new element 
+            arrlist.add("1");
+        else
+            arrlist.add("0");
+  
+        // Convert the Arraylist to array 
+        s = arrlist.toArray(s); 
+        return s;
+    }
+   
+    
     @Override
     void constractExtraPanels(JPanel c) {
         //super.constractExtraPanels(c); //To change body of generated methods, choose Tools | Templates.
@@ -103,11 +138,30 @@ public class SearchForm extends TextForm {
         });
         pnlSearchQuery.add(btnLab);
         pnlSearchQuery.add(btnQuery);
-        JPanel pnl = new JPanel(new GridLayout(2, 1));
+        JPanel pnlRegexSearchResultonly = new JPanel(/*new GridLayout(2,2)*/);
+        chkRegexSearchResultOnly =  new JCheckBox("Parse Search Result Only");
+        chkRegexSearchResultOnly.setToolTipText("Select This If DON'T WANT to parse Search Result Links , but only search result as text");
+        chkRegexSearchResultOnly.setHorizontalTextPosition(SwingConstants.LEFT);
+        //schkRegexSearchResultOnly.setHorizontalAlignment(JCheckBox.LEFT);
+        pnlRegexSearchResultonly.add(chkRegexSearchResultOnly);
+        JPanel pnl = new JPanel(new GridLayout(3, 1));
         pnl.add(pnlSearchEngines);
         pnl.add(pnlSearchQuery);
+        pnl.add(pnlRegexSearchResultonly);
         c.add(pnl, BorderLayout.WEST);
 
     }
 
 }
+
+
+
+
+
+
+
+
+
+
+
+

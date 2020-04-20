@@ -164,9 +164,12 @@ public class Notepad extends JPanel {
             public void mouseClicked(MouseEvent e) {
                 if (e.getClickCount() == 1) {
                     String s = (String) list.getSelectedValue();
-                    s = s.split(":")[0];
-                    String pattern[] = {s};
-                    highLight(editor, pattern);
+                    if (s != null)
+                    {
+                        s = s.split(":")[0];
+                        String pattern[] = {s};
+                        highLight(editor, pattern);
+                   }
                 }
             }
             

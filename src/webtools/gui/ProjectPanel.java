@@ -166,7 +166,7 @@ public class ProjectPanel extends JPanel {
                         String[] s = crawlForm.getFormValues();
                         int id = db.findQueryId(s[1], s[3]);
                         if (id > 0) {
-                            ArrayList<Vector> list = db.selectRegex(id, 0);
+                            ArrayList<Vector> list = db.selectAllRegex();//db.selectRegex(id, 0);
                             for (int i = 0; i < list.size(); i++) {
                                 Vector v = list.get(i);
                                 fw.write((String) v.get(1) + "\n");
@@ -910,7 +910,7 @@ public class ProjectPanel extends JPanel {
                 Vector row = (Vector) v.get(0);
                 indx = ((Integer) row.get(0)).intValue();
             }
-            ArrayList<Vector> list = db.selectRegex(id, indx);
+            ArrayList<Vector> list = db.selectAllRegex();//db.selectRegex(id, indx);
             if (list.size() > 0) {
                 DefaultTableModel m = (DefaultTableModel) tblRegexResult.getModel();
                 for (int i = 0; i < list.size(); i++) {
@@ -1114,5 +1114,7 @@ class MyComparator implements Comparator {
     }
 
 }
+
+
 
 

@@ -39,6 +39,7 @@ public class WebCrawler implements Runnable, ConnectorCallback {
     private SQLite sql;
     private String searcURL;
     private String regexStr;
+    private  boolean regexSearchresultOnly;
     private String regexParserString;
     private int queryId;
     private String searchQuery;
@@ -69,6 +70,8 @@ public class WebCrawler implements Runnable, ConnectorCallback {
         if (list.length > 5) {
             this.regexParserString = list[5];
         }
+        this.regexSearchresultOnly = (list[list.length - 1].equals("1"));
+        
         queryId = sql.saveQuery(list[1], list[3], 0);
 
     }
@@ -188,7 +191,7 @@ public class WebCrawler implements Runnable, ConnectorCallback {
         try {
             Document doc = webC.get(new WebRequest(ipAddr, null));// new WebTools().search(urlEncode, "", true);
             if (doc != null) {
-                this.callback.callback(name, searchQuery, regexStr, regexParserString, Integer.toString(page), doc);
+                this.callback.callback(name, searchQuery, regexStr, regexParserString,regexSearchresultOnly, Integer.toString(page), doc);
             } else if (doc == null && LastHTTPError.errorCode == 0) {
                 LastHTTPError.errorCode = -1;
             }
@@ -200,7 +203,7 @@ public class WebCrawler implements Runnable, ConnectorCallback {
     }
 
     @Override
-    public void callback(String title, String searchQuery, String regexStr, String regexParserStr, String page, Document doc) {
+    public void callback(String title, String searchQuery, String regexStr, String regexParserStr,boolean  regexSearchresultOnly, String page, Document doc) {
         // throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
         if (doc != null) {
             Elements links = doc.select(regexStr);
@@ -318,5 +321,7 @@ class MyComparator implements Comparator {
         return false;
     }
 }
+
+
 
 
