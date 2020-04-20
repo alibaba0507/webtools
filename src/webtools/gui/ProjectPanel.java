@@ -166,7 +166,7 @@ public class ProjectPanel extends JPanel {
                         String[] s = crawlForm.getFormValues();
                         int id = db.findQueryId(s[1], s[3]);
                         if (id > 0) {
-                            ArrayList<Vector> list = db.selectAllRegex();//db.selectRegex(id, 0);
+                            ArrayList<Vector> list = db.selectRegex(id, 0);//db.selectAllRegex(
                             for (int i = 0; i < list.size(); i++) {
                                 Vector v = list.get(i);
                                 fw.write((String) v.get(1) + "\n");
@@ -377,6 +377,10 @@ public class ProjectPanel extends JPanel {
                 if (event.getActionCommand().equalsIgnoreCase("Download Selected(R)")) {
                     downloadSelectedSearchRegex();
                 }
+                if (event.getActionCommand().equalsIgnoreCase("Download Regex Table(All Users)"))
+                {
+                    downloadRegexTableAllUsers();
+                }
                 //Lookup Pages
                 if (event.getActionCommand().equalsIgnoreCase("Lookup Pages")) {
                     findLinksToDomains();
@@ -451,6 +455,9 @@ public class ProjectPanel extends JPanel {
         item.setHorizontalTextPosition(JMenuItem.RIGHT);
         item.addActionListener(menuListener);
         popupRegexResultTable.add(item = new JMenuItem("Download Selected(R)"));
+        item.setHorizontalTextPosition(JMenuItem.RIGHT);
+        item.addActionListener(menuListener);
+        popupRegexResultTable.add(item = new JMenuItem("Download Regex Table(All Users)"));
         item.setHorizontalTextPosition(JMenuItem.RIGHT);
         item.addActionListener(menuListener);
 
@@ -790,7 +797,39 @@ public class ProjectPanel extends JPanel {
             }
         }
     }
+    
+    private void downloadRegexTableAllUsers()
+    {
+        JFileChooser f = new JFileChooser();
+        f.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        // f.showSaveDialog(null);
+        if (f.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+            System.out.println(f.getCurrentDirectory());
+            System.out.println(f.getSelectedFile());
+            FileWriter fr = null;
+            try {
+                fr = new FileWriter(f.getSelectedFile(), true);
 
+                //int rows[] = tblRegexResult.getSelectedRows();//Row();
+                WebToolMainFrame.instance.getConsole().append(">>>>>>> downloadRegexTableAllUsers Saving Regex Items to File ... >>>\n");
+              SQLite db = SQLite.getInstance();
+                ArrayList<Vector> list = db.selectAllRegex();
+                for (int i = 0; i < list.size(); i++) {
+                    Vector row = list.get(i);
+                    
+                    String regexToSave = (String)row.get(1);
+                    fr.write(regexToSave + "\n");
+                    fr.flush();
+                }// end  for (int i = 0; i < rows.length; i++)
+                fr.close();
+                WebToolMainFrame.instance.getConsole().append(">>>>>>> downloadSelectedSearchRegex Finish .... >>>\n");
+
+            } catch (IOException e) {
+                WebToolMainFrame.instance.getConsole().append(">>>>>>> downloadSelectedSearchRegex IO Error[" + e.getMessage() + "] >>>\n");
+                return;
+            }
+        }
+    }
     private void downloadSelectedSearchRegex() {
         JFileChooser f = new JFileChooser();
         f.setFileSelectionMode(JFileChooser.FILES_ONLY);
@@ -818,7 +857,7 @@ public class ProjectPanel extends JPanel {
                 return;
             }
         }
-    }
+    }// end private void downloadSelectedSearchRegex() 
 
     private void downloadSelectedSearchDomains() {
 
@@ -910,7 +949,7 @@ public class ProjectPanel extends JPanel {
                 Vector row = (Vector) v.get(0);
                 indx = ((Integer) row.get(0)).intValue();
             }
-            ArrayList<Vector> list = db.selectAllRegex();//db.selectRegex(id, indx);
+            ArrayList<Vector> list = db.selectRegex(id, indx);//db.selectAllRegex()
             if (list.size() > 0) {
                 DefaultTableModel m = (DefaultTableModel) tblRegexResult.getModel();
                 for (int i = 0; i < list.size(); i++) {
@@ -1114,6 +1153,10 @@ class MyComparator implements Comparator {
     }
 
 }
+
+
+
+
 
 
 

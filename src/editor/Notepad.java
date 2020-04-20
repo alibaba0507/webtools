@@ -751,7 +751,26 @@ public class Notepad extends JPanel {
             }
         };
     }
-    
+    public static void lunchInstance()
+    {
+        try{
+            JFrame frame = new JFrame();
+            frame.setTitle(resources.getString("Title"));
+            frame.setBackground(Color.lightGray);
+            frame.getContentPane().setLayout(new BorderLayout());
+            Notepad notepad = new Notepad();
+            frame.getContentPane().add("Center", notepad);
+            frame.setJMenuBar(notepad.createMenubar());
+            frame.addWindowListener(new AppCloser());
+            frame.pack();
+            frame.setSize(500, 600);
+            frame.show();
+        } catch (Throwable t) {
+            System.out.println("uncaught exception: " + t);
+            t.printStackTrace();
+        }
+        
+    }
     public static void main(String[] args) {
         try {
             String vers = System.getProperty("java.version");
