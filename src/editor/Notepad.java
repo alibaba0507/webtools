@@ -1088,7 +1088,11 @@ public class Notepad extends JPanel {
                 toolbar.add(createTool(toolKeys[i]));
             }
         }
-        toolbar.add(cboMostUsedWords);
+        //cboMostUsedWords.setPreferredSize(new Dimension(165,25));
+        JPanel pnlCbo = new JPanel();
+        pnlCbo.add(new JLabel("Most Used Sentences"));
+        pnlCbo.add(cboMostUsedWords);
+        toolbar.add(pnlCbo);
         toolbar.add(Box.createHorizontalGlue());
         return toolbar;
     }
@@ -1601,8 +1605,9 @@ public class Notepad extends JPanel {
             JFileChooser chooser = new JFileChooser();
             // JFileChooser jf = new JFileChooser();
             FileNameExtensionFilter filter = new FileNameExtensionFilter("TEXT FILES", "txt", "text");
+            FileNameExtensionFilter filter_html = new FileNameExtensionFilter("HTML FILES", "html", "text");
             chooser.setFileFilter(filter);
-            
+            chooser.setFileFilter(filter_html);
             int ret = chooser.showSaveDialog(frame);
             
             if (ret != JFileChooser.APPROVE_OPTION) {
@@ -1612,6 +1617,18 @@ public class Notepad extends JPanel {
             File f = chooser.getSelectedFile();
             frame.setTitle(f.getName());
             // synchronized (SaveAction.this) {
+            if (chooser.getFileFilter().equals(filter))
+            {   
+                System.out.println("editor.Notepad.SaveAction.actionPerformed() FILE FILTER IS TEXT ....");
+                if (!f.getName().endsWith(".txt"))
+                    f = new File(f.getPath() + ".txt");
+            }
+            if (chooser.getFileFilter().equals(filter_html))
+            {   
+                System.out.println("editor.Notepad.SaveAction.actionPerformed() FILE FILTER IS HTML ....");
+                if (!f.getName().endsWith(".html"))
+                    f = new File(f.getPath() + ".html");
+            }
             Thread saver = new FileSaver(f, editor.getDocument());
             //saver.join();
             saver.start();
