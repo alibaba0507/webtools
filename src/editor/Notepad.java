@@ -62,6 +62,7 @@ import javax.swing.event.*;
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import webtools.gui.run.WebToolMainFrame;
+import webtools.utils.ArrayUtils;
 
 /**
  * Sample application using the simple text editor component that supports only
@@ -77,6 +78,9 @@ public class Notepad extends JPanel {
     private static boolean exitAfterFirstPaint;
     private String title;
     private JButton submit;
+    private JComboBox<String> cboSinonyms;
+    private JComboBox<String> cboMostUsedWords;
+    private boolean canSelectItem;
     Preferences prefs = Preferences.userRoot().node(getClass().getName());
     String LAST_USED_FOLDER = System.getProperty("user.home");
     
@@ -89,7 +93,10 @@ public class Notepad extends JPanel {
             System.exit(1);
         }
     }
-    
+    interface ItemSelected {
+        public int startWord();
+        public int endWord();
+    }
     public void paintChildren(Graphics g) {
         super.paintChildren(g);
         if (exitAfterFirstPaint) {
@@ -158,7 +165,28 @@ public class Notepad extends JPanel {
         JViewport porList = scrollerList.getViewport();
         scrollerList.setMaximumSize(new Dimension(250, 80));
         scrollerList.setPreferredSize(new Dimension(250, 80));
+        cboMostUsedWords = new JComboBox<>(new DefaultComboBoxModel<>());
+        cboMostUsedWords.addItemListener(
+                new ItemListener() {
+                    @Override
+                    public void itemStateChanged(ItemEvent e) {
+                         if (e.getStateChange() == ItemEvent.SELECTED)
+                         {
+                            String s = (String) cboMostUsedWords.getSelectedItem();//electedValue();
+                            if (s != null)
+                            {
+                                s = s.split(":")[0];
+                                String pattern[] = {s};
+                                highLight(editor, pattern,true);
+                           }
+                         }
+                    }
+            
+                
+         });
+        
         list = new JList();
+        
         list.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -168,7 +196,7 @@ public class Notepad extends JPanel {
                     {
                         s = s.split(":")[0];
                         String pattern[] = {s};
-                        highLight(editor, pattern);
+                        highLight(editor, pattern,true);
                    }
                 }
             }
@@ -177,8 +205,9 @@ public class Notepad extends JPanel {
         //list.setMaximumSize(new Dimension(150,40));
         list.setModel(new DefaultListModel());
         list.setPreferredSize(new Dimension(250, 140));
+        // remove list from panel
         porList.add(list);
-        pnlEditor.add("North", scrollerList);
+        //pnlEditor.add("North", scrollerList);
         pnlEditor.add("Center", scroller);
         
         try {
@@ -198,11 +227,51 @@ public class Notepad extends JPanel {
                     try {
                         JTextArea textArea = (JTextArea) syntaxEditor;
                         int offset = textArea.viewToModel(e.getPoint());
-                        int start = Utilities.getWordStart(textArea, offset);
-                        int end = Utilities.getWordEnd(textArea, offset);
+                        final int start = Utilities.getWordStart(textArea, offset);
+                        final int end = Utilities.getWordEnd(textArea, offset);
                         String text = textArea.getText(start, end - start);
                         String pattern[] = {text};
-                        highLight(editor, pattern);
+                        Map m = new HashMap();
+                        getSinonyms(m, text);
+                        canSelectItem = false;
+                        ((DefaultComboBoxModel)cboSinonyms.getModel()).removeAllElements();
+                        if (m.size() > 0)
+                        {
+                            String s = ((String)m.get( text ));
+                            if (s.startsWith("{")) {
+                                s = s.substring(1);
+                            }
+                            if (s.endsWith("}")) {
+                                s = s.substring(0, s.length() - 2);
+                            }
+                            String wrds[] = s.split("\\|");
+                            //String[] wrds = s.split("|");
+                            
+                        
+                            for (String wrd : wrds) {
+                                //final cboName = wrd;
+                                ItemSelected elem = new ItemSelected(){
+                                
+                                    public int startWord = start;
+                                    public int endWord = end;
+                                    @Override
+                                    public String toString() {return wrd; }
+
+                                    @Override
+                                    public int startWord() {
+                                      return startWord;
+                                    }
+
+                                    @Override
+                                    public int endWord() {
+                                     return endWord;
+                                    }
+                                };
+                                ((DefaultComboBoxModel)cboSinonyms.getModel()).addElement(elem);
+                            }
+                            canSelectItem = true;
+                        }
+                        highLight(editor, pattern,true);
                     } catch (BadLocationException bes) {
                         
                     }
@@ -251,6 +320,48 @@ public class Notepad extends JPanel {
         panelSyntaxActions.add(new JButton(createActionSpinWords3()));
         panelSyntaxActions.add(new JButton(createActionSpinWords4()));
         panelSyntaxActions.add(new JButton(createActionSpinWords5()));
+        cboSinonyms = new JComboBox<String>(new DefaultComboBoxModel<String>());
+         panelSyntaxActions.add(cboSinonyms);
+        
+         cboSinonyms.addItemListener(new ItemListener() {
+            @Override
+            public void itemStateChanged(ItemEvent e) {
+                System.out.println(".itemStateChanged() [" + (e.getID() & Event.MOUSE_UP) + "]>>");
+                if (e.getStateChange() == ItemEvent.SELECTED && canSelectItem)
+                {
+                 ItemSelected item = (ItemSelected) cboSinonyms.getSelectedItem();
+                    int startWord = (int)item.startWord();
+                  int endWord = (int)item.endWord();
+                  String replace = (String)item.toString();
+                  ((JTextArea) syntaxEditor).replaceRange(replace, startWord, endWord);
+                  String [] pattern = {replace};
+                    highLight(syntaxEditor, pattern, false);
+                }
+                //canSelectItem = true;
+            }
+        });
+         
+         
+         cboSinonyms.addMouseListener(
+                 new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+               if (e.getButton() == MouseEvent.BUTTON1)
+               {
+                   canSelectItem = true;
+                  
+               }
+            }
+                  
+                 
+        });
+         
+         
+                 
+                 
+              
+         
+            
         // add("North", panelEditor);
         add("Center", splitPane);
         add("South", createStatusbar());
@@ -287,7 +398,7 @@ public class Notepad extends JPanel {
                         int replaceWithCnt = 0;
                         while (it.hasNext()) {
                             
-                            String key = it.next().toString();
+                            String key = it.next().toString().trim();
                             String val = m.get(key).toString();
                             //int indx = 
                             // we need clear space for a key word
@@ -334,15 +445,17 @@ public class Notepad extends JPanel {
                             s = s.replaceAll(" " + key + ".", " " + repl+ ".");
                              */
                             // s = s.replaceAll(" " + key + " ", " " + val + " ");
-                            ((JTextArea) syntaxEditor).setLineWrap(true);
-                            ((JTextArea) syntaxEditor).setWrapStyleWord(true);
                             
-                            syntaxEditor.setText(s);
                         }// end while(it.next)
-                        // String pattern[] = (String[])toBeReplacedList.toArray();
-                        highLight(editor, toBeReplacedList);
+                        
+                       ((JTextArea) syntaxEditor).setLineWrap(true);
+                        ((JTextArea) syntaxEditor).setWrapStyleWord(true);
+                            
+                        syntaxEditor.setText(s);
+                       // String pattern[] = (String[])toBeReplacedList.toArray();
+                        highLight(editor, toBeReplacedList,true);
                         //pattern = (String[])replaceWithList.toArray();
-                        highLight(syntaxEditor, replaceWithList);
+                        highLight(syntaxEditor, replaceWithList,true);
                         if (WebToolMainFrame.instance != null) {
                             Font fnt = WebToolMainFrame.instance.getConsole().getFont();
                             WebToolMainFrame.instance.getConsole().setFont(fnt.deriveFont(Font.BOLD));
@@ -375,27 +488,9 @@ public class Notepad extends JPanel {
                 continue; // we have this one 
             }
             if (w.trim().length() >= minLen && !sw.isStopWord(w)) {
-                try {
-                    // inr.mark(0);
-                    //inr.reset();
-                    BufferedReader br = new BufferedReader(getResourceAsStream("syntax"));
-                    String readLine = "";
-                    int cnt = 0;
-                    while ((readLine = br.readLine()) != null) {
-                        if (readLine.indexOf("," + w + ",") > -1) { // we found 
-                            m.put(w, "{" + readLine.replaceAll(",", "|") + "}");
-                            found = true;
-                            //br.close();
-                            cnt++;
-                            if (cnt > 1) {
-                                break;
-                            }
-                        }
-                    }// end while
-                    br.close();
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
+                getSinonyms(m,w);
+               if (m.containsKey(" " + w + " "))
+                       break;
             }// end if
             if (found) {
                 break;
@@ -404,7 +499,37 @@ public class Notepad extends JPanel {
         //}// end for
         return m;
     }
-    
+    void getSinonyms(Map m,String w)
+    {
+         try {
+            // inr.mark(0);
+            //inr.reset();
+            BufferedReader br = new BufferedReader(getResourceAsStream("syntax"));
+           
+            String readLine = "";
+            int cnt = 0;
+            while ((readLine = br.readLine()) != null) {
+                StringBuffer buffer = new StringBuffer( w );
+                //if (ArrayUtils.useArraysBinarySearch(readLine.split(","), w)){
+                if (readLine.contains(buffer)) { // we found 
+                    if (!readLine.startsWith(w) && !readLine.contains(buffer.insert(0, ",")))
+                        continue;
+                    if (!readLine.endsWith(w) && !readLine.contains(buffer.append(",")))
+                        continue;
+                    m.put( w , "{" + readLine.replaceAll(",", "|") + "}");
+                   // found = true;
+                    //br.close();
+                    cnt++;
+                    if (cnt > 0) {
+                        break;
+                    }
+                }
+            }// end while
+            br.close();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
     Map<String, String> spinSencanses() {
         Map m = new HashMap();
         //String syntax = getResourceString("syntax");// getResourceString("syntax");
@@ -418,35 +543,17 @@ public class Notepad extends JPanel {
             for (final String w : new WordIterator(word_clean)) {
                 //System.out.println(word);
                 boolean found = false;
-                if (m.containsKey(" " + w + " ")) {
+                if (m.containsKey( w )) {
                     continue; // we have this one 
                 }
                 if (w.trim().length() >= 4 && !sw.isStopWord(w)) {
-                    try {
-                        // inr.mark(0);
-                        //inr.reset();
-                        BufferedReader br = new BufferedReader(getResourceAsStream("syntax"));
-                        String readLine = "";
-                        int cnt = 0;
-                        while ((readLine = br.readLine()) != null) {
-                            if (readLine.indexOf("," + w + ",") > -1) { // we found 
-                                m.put(w, "{" + readLine.replaceAll(",", "|") + "}");
-                                found = true;
-                                //br.close();
-                                cnt++;
-                                if (cnt > 1) {
-                                    break;
-                                }
-                            }
-                        }// end while
-                        br.close();
-                    } catch (Exception ex) {
-                        ex.printStackTrace();
-                    }
+                   getSinonyms(m,w);
+                   if (m.containsKey( w ))
+                       break;
                 }// end if
-                if (found) {
-                    break;
-                }
+               // if (found) {
+                //    break;
+               // }
             }// end for 
         }// end for
         return m;
@@ -534,9 +641,9 @@ public class Notepad extends JPanel {
                             syntaxEditor.setText(s);
                         }// end while(it.next)
                         // String pattern[] = (String[])toBeReplacedList.toArray();
-                        highLight(editor, toBeReplacedList);
+                        highLight(editor, toBeReplacedList,true);
                         //pattern = (String[])replaceWithList.toArray();
-                        highLight(syntaxEditor, replaceWithList);
+                        highLight(syntaxEditor, replaceWithList,true);
                         if (WebToolMainFrame.instance != null) {
                             Font fnt = WebToolMainFrame.instance.getConsole().getFont();
                             WebToolMainFrame.instance.getConsole().setFont(fnt.deriveFont(Font.BOLD));
@@ -634,9 +741,9 @@ public class Notepad extends JPanel {
                             syntaxEditor.setText(s);
                         }// end while(it.next)
                         // String pattern[] = (String[])toBeReplacedList.toArray();
-                        highLight(editor, toBeReplacedList);
+                        highLight(editor, toBeReplacedList,true);
                         //pattern = (String[])replaceWithList.toArray();
-                        highLight(syntaxEditor, replaceWithList);
+                        highLight(syntaxEditor, replaceWithList,true);
                         if (WebToolMainFrame.instance != null) {
                             Font fnt = WebToolMainFrame.instance.getConsole().getFont();
                             WebToolMainFrame.instance.getConsole().setFont(fnt.deriveFont(Font.BOLD));
@@ -734,9 +841,9 @@ public class Notepad extends JPanel {
                             syntaxEditor.setText(s);
                         }// end while(it.next)
                         // String pattern[] = (String[])toBeReplacedList.toArray();
-                        highLight(editor, toBeReplacedList);
+                        highLight(editor, toBeReplacedList,true);
                         //pattern = (String[])replaceWithList.toArray();
-                        highLight(syntaxEditor, replaceWithList);
+                        highLight(syntaxEditor, replaceWithList,true);
                         if (WebToolMainFrame.instance != null) {
                             Font fnt = WebToolMainFrame.instance.getConsole().getFont();
                             WebToolMainFrame.instance.getConsole().setFont(fnt.deriveFont(Font.BOLD));
@@ -981,6 +1088,7 @@ public class Notepad extends JPanel {
                 toolbar.add(createTool(toolKeys[i]));
             }
         }
+        toolbar.add(cboMostUsedWords);
         toolbar.add(Box.createHorizontalGlue());
         return toolbar;
     }
@@ -1097,9 +1205,10 @@ public class Notepad extends JPanel {
     }
 
     // Creates highlights around all occurrences of pattern in textComp
-    public void highLight(JTextComponent textComp, String[] pattern) {
+    public void highLight(JTextComponent textComp, String[] pattern,boolean clearPreviosHighlight ) {
         // First remove all old highlights
-        removeHighlights(textComp);
+        if (clearPreviosHighlight)
+            removeHighlights(textComp);
         
         try {
             
@@ -1108,6 +1217,8 @@ public class Notepad extends JPanel {
             String text = doc.getText(0, doc.getLength());
             text = text.toLowerCase();
             for (int i = 0; i < pattern.length; i++) {
+                if (pattern[i] == null)
+                    continue;
                 int pos = 0;
                 // Search for pattern
                 while ((pos = text.indexOf(pattern[i], pos)) >= 0) {
@@ -1118,7 +1229,9 @@ public class Notepad extends JPanel {
                     
                 }
             }
+         //   System.out.println("editor.Notepad.highLight() >>>> FINISH");
         } catch (BadLocationException e) {
+            e.printStackTrace();
         }
         
     }
@@ -1417,6 +1530,8 @@ public class Notepad extends JPanel {
                 }
                 String s = editor.getDocument().getText(0, editor.getDocument().getLength());
                 ((DefaultListModel) list.getModel()).clear();
+                ((DefaultComboBoxModel) cboMostUsedWords.getModel()).removeAllElements();
+                 
                 /*
                     System.out.println("---------------------------- WORDS ---------------------------");
                     for (final String word : new WordIterator(s)) {
@@ -1448,6 +1563,7 @@ public class Notepad extends JPanel {
                 for (final Map.Entry<String, Integer> en : ngrams.getAllByFrequency().subList(0, 10)) {
                     System.out.println(en.getKey() + ": " + en.getValue());
                     ((DefaultListModel) list.getModel()).addElement(en.getKey() + ": " + en.getValue());
+                    ((DefaultComboBoxModel) cboMostUsedWords.getModel()).addElement(en.getKey() + ": " + en.getValue());
                 }
                 list.setVisible(true);
                 list.revalidate();
